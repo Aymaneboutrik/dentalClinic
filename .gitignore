@@ -1,0 +1,31 @@
+# Build
+bin/
+obj/
+
+# User files
+*.user
+*.suo
+*.cache
+*.log
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+appsettings.Development.json
+
+# Docker
+*.tar
+
+# Node
+node_modules/
+
+# Env
+.env
