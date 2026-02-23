@@ -1,6 +1,5 @@
-version: "3.9"
-
 services:
+
   personnel-db:
     image: postgres:16
     container_name: personnel-db
@@ -14,7 +13,7 @@ services:
       - personnel_db_data:/var/lib/postgresql/data
 
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:8.14
     container_name: pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
