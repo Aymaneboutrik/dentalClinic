@@ -1,0 +1,143 @@
+services:
+  frontend:
+    build:
+      context: ./frontend-app
+      dockerfile: Dockerfile
+    container_name: frontend-react
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend-app:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    networks:
+      - dental-network
+
+  auth-postgres:
+    image: postgres:15
+    container_name: auth-postgres
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: ton_mot_de_passe
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    networks:
+      - dental-network
+
+  auth-service:
+    build:
+      context: ./Backend/auth-service
+    container_name: auth-service
+    ports:
+      - "5002:8080"
+    depends_on:
+      - auth-postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-postgres:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: auth_user
+      SPRING_DATASOURCE_PASSWORD: ton_mot_de_passe
+    networks:
+      - dental-network
+
+  personnel-db:
+    image: postgres:16
+    container_name: personnel-db
+    environment:
+      POSTGRES_DB: personnel_db
+      POSTGRES_USER: personnel_user
+      POSTGRES_PASSWORD: personnel_pass
+    volumes:
+      - servicepersonnel_personnel_db_data:/var/lib/postgresql/data
+    networks:
+      - dental-network
+
+  
+    
+
+  pgadmin:
+    image: dpage/pgadmin4:8.14
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - personnel-db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - dental-network
+
+  personnel-service:
+    build:
+      context: ./Backend/personnel-service/ServicePersonnel
+      dockerfile: Dockerfile
+    container_name: personnel-service
+    ports:
+      - "5001:8080"
+    depends_on:
+      - personnel-db
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=personnel-db;Port=5432;Database=personnel_db;Username=personnel_user;Password=personnel_pass
+    networks:
+      - dental-network
+
+  stock-db:
+    image: postgres:15
+    container_name: stock-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: stockdb
+    volumes:
+      - stock_data:/var/lib/postgresql/data
+      - ./Backend/stock-service/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - dental-network
+
+  stock-api:
+    build:
+      context: ./Backend/stock-service/stock-api
+    container_name: stock-api
+    depends_on:
+      - stock-db
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=stock-db;Database=stockdb;Username=admin;Password=admin123
+    ports:
+      - "5003:8080"
+    networks:
+      - dental-network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - personnel-service
+      - auth-service
+      - stock-api
+    networks:
+      - dental-network
+
+networks:
+  dental-network:
+    driver: bridge
+
+volumes:
+  auth_postgres_data:
+  personnel_db_data:
+  pgadmin_data:
+  stock_data:
+  servicepersonnel_personnel_db_data:
+    external: true
+
+
