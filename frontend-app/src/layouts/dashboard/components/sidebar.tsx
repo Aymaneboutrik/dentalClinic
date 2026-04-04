@@ -5,10 +5,21 @@ import SidebarFooter from "./sidebar-footer";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import useUserPreference from "@stores/user-preference";
 import clsx from "clsx";
-
+import { useLocation } from "react-router-dom";
+import { doctorSidebarConfig } from "../../../features/doctor/config/sidebar.config";
+import { secretaireSidebarConfig } from "../../../features/secretaire/config/sidebar.config";
+import { assistantSidebarConfig } from "../../../features/assistant/config/sidebar.config";
 export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUserPreference();
+  const location = useLocation();
 
+ const currentMenus = location.pathname.startsWith("/doctor")
+  ? doctorSidebarConfig
+  : location.pathname.startsWith("/secretaire")
+  ? secretaireSidebarConfig
+  : location.pathname.startsWith("/assistant")
+  ? assistantSidebarConfig
+  : menus;
   return (
     <>
       <aside
@@ -20,7 +31,7 @@ export function Sidebar() {
         <nav className={clsx("flex flex-col gap-1 p-2 items-start")}>
           <SidebarHeader />
 
-          {menus.map((m) => (
+          {currentMenus.map((m) => (
             <SidebarItem
               key={m.route}
               icon={m.icon}
@@ -31,7 +42,7 @@ export function Sidebar() {
           ))}
         </nav>
 
-        <nav className="mt-auto flex flex-col items-start gap-4 px-2">
+        <nav className="flex flex-col items-start gap-4 px-2 mt-auto">
           <SidebarFooter />
         </nav>
       </aside>

@@ -7,10 +7,10 @@ import { useModal } from "@saimin/react-modal-manager";
 import IdleConfirmation from "@components/modals/idle-confirmation";
 import { useState } from "react";
 import useAuthOperations from "@hooks/use-auth-operations";
-import useAuth from "@hooks/use-auth";
+
 
 export function DashboardLayout() {
-  useAuth();
+  //useAuth();
 
   const { sidebarCollapsed } = useUserPreference();
   const { open, closeAll } = useModal();
@@ -42,7 +42,7 @@ export function DashboardLayout() {
         if (!isIdle) handleOnActive();
       }}
     >
-      <div className="flex min-h-screen w-full flex-col bg-background">
+      <div className="flex flex-col w-full min-h-screen bg-background">
         <Sidebar />
 
         <Header />

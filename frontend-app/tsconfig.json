@@ -6,6 +6,7 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@assets/*": ["./src/assets/*"],
       "@layouts/*": ["./src/layouts/*"],
@@ -16,7 +17,8 @@
       "@pages/*": ["./src/pages/*"],
       "@stores/*": ["./src/stores/*"],
       "@helpers/*": ["./src/helpers/*"],
-      "@apis/*": ["./src/apis/*"]
+      "@apis/*": ["./src/apis/*"],
+      "@features/*": ["./src/features/*"]
     }
   }
 }

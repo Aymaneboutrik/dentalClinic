@@ -1,18 +1,14 @@
+import { createBrowserRouter, Navigate } from "react-router-dom";
+
 import AuthLayout from "@layouts/auth/auth-layout";
 import { DashboardLayout } from "@layouts/dashboard/dashboard-layout";
 import RootLayout from "@layouts/root/root-layout";
-import {
-  Charts,
-  Dashboard,
-  Error404,
-  Error500,
-  Form,
-  Login,
-  Modals,
-  TableCreatePage,
-  TableList,
-} from "@pages/index";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+
+import { Error404, Error500, Login } from "@pages/index";
+
+import AssistantDashboardPage from "../features/assistant/pages/AssistantDashboardPage";
+import DoctorDashboardPage from "../features/doctor/pages/DoctorDashboardPage";
+import SecretaireDashboardPage from "../features/secretaire/pages/SecretaireDashboardPage";
 
 export const router = createBrowserRouter([
   {
@@ -20,37 +16,23 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       {
-        path: "",
         element: <DashboardLayout />,
         children: [
           {
             index: true,
-            element: <Navigate to="dashboard" replace />,
+            element: <Navigate to="/doctor" replace />,
           },
           {
-            index: true,
-            path: "dashboard",
-            element: <Dashboard />,
+            path: "doctor",
+            element: <DoctorDashboardPage />,
           },
           {
-            path: "forms",
-            element: <Form />,
+            path: "secretaire",
+            element: <SecretaireDashboardPage />,
           },
           {
-            path: "table",
-            element: <TableList />,
-          },
-          {
-            path: "table/create",
-            element: <TableCreatePage />,
-          },
-          {
-            path: "charts",
-            element: <Charts />,
-          },
-          {
-            path: "modals",
-            element: <Modals />,
+            path: "assistant",
+            element: <AssistantDashboardPage />,
           },
           {
             path: "404",
@@ -67,7 +49,6 @@ export const router = createBrowserRouter([
         element: <AuthLayout />,
         children: [
           {
-            index: true,
             path: "login",
             element: <Login />,
           },
@@ -76,7 +57,7 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    path: "/*",
-    element: <Error404 />,
+    path: "*",
+    element: <Navigate to="/404" replace />,
   },
 ]);
