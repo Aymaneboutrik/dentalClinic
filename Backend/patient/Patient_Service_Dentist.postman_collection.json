@@ -1,0 +1,160 @@
+{
+  "info": {
+    "name": "Patient Service - Dentist API",
+    "description": "Tests Postman pour la partie Dentiste (Gestion des patients, consultations, ordonnances)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Patients",
+      "item": [
+        {
+          "name": "Créer un Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nom\": \"Dupont\",\n    \"prenom\": \"Jean\",\n    \"dateNaissance\": \"1980-05-15\",\n    \"telephone\": \"0601020304\",\n    \"email\": \"jean.dupont@email.com\",\n    \"adresse\": \"10 rue de Paris\",\n    \"sexe\": \"M\",\n    \"mutuelle\": \"Allianz\",\n    \"numeroSecu\": \"1800575000000\",\n    \"anticedentsMedicaux\": \"Diabète type 2\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/patients",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "patients"]
+            }
+          }
+        },
+        {
+          "name": "Lister tous les Patients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/patients",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "patients"]
+            }
+          }
+        },
+        {
+          "name": "Obtenir un Patient par ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/patients/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "patients", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Consultations",
+      "item": [
+        {
+          "name": "Ajouter une Consultation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motif\": \"Douleur dentaire\",\n  \"observation\": \"Carie sur la dent 46\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/consultations/patient/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "consultations", "patient", "1"]
+            }
+          }
+        },
+        {
+          "name": "Historique Consultations Patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/consultations/patient/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "consultations", "patient", "1"]
+            }
+          }
+        },
+        {
+          "name": "Ajouter une Observation à la consultation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contenu\": \"Le patient devra revenir dans 2 semaines pour vérifier le pansement.\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/consultations/1/observations",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "consultations", "1", "observations"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Ordonnances",
+      "item": [
+        {
+          "name": "Créer une Ordonnance",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"medicament\": \"Doliprane 1000mg\",\n    \"posologie\": \"1 comprimé en cas de douleur, max 3/jour\",\n    \"duree\": \"3 jours\"\n  },\n  {\n    \"medicament\": \"Amoxicilline 500mg\",\n    \"posologie\": \"1 gélule matin et soir\",\n    \"duree\": \"6 jours\"\n  }\n]"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/ordonnances/consultation/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "ordonnances", "consultation", "1"]
+            }
+          }
+        },
+        {
+          "name": "Voir Ordonnance par Consultation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/ordonnances/consultation/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "ordonnances", "consultation", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

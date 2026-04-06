@@ -1,0 +1,159 @@
+{
+	"info": {
+		"_postman_id": "c9e2b1b3-1f44-46b5-9f2d-8e41a9a8f234",
+		"name": "Patient Service - Assistante",
+		"description": "Collection pour tester les API dédiées au rôle de l'assistante dans le système de clinique dentaire.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Dossiers Patients",
+			"item": [
+				{
+					"name": "Rechercher Patient (par CIN ou Nom)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/api/assistant/patients/search?query=JB123456",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"assistant",
+								"patients",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "JB123456"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consulter Patient par ID (Dossier complet)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/api/assistant/patients/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"assistant",
+								"patients",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Observations",
+			"item": [
+				{
+					"name": "Ajouter Observation à la Consultation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"contenu\": \"Le patient se plaint d'une légère douleur post-opératoire (saignement mineur). Instruction donnée de ne pas rincer.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/assistant/consultations/1/observations",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"assistant",
+								"consultations",
+								"1",
+								"observations"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Documents",
+			"item": [
+				{
+					"name": "Lister Documents d'un Dossier",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/api/assistant/dossiers/1/documents",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"assistant",
+								"dossiers",
+								"1",
+								"documents"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Télécharger/Voir Document (ID)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/api/assistant/documents/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"assistant",
+								"documents",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
