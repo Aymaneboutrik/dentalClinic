@@ -68,7 +68,7 @@ function SidebarItem({
   };
 
   const handleClick = () => {
-    if (childs) {
+    if (childs && childs.length > 0) {
       setShowChilds((prev) => !prev);
     } else {
       navigate(route);

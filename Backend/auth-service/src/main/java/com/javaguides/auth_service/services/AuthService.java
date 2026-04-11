@@ -56,15 +56,6 @@ public class AuthService {
 
         // 3. Vérifier si le mot de passe correspond au mot de passe haché en base
         if (!passwordEncoder.matches(request.getPassword(), user.getMotDePasse())) {
-            // Check if there is a recently approved password request that hasn't been notified yet
-            java.util.List<PasswordRequest> approvedRequests = passwordRequestRepository
-                    .findByUtilisateurAndStatusAndNotified(user, PasswordRequest.RequestStatus.APPROVED, false);
-
-            if (!approvedRequests.isEmpty()) {
-                throw new RuntimeException("Votre demande de changement de mot de passe a été approuvée ! " +
-                        "Merci d'utiliser votre nouveau mot de passe dès maintenant.");
-            }
-
             user.setTentativesConnexion(user.getTentativesConnexion() + 1);
             if (user.getTentativesConnexion() >= 5) {
                 user.setDateVerrouillage(LocalDateTime.now());
@@ -86,30 +77,44 @@ public class AuthService {
             throw new RuntimeException("Compte désactivé par l'administrateur");
         }
 
-        // 4. Vérifier s'il y a des changements de mot de passe acceptés ou refusés par le dentiste
+        // 4. Vérifier s'il y a des demandes de réinitialisation acceptées ou refusées par le dentiste
         String notification = null;
-        
-        // Vérifier les demandes APPROUVÉES
+        boolean passwordResetApproved = false;
+
+        // Vérifier les demandes APPROUVÉES (non encore notifiées)
         java.util.List<PasswordRequest> approvedRequests = passwordRequestRepository
                 .findByUtilisateurAndStatusAndNotified(user, PasswordRequest.RequestStatus.APPROVED, false);
 
         if (!approvedRequests.isEmpty()) {
-            notification = "Votre demande de changement de mot de passe a été approuvée.";
-            for (PasswordRequest pr : approvedRequests) {
-                pr.setNotified(true);
-                passwordRequestRepository.save(pr);
+            // Vérifier si c'est une demande de type RESET
+            boolean hasReset = approvedRequests.stream()
+                    .anyMatch(r -> r.getType() == PasswordRequest.RequestType.RESET);
+            if (hasReset) {
+                notification = "Votre demande de réinitialisation de mot de passe a été approuvée. Vous pouvez maintenant définir un nouveau mot de passe depuis votre profil.";
+                passwordResetApproved = true;
+            } else {
+                notification = "Votre demande de changement de mot de passe a été approuvée.";
+                // Pour un changement simple (pas reset), on peut le marquer comme notifié ici
+                // car il n'y a pas d'action bloquante attendue.
+                for (PasswordRequest pr : approvedRequests) {
+                    pr.setNotified(true);
+                    passwordRequestRepository.save(pr);
+                }
             }
         } else {
-            // Sinon, vérifier les demandes REJETÉES ("l'inverse aussi")
+            // Sinon, vérifier les demandes REJECTÉES
             java.util.List<PasswordRequest> rejectedRequests = passwordRequestRepository
                     .findByUtilisateurAndStatusAndNotified(user, PasswordRequest.RequestStatus.REJECTED, false);
 
             if (!rejectedRequests.isEmpty()) {
-                notification = "Votre demande de changement de mot de passe a été rejetée par le dentiste.";
-                for (PasswordRequest pr : rejectedRequests) {
-                    pr.setNotified(true);
-                    passwordRequestRepository.save(pr);
+                boolean hasReset = rejectedRequests.stream()
+                        .anyMatch(r -> r.getType() == PasswordRequest.RequestType.RESET);
+                if (hasReset) {
+                    notification = "Votre demande de réinitialisation de mot de passe a été refusée par le dentiste.";
+                } else {
+                    notification = "Votre demande de changement de mot de passe a été refusée par le dentiste.";
                 }
+                // Supprimé: pr.setNotified(true) ici pour laisser le message persister jusqu'à action manuelle
             }
         }
 
@@ -123,9 +128,11 @@ public class AuthService {
         response.put("role", role); // Rôle (Dentiste, etc.)
         response.put("nom", user.getNom());
         response.put("prenom", user.getPrenom());
+        response.put("email", user.getEmail()); // Add the user's email as well
         if (notification != null) {
             response.put("notification", notification);
         }
+        response.put("passwordResetApproved", passwordResetApproved);
         return response; // Retourner les infos au contrôleur
     }
 
@@ -168,74 +175,125 @@ public class AuthService {
         return utilisateurRepository.save(newUser);
     }
 
-    public void changePassword(Integer userId, String oldPassword, String newPassword) { // Fonction pour changer de mot
-                                                                                         // de passe
+    public void changePassword(Integer userId, String oldPassword, String newPassword) {
         // 1. Trouver l'utilisateur dans la base
         Utilisateur user = utilisateurRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
         // 2. Vérifier si l'ancien mot de passe saisi est correct
         if (!passwordEncoder.matches(oldPassword, user.getMotDePasse())) {
-            // Check if there is a recently approved password request that hasn't been notified yet
-            java.util.List<PasswordRequest> approvedRequests = passwordRequestRepository
-                    .findByUtilisateurAndStatusAndNotified(user, PasswordRequest.RequestStatus.APPROVED, false);
-
-            if (!approvedRequests.isEmpty()) {
-                throw new RuntimeException("Votre demande de changement de mot de passe a été approuvée ! " +
-                        "Merci d'utiliser votre nouveau mot de passe dès maintenant.");
-            }
             throw new RuntimeException("Ancien mot de passe incorrect");
         }
 
-        String hashed = passwordEncoder.encode(newPassword); // Hacher le nouveau mot de passe
+        String hashed = passwordEncoder.encode(newPassword);
 
-        // 3. Logique spécifique au projet (PFA) :
+        // 3. Le dentiste change directement ; les autres passent par une demande
         if (Hibernate.getClass(user).equals(Dentiste.class)) {
-            // Si c'est le Dentiste, il peut changer son mot de passe immédiatement
             user.setMotDePasse(hashed);
             utilisateurRepository.save(user);
         } else {
-            // Si c'est une assistante ou secrétaire, on crée une DEMANDE (PasswordRequest)
             PasswordRequest request = new PasswordRequest();
-            request.setUtilisateur(user); // Qui demande ?
-            request.setHashedPassword(hashed); // Quel sera le nouveau mot de passe ?
-            request.setType(PasswordRequest.RequestType.CHANGE); // C'est un changement simple
-            request.setStatus(PasswordRequest.RequestStatus.PENDING); // Statut "En attente" du dentiste
-            passwordRequestRepository.save(request); // Enregistrement de la demande
-
-            // On informe l'utilisateur que ce n'est pas immédiat
+            request.setUtilisateur(user);
+            request.setHashedPassword(hashed);
+            request.setType(PasswordRequest.RequestType.CHANGE);
+            request.setStatus(PasswordRequest.RequestStatus.PENDING);
+            passwordRequestRepository.save(request);
             throw new RuntimeException(
                     "Votre demande de changement de mot de passe a été envoyée. Veuillez attendre la validation par le Dentiste.");
         }
     }
 
+    /**
+     * Crée une demande de réinitialisation de mot de passe (type RESET) sans fournir de nouveau mot de passe.
+     * Le dentiste doit approuver avant que la secrétaire/assistante puisse changer son mot de passe.
+     */
     @org.springframework.transaction.annotation.Transactional
-    public void requestPasswordReset(String email) {
+    public void requestPasswordResetForUser(Integer userId) {
+        Utilisateur user = utilisateurRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // Vérifie qu'il n'y a pas déjà une demande PENDING pour cet utilisateur
+        java.util.List<PasswordRequest> pending = passwordRequestRepository
+                .findByUtilisateurAndStatus(user, PasswordRequest.RequestStatus.PENDING);
+        
+        // Si une demande existe déjà, on ne fait rien (ou on pourrait lever une erreur)
+        if (pending.isEmpty()) {
+            PasswordRequest request = new PasswordRequest();
+            request.setUtilisateur(user);
+            request.setHashedPassword(null); // Pas de nouveau MDP à ce stade
+            request.setType(PasswordRequest.RequestType.RESET);
+            request.setStatus(PasswordRequest.RequestStatus.PENDING);
+            passwordRequestRepository.save(request);
+        }
+    }
+
+    /**
+     * Permet à une secrétaire/assistante de définir un nouveau mot de passe après que le dentiste
+     * ait approuvé sa demande de réinitialisation. Aucune validation dentiste supplémentaire requise.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void changePasswordAfterApproval(Integer userId, String oldPassword, String newPassword) {
+        Utilisateur user = utilisateurRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        // Si l'ancien mot de passe est fourni, on le vérifie (sécurité supplémentaire)
+        if (oldPassword != null && !oldPassword.isEmpty()) {
+            if (!passwordEncoder.matches(oldPassword, user.getMotDePasse())) {
+                throw new RuntimeException("L'ancien mot de passe est incorrect.");
+            }
+        }
+
+        // Chercher une demande RESET approuvée pour cet utilisateur
+        java.util.List<PasswordRequest> approved = passwordRequestRepository
+                .findByUtilisateurAndStatusAndType(user, PasswordRequest.RequestStatus.APPROVED, PasswordRequest.RequestType.RESET);
+
+        if (approved.isEmpty()) {
+            throw new RuntimeException("Aucune demande de réinitialisation approuvée trouvée pour cet utilisateur.");
+        }
+
+        // Changer le mot de passe directement
+        user.setMotDePasse(passwordEncoder.encode(newPassword));
+        utilisateurRepository.save(user);
+
+        // Marquer toutes les demandes approuvées comme notifiées
+        for (PasswordRequest pr : approved) {
+            pr.setNotified(true);
+            passwordRequestRepository.save(pr);
+        }
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void markNotificationsAsSeen(Integer userId) {
+        Utilisateur user = utilisateurRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        java.util.List<PasswordRequest> pending = passwordRequestRepository.findByUtilisateurAndNotified(user, false);
+        for (PasswordRequest pr : pending) {
+            pr.setNotified(true);
+            passwordRequestRepository.save(pr);
+        }
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public String requestPasswordReset(String email) {
         Utilisateur user = utilisateurRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec cet email"));
 
-        // Add check to ensure only the Dentist can reset their password
-        if (!Hibernate.getClass(user).equals(Dentiste.class)) {
-            throw new RuntimeException(
-                    "Seul le Dentiste peut réinitialiser son mot de passe par e-mail. Veuillez contacter le Dentiste pour créer un nouveau compte.");
+        if (Hibernate.getClass(user).equals(Dentiste.class)) {
+            // Nettoyer les anciens jetons de cet utilisateur s'il y en a
+            passwordResetTokenRepository.deleteByUtilisateur(user);
+            passwordResetTokenRepository.flush(); // Force la suppression immédiate
+
+            // Générer un nouveau jeton aléatoire
+            // Un Dentiste peut réinitialiser son mot de passe par e-mail
+            String token = java.util.UUID.randomUUID().toString();
+            createPasswordResetTokenForUser(user, token);
+            emailService.sendPasswordResetEmail(user.getEmail(), token);
+            return "DENTIST_EMAIL_SENT";
+        } else {
+            // On retourne un code spécifique pour que le contrôleur affiche le bon message
+            return "NON_DENTIST";
         }
-
-        // Nettoyer les anciens jetons de cet utilisateur s'il y en a
-        passwordResetTokenRepository.deleteByUtilisateur(user);
-        passwordResetTokenRepository.flush(); // Force la suppression immédiate pour éviter le conflit de clé
-
-        // Générer un nouveau jeton aléatoire
-        String token = java.util.UUID.randomUUID().toString();
-
-        // Créer l'entité Jeton (valide 15 minutes)
-        PasswordResetToken resetToken = new PasswordResetToken(
-                token,
-                user,
-                LocalDateTime.now().plusMinutes(15));
-        passwordResetTokenRepository.save(resetToken);
-
-        // Envoyer l'e-mail avec le lien
-        emailService.sendPasswordResetEmail(user.getEmail(), token);
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -269,9 +327,15 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Requête non trouvée"));
 
         request.setStatus(PasswordRequest.RequestStatus.APPROVED);
-        Utilisateur user = request.getUtilisateur();
-        user.setMotDePasse(request.getHashedPassword());
-        utilisateurRepository.save(user);
+
+        // Pour les demandes CHANGE (avec hashedPassword), appliquer immédiatement
+        // Pour les demandes RESET, ne pas changer le mot de passe — la secrétaire le fera elle-même
+        if (request.getType() == PasswordRequest.RequestType.CHANGE && request.getHashedPassword() != null) {
+            Utilisateur user = request.getUtilisateur();
+            user.setMotDePasse(request.getHashedPassword());
+            utilisateurRepository.save(user);
+        }
+
         passwordRequestRepository.save(request);
     }
 
@@ -335,5 +399,33 @@ public class AuthService {
                         .setParameter("role", newRole).setParameter("id", userId).executeUpdate();
             }
         }
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void resetPasswordDirectly(Integer userId, String newPassword) {
+        Utilisateur user = utilisateurRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        
+        // Seules les secrétaires et assistantes peuvent être réinitialisées directement par le dentiste
+        if (Hibernate.getClass(user).equals(Dentiste.class)) {
+            throw new RuntimeException("Le mot de passe du Dentiste ne peut pas être réinitialisé directement. Utilisez la récupération par email.");
+        }
+
+        user.setMotDePasse(passwordEncoder.encode(newPassword));
+        utilisateurRepository.save(user);
+
+        // On nettoie aussi toutes les demandes de mot de passe en cours pour cet utilisateur
+        java.util.List<PasswordRequest> pending = passwordRequestRepository.findByUtilisateurAndStatus(user, PasswordRequest.RequestStatus.PENDING);
+        for (PasswordRequest pr : pending) {
+            pr.setStatus(PasswordRequest.RequestStatus.APPROVED);
+            pr.setNotified(true);
+            passwordRequestRepository.save(pr);
+        }
+    }
+
+    private void createPasswordResetTokenForUser(Utilisateur user, String token) {
+        LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(15);
+        PasswordResetToken myToken = new PasswordResetToken(token, user, expiryDate);
+        passwordResetTokenRepository.save(myToken);
     }
 }

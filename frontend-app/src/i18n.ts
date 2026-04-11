@@ -8,10 +8,14 @@ const resources = {
   en: {
     translation: en,
   },
+  fr: {
+    translation: en, // Fallback to English for French browsers for now
+  },
   mm: {
     translation: mm,
   },
 };
+
 
 i18n.use(initReactI18next).init({
   resources,

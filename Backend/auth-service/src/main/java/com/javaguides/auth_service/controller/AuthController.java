@@ -30,9 +30,15 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
-        authService.requestPasswordReset(request.get("email"));
-        return ResponseEntity.ok(Map.of("message",
-                "Si cet e-mail existe, un lien de réinitialisation vous a été envoyé. Vérifiez votre boîte de réception."));
+        String result = authService.requestPasswordReset(request.get("email"));
+        
+        if ("DENTIST_EMAIL_SENT".equals(result)) {
+            return ResponseEntity.ok(Map.of("message",
+                "Un lien de réinitialisation vous a été envoyé par e-mail. Veuillez vérifier votre boîte de réception."));
+        } else {
+            return ResponseEntity.ok(Map.of("message",
+                "Cette fonctionnalité est réservée au Dentiste. Veuillez le contacter en personne pour réinitialiser votre accès."));
+        }
     }
 
     @PostMapping("/reset-password")

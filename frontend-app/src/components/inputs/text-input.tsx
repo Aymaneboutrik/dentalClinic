@@ -1,3 +1,4 @@
+import React from "react";
 import {
   FormControl,
   FormDescription,
@@ -9,13 +10,16 @@ import {
 import { Input } from "@components/ui/input";
 
 interface Props {
-  label?: string;
+  label?: React.ReactNode;
   placeholder?: string;
   description?: string;
   withAsterisk?: boolean;
   name: string;
   form?: any;
+  className?: string;
+  autoComplete?: string;
 }
+
 
 function TextInput({
   label,
@@ -24,7 +28,10 @@ function TextInput({
   withAsterisk = false,
   name,
   form,
+  className,
+  autoComplete,
 }: Props) {
+
   return (
     <FormField
       control={form.control}
@@ -38,8 +45,14 @@ function TextInput({
             </FormLabel>
           )}
           <FormControl>
-            <Input placeholder={placeholder} {...field} />
+            <Input 
+              placeholder={placeholder} 
+              className={className} 
+              autoComplete={autoComplete}
+              {...field} 
+            />
           </FormControl>
+
 
           {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />

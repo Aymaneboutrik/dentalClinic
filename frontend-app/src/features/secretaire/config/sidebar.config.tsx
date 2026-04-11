@@ -1,8 +1,7 @@
 import {
   LayoutDashboard,
   CalendarDays,
-  UserRound,
-  FileText,
+  Users,
 } from "lucide-react";
 
 export const secretaireSidebarConfig = [
@@ -21,13 +20,7 @@ export const secretaireSidebarConfig = [
   {
     name: "Patients",
     route: "/secretaire/patients",
-    icon: <UserRound size={18} />,
-    childs: [],
-  },
-  {
-    name: "Dossiers",
-    route: "/secretaire/files",
-    icon: <FileText size={18} />,
+    icon: <Users size={18} />,
     childs: [],
   },
 ];

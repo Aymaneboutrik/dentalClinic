@@ -1,8 +1,7 @@
 import {
   LayoutDashboard,
-  FileText,
-  UserRound,
-  ClipboardList,
+  CalendarDays,
+  Users,
 } from "lucide-react";
 
 export const assistantSidebarConfig = [
@@ -13,22 +12,15 @@ export const assistantSidebarConfig = [
     childs: [],
   },
   {
-    name: "Dossiers",
-    route: "/assistant/files",
-    icon: <FileText size={18} />,
+    name: "Rendez-vous",
+    route: "/assistant/appointments",
+    icon: <CalendarDays size={18} />,
     childs: [],
   },
   {
     name: "Patients",
     route: "/assistant/patients",
-    icon: <UserRound size={18} />,
+    icon: <Users size={18} />,
     childs: [],
   },
-  {
-    name: "Tâches",
-    route: "/assistant/tasks",
-    icon: <ClipboardList size={18} />,
-    childs: [],
-  },
- 
 ];

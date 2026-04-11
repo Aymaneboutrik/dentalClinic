@@ -23,7 +23,8 @@ function SidebarHeader() {
 
       {!sidebarCollapsed && (
         <div className="h-[30px] flex-1 overflow-hidden">
-          <Text size="lg">Starter Template</Text>
+          <Text size="lg">Dental Clinic</Text>
+
         </div>
       )}
     </div>

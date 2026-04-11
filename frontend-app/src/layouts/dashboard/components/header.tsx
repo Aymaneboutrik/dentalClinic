@@ -24,14 +24,17 @@ import SearchInput from "@components/inputs/search-input";
 import Logo from "@components/commons/logo";
 import { useModal } from "@saimin/react-modal-manager";
 import LogoutConfirmation from "@components/modals/logout-confirmation";
+import ProfileModal from "@components/modals/profile-modal";
 import { useState } from "react";
 import useAuthOperations from "@hooks/use-auth-operations";
+import useAuthStore from "@stores/auth-store";
 
 export function Header() {
   const { sidebarCollapsed } = useUserPreference();
   const { setTheme, theme } = useTheme();
   const { open } = useModal();
   const { logout } = useAuthOperations();
+  const { user } = useAuthStore();
 
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -45,6 +48,17 @@ export function Header() {
       animationType: "zoom",
     });
   };
+
+  const handleOpenProfile = () => {
+    open("profile-modal", {
+      content: <ProfileModal />,
+      animationType: "zoom",
+    });
+  };
+
+  const initials = user 
+    ? (user.email ? user.email.charAt(0) : "U").toUpperCase() 
+    : "S";
 
   const handleToggleTheme = () => {
     if (theme === "dark") {
@@ -72,8 +86,10 @@ export function Header() {
 
         <SheetContent side="left" className="sm:max-w-xs">
           <VisuallyHidden>
-            <SheetTitle>Starter Template</SheetTitle>
-            <SheetDescription>Starter Template</SheetDescription>
+            <SheetTitle>Dental Clinic</SheetTitle>
+
+            <SheetDescription>Dental Clinic</SheetDescription>
+
           </VisuallyHidden>
           <Logo />
           <nav className="flex flex-col gap-1 mt-4">
@@ -116,15 +132,17 @@ export function Header() {
             <Button
               variant="outline"
               size="icon"
-              className="overflow-hidden rounded-full"
+              className="overflow-hidden rounded-full font-bold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
             >
-              <div>S</div>
+              <div>{initials}</div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={handleOpenProfile} className="cursor-pointer">
+              Profile
+            </DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleOpenModal}>
+            <DropdownMenuItem onClick={handleOpenModal} className="cursor-pointer text-red-500 focus:text-red-600 focus:bg-red-50">
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

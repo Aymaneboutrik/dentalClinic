@@ -19,4 +19,18 @@ public interface PasswordRequestRepository extends JpaRepository<PasswordRequest
     // Fonction plus complexe : Trouve les demandes pour un utilisateur précis, avec
     // un statut précis,
     // et vérifie si l'utilisateur a déjà été notifié du résultat.
+
+    List<PasswordRequest> findByUtilisateurAndStatus(
+            com.javaguides.auth_service.models.Utilisateur utilisateur, PasswordRequest.RequestStatus status);
+    // Trouve les demandes d'un utilisateur avec un statut donné (sans filtre sur notified).
+
+    List<PasswordRequest> findByUtilisateurAndStatusAndType(
+            com.javaguides.auth_service.models.Utilisateur utilisateur,
+            PasswordRequest.RequestStatus status,
+            PasswordRequest.RequestType type);
+    // Trouve les demandes d'un utilisateur selon le statut ET le type (CHANGE ou RESET).
+
+    List<PasswordRequest> findByUtilisateurAndNotified(
+            com.javaguides.auth_service.models.Utilisateur utilisateur, 
+            Boolean notified);
 }
