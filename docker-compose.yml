@@ -79,6 +79,7 @@ services:
     networks:
       - dental-network
 
+
   pgadmin:
     image: dpage/pgadmin4:8.14
     container_name: pgadmin
