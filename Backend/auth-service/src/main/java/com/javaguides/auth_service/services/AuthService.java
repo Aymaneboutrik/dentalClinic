@@ -54,17 +54,33 @@ public class AuthService {
             }
         }
 
-        // 3. Vérifier si le mot de passe correspond au mot de passe haché en base
-        if (!passwordEncoder.matches(request.getPassword(), user.getMotDePasse())) {
-            user.setTentativesConnexion(user.getTentativesConnexion() + 1);
-            if (user.getTentativesConnexion() >= 5) {
-                user.setDateVerrouillage(LocalDateTime.now());
-                utilisateurRepository.save(user);
-                throw new RuntimeException("Compte verrouillé après 5 tentatives infructueuses.");
-            }
-            utilisateurRepository.save(user);
-            throw new RuntimeException("Mot de passe incorrect");
-        }
+        String storedPassword = user.getMotDePasse();
+
+// Vérifier si le mot de passe en base est valide
+if (storedPassword == null || storedPassword.isBlank()) {
+    throw new RuntimeException("Mot de passe utilisateur invalide en base.");
+}
+
+boolean passwordMatches;
+try {
+    passwordMatches = passwordEncoder.matches(request.getPassword(), storedPassword);
+} catch (Exception ex) {
+    throw new RuntimeException("Le mot de passe stocké n'est pas dans un format valide.");
+}
+
+if (!passwordMatches) {
+    Integer tentatives = user.getTentativesConnexion() == null ? 0 : user.getTentativesConnexion();
+    user.setTentativesConnexion(tentatives + 1);
+
+    if (user.getTentativesConnexion() >= 5) {
+        user.setDateVerrouillage(LocalDateTime.now());
+        utilisateurRepository.save(user);
+        throw new RuntimeException("Compte verrouillé après 5 tentatives infructueuses.");
+    }
+
+    utilisateurRepository.save(user);
+    throw new RuntimeException("Mot de passe incorrect");
+}
 
         // 4. Réinitialiser les tentatives si réussite
         user.setTentativesConnexion(0);

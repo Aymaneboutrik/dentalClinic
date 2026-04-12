@@ -68,18 +68,14 @@ function SidebarItem({
     return false;
   };
 
-  const handleClick = () => {
-<<<<<<< HEAD
-    if (childs && childs.length > 0) {
-=======
-    if (hasChildren) {
->>>>>>> Consommation-API--Personnel-Service
-      setShowChilds((prev) => !prev);
-    } else {
-      navigate(route);
-      if (closeSheet) closeSheet((prev) => !prev);
-    }
-  };
+ const handleClick = () => {
+  if (hasChildren) {
+    setShowChilds((prev) => !prev);
+  } else {
+    navigate(route);
+    if (closeSheet) closeSheet((prev) => !prev);
+  }
+};
 
   /** ======= Collapsed Sidebar ======= */
   if (sidebarCollapsed && collapsible) {

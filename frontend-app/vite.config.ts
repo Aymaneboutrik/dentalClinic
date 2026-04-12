@@ -18,7 +18,6 @@ export default defineConfig({
       "@apis": path.resolve(__dirname, "./src/apis"),
     },
   },
-
   server: {
     host: true,
     watch: {
@@ -27,7 +26,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://nginx",
+        target: "http://localhost",
         changeOrigin: true,
         secure: false,
       },

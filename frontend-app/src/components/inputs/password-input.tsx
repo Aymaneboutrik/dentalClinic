@@ -67,12 +67,12 @@ function PasswordInput({
             <div className="relative flex items-center justify-between">
               <div
                 onClick={togglePasswordVisibility}
-                className="cursor-pointer flex items-center justify-center h-full px-4 border-l absolute right-0 z-10"
+                className="absolute right-0 z-10 flex items-center justify-center h-full px-4 border-l cursor-pointer"
               >
                 {!visiblePassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="w-4 h-4 text-muted-foreground" />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Eye className="w-4 h-4 text-muted-foreground" />
                 )}
               </div>
               <Input
@@ -80,17 +80,17 @@ function PasswordInput({
                 id={stableId}
                 type={isReadOnly ? "text" : (visiblePassword ? "text" : "password")}
                 placeholder={placeholder}
-                className={className}
-                autoComplete="one-time-code"
+                  className={className}
+                autoComplete={autoComplete}
                 readOnly={isReadOnly}
-                onFocus={(e) => {
-                  setIsReadOnly(false);
-                  field.onFocus();
+                
+                onFocus={() => {
+                    setIsReadOnly(false);
                 }}
-                onBlur={(e) => {
-                  setIsReadOnly(true);
-                  field.onBlur();
-                }}
+              onBlur={() => {
+                setIsReadOnly(true);
+                field.onBlur();
+              }}
               />
 
             </div>
