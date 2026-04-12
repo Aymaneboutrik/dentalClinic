@@ -43,11 +43,12 @@ function SidebarItem({
   const { t } = useTranslation();
 
   const [showChilds, setShowChilds] = useState<boolean>(false);
+  const hasChildren = (childs?.length ?? 0) > 0;
 
   const getChildRoutes = (): string[] => {
-    if (childs) {
-      return childs.map((c) => c.route);
-    }
+    if (hasChildren) {
+  return childs!.map((c) => c.route);
+}
 
     return [];
   };
@@ -58,7 +59,7 @@ function SidebarItem({
   };
 
   const hasActiveChild = (): boolean => {
-    if (childs) {
+    if (hasChildren) {
       const childRoutes = getChildRoutes();
 
       return childRoutes.includes(location.pathname.split("/").pop() as string);
@@ -68,7 +69,7 @@ function SidebarItem({
   };
 
   const handleClick = () => {
-    if (childs) {
+    if (hasChildren) {
       setShowChilds((prev) => !prev);
     } else {
       navigate(route);
@@ -81,7 +82,7 @@ function SidebarItem({
     return (
       <>
         {/* ======= Collapsed item with child items ======= */}
-        {childs ? (
+        {hasChildren ? (
           <Popover>
             <PopoverTrigger>
               <Tooltip>
@@ -102,7 +103,7 @@ function SidebarItem({
             </PopoverTrigger>
             <PopoverContent side="right">
               <div>
-                {childs.map((c) => (
+                {hasChildren && childs!.map((c) => (
                   <ChildItem
                     key={c.route}
                     icon={c.icon}
@@ -123,7 +124,7 @@ function SidebarItem({
               <div
                 onClick={handleClick}
                 className={clsx(
-                  "cursor-pointer my-1 ml-[5px] flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-primary md:h-8 md:w-8",
+                  "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
                   isActiveModule() || hasActiveChild()
                     ? "text-primary"
                     : "text-muted-foreground"
@@ -146,7 +147,7 @@ function SidebarItem({
       <div
         onClick={handleClick}
         className={clsx(
-          "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground",
+          "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
           (isActiveModule() || hasActiveChild()) &&
             "bg-primary text-primary-foreground",
           !(isActiveModule() || hasActiveChild()) && "hover:bg-primary/10"
@@ -159,7 +160,7 @@ function SidebarItem({
           </div>
         </div>
 
-        {childs && (
+        {hasChildren && (
           <ChevronDown
             className={clsx(
               "h-[15px] w-[15px] transition-all duration-500",
@@ -176,7 +177,8 @@ function SidebarItem({
           showChilds ? "max-h-[100vh]" : "max-h-0"
         )}
       >
-        {childs?.map((c) => (
+        {hasChildren &&
+          childs!.map((c) => (
           <ChildItem
             key={c.route}
             icon={c.icon}
@@ -207,9 +209,9 @@ function ChildItem({
 
   return (
     <div
-      onClick={handleClick}
+    onClick={handleClick}
       className={clsx(
-        "flex align-middle gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground",
+            "flex align-middle gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
         isMatched && "text-primary",
         !isMatched && "hover:text-primary",
         !collapsed && "pl-6"

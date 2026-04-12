@@ -1,7 +1,8 @@
 import {
   LayoutDashboard,
-  FileText,
+  CalendarDays,
   UserRound,
+  FileText,
   ClipboardList,
 } from "lucide-react";
 
@@ -13,9 +14,9 @@ export const assistantSidebarConfig = [
     childs: [],
   },
   {
-    name: "Dossiers",
-    route: "/assistant/files",
-    icon: <FileText size={18} />,
+    name: "Rendez-vous",
+    route: "/assistant/appointments",
+    icon: <CalendarDays size={18} />,
     childs: [],
   },
   {
@@ -25,10 +26,27 @@ export const assistantSidebarConfig = [
     childs: [],
   },
   {
-    name: "Tâches",
-    route: "/assistant/tasks",
+    name: "Dossiers",
+    route: "/assistant/files",
+    icon: <FileText size={18} />,
+    childs: [],
+  },
+  {
+    name: "Planning",
+    route: "/assistant/planning",
+    icon: <CalendarDays size={18} />,
+    childs: [],
+  },
+  {
+    name: "Demandes d’absence",
+    route: "/assistant/demandes-absence",
     icon: <ClipboardList size={18} />,
     childs: [],
   },
- 
+  {
+    name: "Absences",
+    route: "/assistant/absences",
+    icon: <FileText size={18} />,
+    childs: [],
+  },
 ];

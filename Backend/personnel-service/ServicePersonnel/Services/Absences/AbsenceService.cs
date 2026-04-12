@@ -31,7 +31,7 @@ namespace Service_Personnel.Services.Absences
             var dateFin = DateTime.SpecifyKind(dto.DateFin, DateTimeKind.Utc);
 
             // 3 — Vérification métier
-            if (dateDebut >= dateFin)
+            if (dateDebut > dateFin)
                 throw new ApiException("La date de début doit être inférieure à la date de fin", 400, "INVALID_DATE_RANGE");
 
             // 4 — Création de l'absence
@@ -130,5 +130,5 @@ namespace Service_Personnel.Services.Absences
                 Message = "Absence supprimée avec succès"
             };
         }
-    }
+}
 }

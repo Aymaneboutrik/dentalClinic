@@ -67,3 +67,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Empêcher l'effet de sélection / curseur texte sur les éléments interactifs */
+button,
+a,
+[role="button"],
+.clickable {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  outline: none;
+}
+
+/* Masquer le caret global hors champs d'écriture */
+body {
+  caret-color: transparent;
+}
+
+/* Garder le comportement normal dans les vrais champs */
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  caret-color: auto;
+}

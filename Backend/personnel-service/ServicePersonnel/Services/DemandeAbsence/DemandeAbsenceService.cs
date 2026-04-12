@@ -127,80 +127,80 @@ namespace Service_Personnel.Services.DemandeAbsence
 
 
         public async Task<object> AccepterAsync(int demandeId, int traiteParId, CancellationToken ct = default)
-        {
+{
+    var traiteur = await _employeeRepo.GetByIdWithRoleAsync(traiteParId, ct);
 
-            var traiteur = await _employeeRepo.GetByIdWithRoleAsync(traiteParId, ct);
+    if (traiteur == null)
+        throw new ApiException("Employé introuvable", 404, "EMPLOYEE_NOT_FOUND");
 
-            if (traiteur == null)
-                throw new ApiException("Employé introuvable", 404, "EMPLOYEE_NOT_FOUND");
+    if (
+        traiteur.Role == null ||
+        !string.Equals(traiteur.Role.NomRole?.Trim(), "Docteur", StringComparison.OrdinalIgnoreCase)
+    )
+        throw new ApiException("Seul le docteur peut traiter une demande", 403, "DOCTOR_ROLE_REQUIRED");
 
-            if (traiteur.Role == null || traiteur.Role.NomRole != "Docteur")
-                throw new ApiException("Seul le docteur peut traiter une demande", 403, "DOCTOR_ROLE_REQUIRED");
-            // 1 — récupérer la demande
-            var demande = await _demandeRepo.GetByIdAsync(demandeId, ct);
-            if (demande == null)
-                throw new ApiException("Demande introuvable", 404, "DEMANDE_NOT_FOUND");
+    var demande = await _demandeRepo.GetByIdAsync(demandeId, ct);
+    if (demande == null)
+        throw new ApiException("Demande introuvable", 404, "DEMANDE_NOT_FOUND");
 
-            // 2 — vérifier statut
-            if (demande.Statut != "EN_ATTENTE")
-                throw new ApiException("Demande déjà traitée", 400, "DEMANDE_ALREADY_PROCESSED");
+    if (demande.Statut != "EN_ATTENTE")
+        throw new ApiException("Demande déjà traitée", 400, "DEMANDE_ALREADY_PROCESSED");
 
-            // 3 — mettre à jour la demande
-            demande.Statut = "ACCEPTEE";
-            demande.DateTraitement = DateTime.UtcNow;
-            demande.TraiteParId = traiteParId;
+    demande.Statut = "ACCEPTEE";
+    demande.DateTraitement = DateTime.UtcNow;
+    demande.TraiteParId = traiteParId;
 
-            // 4 — créer absence
-            var absence = new Absence
-            {
-                DateDebut = DateTime.SpecifyKind(demande.DateDebut, DateTimeKind.Utc),
-                DateFin = DateTime.SpecifyKind(demande.DateFin, DateTimeKind.Utc),
-                TypeAbsence = demande.TypeDemande,
-                DateValidation = DateTime.UtcNow,
-                DemandeId = demande.IdDemande,
-                EmployeId = demande.EmployeId
-            };
+    var absence = new Absence
+    {
+        DateDebut = DateTime.SpecifyKind(demande.DateDebut, DateTimeKind.Utc),
+        DateFin = DateTime.SpecifyKind(demande.DateFin, DateTimeKind.Utc),
+        TypeAbsence = demande.TypeDemande,
+        DateValidation = DateTime.UtcNow,
+        DemandeId = demande.IdDemande,
+        EmployeId = demande.EmployeId
+    };
 
-            await _absenceRepo.AddAsync(absence, ct);
-            await _demandeRepo.SaveChangesAsync(ct);
+    await _absenceRepo.AddAsync(absence, ct);
+    await _demandeRepo.SaveChangesAsync(ct);
 
-            return new
-            {
-                Message = "Demande acceptée et absence créée"
-            };
-        }
+    return new
+    {
+        Message = "Demande acceptée et absence créée"
+    };
+}
 
-      
+public async Task<object> RefuserAsync(int demandeId, int traiteParId, CancellationToken ct = default)
+{
+    var traiteur = await _employeeRepo.GetByIdWithRoleAsync(traiteParId, ct);
 
-        public async Task<object> RefuserAsync(int demandeId, int traiteParId, CancellationToken ct = default)
-        {
-            var traiteur = await _employeeRepo.GetByIdWithRoleAsync(traiteParId, ct);
+    if (traiteur == null)
+        throw new ApiException("Employé introuvable", 404, "EMPLOYEE_NOT_FOUND");
 
-            if (traiteur == null)
-                throw new ApiException("Employé introuvable", 404, "EMPLOYEE_NOT_FOUND");
+    if (
+        traiteur.Role == null ||
+        !string.Equals(traiteur.Role.NomRole?.Trim(), "Docteur", StringComparison.OrdinalIgnoreCase)
+    )
+        throw new ApiException("Seul le docteur peut traiter une demande", 403, "DOCTOR_ROLE_REQUIRED");
 
-            if (traiteur.Role == null || traiteur.Role.NomRole != "Docteur")
-                throw new ApiException("Seul le docteur peut traiter une demande", 403, "DOCTOR_ROLE_REQUIRED");
-            var demande = await _demandeRepo.GetByIdAsync(demandeId, ct);
+    var demande = await _demandeRepo.GetByIdAsync(demandeId, ct);
 
-            if (demande == null)
-                throw new ApiException("Demande introuvable", 404, "DEMANDE_NOT_FOUND");
+    if (demande == null)
+        throw new ApiException("Demande introuvable", 404, "DEMANDE_NOT_FOUND");
 
-            if (demande.Statut != "EN_ATTENTE")
-                throw new ApiException("Demande déjà traitée", 400, "DEMANDE_ALREADY_PROCESSED");
+    if (demande.Statut != "EN_ATTENTE")
+        throw new ApiException("Demande déjà traitée", 400, "DEMANDE_ALREADY_PROCESSED");
 
-            demande.Statut = "REFUSEE";
-            demande.DateTraitement = DateTime.UtcNow;
-            demande.TraiteParId = traiteParId;
+    demande.Statut = "REFUSEE";
+    demande.DateTraitement = DateTime.UtcNow;
+    demande.TraiteParId = traiteParId;
 
-            await _demandeRepo.SaveChangesAsync(ct);
+    await _demandeRepo.SaveChangesAsync(ct);
 
-            return new
-            {
-                Message = "Demande refusée"
-            };
-        }
-    }
-    }
+    return new
+    {
+        Message = "Demande refusée"
+    };
+}
+    }}
 
     

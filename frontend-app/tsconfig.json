@@ -20,5 +20,7 @@
       "@apis/*": ["./src/apis/*"],
       "@features/*": ["./src/features/*"]
     }
+    
   }
+  
 }
