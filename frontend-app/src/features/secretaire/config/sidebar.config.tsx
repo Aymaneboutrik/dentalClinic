@@ -1,7 +1,13 @@
 import {
   LayoutDashboard,
   CalendarDays,
+<<<<<<< HEAD
   Users,
+=======
+  UserRound,
+  FileText,
+  ClipboardList,
+>>>>>>> Consommation-API--Personnel-Service
 } from "lucide-react";
 
 export const secretaireSidebarConfig = [
@@ -23,4 +29,22 @@ export const secretaireSidebarConfig = [
     icon: <Users size={18} />,
     childs: [],
   },
+  {
+  name: "Planning",
+  route: "/secretaire/planning",
+  icon: <CalendarDays size={18} />,
+  childs: [],
+},
+  {
+    name: "Demandes d’absence",
+    route: "/secretaire/demandes-absence",
+    icon: <ClipboardList size={18} />,
+    childs: [],
+  },
+  {
+  name: "Absences",
+  route: "/secretaire/absences",
+  icon: <FileText size={18} />,
+  childs: [],
+},
 ];

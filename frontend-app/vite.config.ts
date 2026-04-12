@@ -19,11 +19,18 @@ export default defineConfig({
     },
   },
 
-    server: {
+  server: {
     host: true,
     watch: {
       usePolling: true,
-      interval: 50
-    }
-  }
+      interval: 50,
+    },
+    proxy: {
+      "/api": {
+        target: "http://nginx",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });
