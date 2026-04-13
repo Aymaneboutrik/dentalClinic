@@ -5,6 +5,7 @@ import {
   CalendarDays,
   FileText,
   ClipboardMinus,
+  ShieldAlert,
 } from "lucide-react";
 
 export const doctorSidebarConfig = [
@@ -15,9 +16,15 @@ export const doctorSidebarConfig = [
     childs: [],
   },
   {
-    name: "Personnel",
+    name: "Fiches Employés",
     route: "/doctor/personnel",
     icon: <Users size={18} />,
+    childs: [],
+  },
+  {
+    name: "Comptes & Sécurité",
+    route: "/doctor/employees",
+    icon: <ShieldAlert size={18} />,
     childs: [],
   },
   {
