@@ -8,25 +8,18 @@ const resources = {
   en: {
     translation: en,
   },
-<<<<<<< HEAD
-=======
   fr: {
-    translation: en, // Fallback to English for French browsers for now
+    translation: en // fallback English for now
   },
->>>>>>> origin/main
   mm: {
     translation: mm,
   },
 };
 
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
 i18n.use(initReactI18next).init({
   resources,
   lng: useUserPreference.getState().lang || "en",
-  fallbackLng: useUserPreference.getState().lang || "en",
+  fallbackLng: "en",
   interpolation: {
     escapeValue: false,
   },
