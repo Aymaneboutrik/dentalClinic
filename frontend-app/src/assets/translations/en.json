@@ -11,8 +11,13 @@
   },
   "login": {
     "loginHere": "Login Here",
+<<<<<<< HEAD
     "username": "Username",
     "enterUsername": "Enter Username",
+=======
+    "email": "Email",
+    "enterEmail": "Enter Email",
+>>>>>>> origin/main
     "password": "Password",
     "enterPassword": "Enter Password",
     "login": "Login"

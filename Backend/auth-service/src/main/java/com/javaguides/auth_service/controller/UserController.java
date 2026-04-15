@@ -1,6 +1,7 @@
 package com.javaguides.auth_service.controller;
 
 import com.javaguides.auth_service.dtos.ChangePasswordRequest;
+import com.javaguides.auth_service.dtos.NewPasswordRequest;
 import com.javaguides.auth_service.dtos.RegisterRequest;
 import com.javaguides.auth_service.models.Dentiste;
 import com.javaguides.auth_service.models.PasswordRequest;
@@ -78,6 +79,23 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Mot de passe modifié"));
     }
 
+    // Demander une réinitialisation de mot de passe (secrétaire/assistante)
+    @PostMapping("/password-reset-request")
+    public ResponseEntity<?> requestPasswordReset() {
+        Utilisateur user = getCurrentUser();
+        authService.requestPasswordResetForUser(user.getIdUtilisateur());
+        return ResponseEntity.ok(Map.of("message", "Votre demande de réinitialisation a été envoyée. Veuillez attendre la validation par le Dentiste."));
+    }
+
+    // Changer le mot de passe après approbation du dentiste (sans re-demande)
+    @PostMapping("/change-password-approved")
+    public ResponseEntity<?> changePasswordAfterApproval(
+            @Valid @RequestBody NewPasswordRequest request) {
+        Utilisateur user = getCurrentUser();
+        authService.changePasswordAfterApproval(user.getIdUtilisateur(), request.getOldPassword(), request.getNewPassword());
+        return ResponseEntity.ok(Map.of("message", "Mot de passe modifié avec succès."));
+    }
+
     @GetMapping("/password-requests")
     public ResponseEntity<?> getPendingRequests() {
         checkDentistRole();
@@ -131,5 +149,21 @@ public class UserController {
         checkDentistRole();
         authService.updateUser(id, updates);
         return ResponseEntity.ok(Map.of("message", "Utilisateur modifié avec succès"));
+    }
+
+    @PostMapping("/{id}/reset-password-direct")
+    public ResponseEntity<?> resetPasswordDirectly(
+            @PathVariable Integer id,
+            @RequestBody Map<String, String> request) {
+        checkDentistRole();
+        authService.resetPasswordDirectly(id, request.get("newPassword"));
+        return ResponseEntity.ok(Map.of("message", "Le mot de passe de l'utilisateur a été réinitialisé avec succès par l'administrateur."));
+    }
+
+    @PostMapping("/notifications/clear")
+    public ResponseEntity<?> clearNotifications() {
+        Utilisateur user = getCurrentUser();
+        authService.markNotificationsAsSeen(user.getIdUtilisateur());
+        return ResponseEntity.ok(Map.of("message", "Notifications marquées comme lues"));
     }
 }

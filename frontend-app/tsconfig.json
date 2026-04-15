@@ -6,7 +6,12 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
+<<<<<<< HEAD
     "ignoreDeprecations": "6.0",
+=======
+        "ignoreDeprecations": "6.0",
+
+>>>>>>> origin/main
     "paths": {
       "@assets/*": ["./src/assets/*"],
       "@layouts/*": ["./src/layouts/*"],
@@ -20,5 +25,11 @@
       "@apis/*": ["./src/apis/*"],
       "@features/*": ["./src/features/*"]
     }
+<<<<<<< HEAD
   }
+=======
+    
+  }
+  
+>>>>>>> origin/main
 }

@@ -24,7 +24,7 @@ public class PasswordRequest {
     @JoinColumn(name = "id_utilisateur", nullable = false)
     private Utilisateur utilisateur;
 
-    @Column(name = "hashed_password", nullable = false)
+    @Column(name = "hashed_password", nullable = true)
     private String hashedPassword;
 
     @Enumerated(EnumType.STRING)

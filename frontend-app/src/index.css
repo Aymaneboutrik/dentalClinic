@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+<<<<<<< HEAD
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -59,6 +60,66 @@
   }
 }
 
+=======
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 71% 7%;
+    --card-foreground: 213 31% 91%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 222 47% 12%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 222 47% 12%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 213 31% 91%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 224 71% 15%;
+    --input: 224 71% 12%;
+    --ring: 217 91% 60%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 71% 7%;
+    --card-foreground: 213 31% 91%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 222 47% 12%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 222 47% 12%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 213 31% 91%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 224 71% 15%;
+    --input: 224 71% 12%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-card/60 backdrop-blur-xl border border-white/10;
+  }
+  .glass-darker {
+    @apply bg-black/40 backdrop-blur-2xl border border-white/5;
+  }
+  .glow-blue {
+    box-shadow: 0 0 20px -5px rgba(59, 130, 246, 0.5);
+  }
+}
+
+
+>>>>>>> origin/main
 @layer base {
   * {
     @apply border-border;
@@ -67,3 +128,33 @@
     @apply bg-background text-foreground;
   }
 }
+<<<<<<< HEAD
+=======
+
+/* Empêcher l'effet de sélection / curseur texte sur les éléments interactifs */
+button,
+a,
+[role="button"],
+.clickable {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  outline: none;
+}
+
+/* Masquer le caret global hors champs d'écriture */
+body {
+  caret-color: transparent;
+}
+
+/* Garder le comportement normal dans les vrais champs */
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  caret-color: auto;
+}
+>>>>>>> origin/main

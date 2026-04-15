@@ -54,8 +54,36 @@ services:
     networks:
       - dental-network
 
+<<<<<<< HEAD
   
     
+=======
+  patient-db:
+    image: postgres:15-alpine
+    container_name: patient-db
+    environment:
+      POSTGRES_DB: patient_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - patient_db_data:/var/lib/postgresql/data
+    networks:
+      - dental-network
+
+  patient-service:
+    build:
+      context: ./Backend/patient
+    container_name: patient-service
+    depends_on:
+      - patient-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-db:5432/patient_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    networks:
+      - dental-network
+
+>>>>>>> origin/main
 
   pgadmin:
     image: dpage/pgadmin4:8.14
@@ -125,6 +153,10 @@ services:
       - personnel-service
       - auth-service
       - stock-api
+<<<<<<< HEAD
+=======
+      - patient-service
+>>>>>>> origin/main
     networks:
       - dental-network
 
@@ -137,7 +169,15 @@ volumes:
   personnel_db_data:
   pgadmin_data:
   stock_data:
+<<<<<<< HEAD
+=======
+  patient_db_data:
+>>>>>>> origin/main
   servicepersonnel_personnel_db_data:
     external: true
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main

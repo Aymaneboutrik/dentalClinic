@@ -19,7 +19,7 @@ public class EmailService {
         // Lien cliquable pour réinitialiser le mot de passe
         // Dans une vraie application, cela pointera vers votre application frontend
         // (ex: React, Angular, Vue)
-        String resetUrl = "http://localhost:3000/reset-password?token=" + token;
+        String resetUrl = "http://localhost/reset-password?token=" + token;
 
         message.setText("Bonjour,\n\n"
                 + "Vous avez demandé la réinitialisation de votre mot de passe.\n"

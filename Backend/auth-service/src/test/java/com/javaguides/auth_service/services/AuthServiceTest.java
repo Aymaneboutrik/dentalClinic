@@ -289,16 +289,16 @@ class AuthServiceTest {
     }
 
     @Test
-    void requestPasswordReset_AssistantFails() {
+    void requestPasswordReset_AssistantCreatesRequest() {
         Assistante assistant = new Assistante();
         assistant.setEmail("assistant@example.com");
 
         when(utilisateurRepository.findByEmail("assistant@example.com")).thenReturn(Optional.of(assistant));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, 
-            () -> authService.requestPasswordReset("assistant@example.com"));
+        String result = authService.requestPasswordReset("assistant@example.com");
         
-        assertTrue(exception.getMessage().contains("Seul le Dentiste"));
+        assertEquals("EMPLOYEE_REQUEST_CREATED", result);
+        verify(passwordRequestRepository, times(1)).save(any(PasswordRequest.class));
     }
 
     @Test

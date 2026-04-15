@@ -56,6 +56,7 @@ export function DataTable<TData, TValue>({
     []
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
+<<<<<<< HEAD
   const [internalPagination, setInternalPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
@@ -63,6 +64,8 @@ export function DataTable<TData, TValue>({
 
   const resolvedPagination = paginationState ?? internalPagination;
   const resolvedOnPaginationChange = onPaginationChange ?? setInternalPagination;
+=======
+>>>>>>> origin/main
 
   const table = useReactTable({
     data: loading ? [] : data,
@@ -72,12 +75,20 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
+<<<<<<< HEAD
       pagination: resolvedPagination,
+=======
+      pagination: paginationState,
+>>>>>>> origin/main
     },
     enableRowSelection: true,
     manualPagination: manualPagination,
     rowCount: rowCount,
+<<<<<<< HEAD
     onPaginationChange: resolvedOnPaginationChange,
+=======
+    onPaginationChange: onPaginationChange,
+>>>>>>> origin/main
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -95,7 +106,11 @@ export function DataTable<TData, TValue>({
       {loading ? (
         <DataTableLoader
           table={table}
+<<<<<<< HEAD
           rowCount={resolvedPagination?.pageSize as number}
+=======
+          rowCount={paginationState?.pageSize as number}
+>>>>>>> origin/main
         />
       ) : (
         <div className="rounded-md border">

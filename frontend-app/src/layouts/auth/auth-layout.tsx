@@ -7,7 +7,12 @@ function AuthLayout() {
   useUnauth();
 
   return (
+<<<<<<< HEAD
     <div className="w-full h-[100vh] p-4">
+=======
+    <div className="relative w-full h-[100vh] p-4">
+
+>>>>>>> origin/main
       <Center>
         <Header />
         <Outlet />

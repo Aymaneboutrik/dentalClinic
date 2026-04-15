@@ -18,6 +18,7 @@ export default defineConfig({
       "@apis": path.resolve(__dirname, "./src/apis"),
     },
   },
+<<<<<<< HEAD
 
     server: {
     host: true,
@@ -27,3 +28,20 @@ export default defineConfig({
     }
   }
 });
+=======
+  server: {
+    host: true,
+    watch: {
+      usePolling: true,
+      interval: 50,
+    },
+    proxy: {
+      "/api": {
+        target: "http://nginx",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+});
+>>>>>>> origin/main

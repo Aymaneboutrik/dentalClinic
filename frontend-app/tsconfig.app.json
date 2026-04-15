@@ -2,10 +2,20 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
+<<<<<<< HEAD
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 
+=======
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "skipLibCheck": true,
+>>>>>>> origin/main
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -13,12 +23,16 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+<<<<<<< HEAD
 
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
@@ -37,3 +51,44 @@
   },
   "include": ["src"]
 }
+=======
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@assets/*": [
+        "./src/assets/*"
+      ],
+      "@layouts/*": [
+        "./src/layouts/*"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@configs/*": [
+        "./src/configs/*"
+      ],
+      "@hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@lib/*": [
+        "./src/lib/*"
+      ],
+      "@pages/*": [
+        "./src/pages/*"
+      ],
+      "@stores/*": [
+        "./src/stores/*"
+      ],
+      "@helpers/*": [
+        "./src/helpers/*"
+      ],
+      "@apis/*": [
+        "./src/apis/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}
+>>>>>>> origin/main
