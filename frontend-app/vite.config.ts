@@ -18,17 +18,7 @@ export default defineConfig({
       "@apis": path.resolve(__dirname, "./src/apis"),
     },
   },
-<<<<<<< HEAD
 
-    server: {
-    host: true,
-    watch: {
-      usePolling: true,
-      interval: 50
-    }
-  }
-});
-=======
   server: {
     host: true,
     watch: {
@@ -44,4 +34,3 @@ export default defineConfig({
     },
   },
 });
->>>>>>> origin/main
