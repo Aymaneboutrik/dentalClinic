@@ -5,19 +5,6 @@ import { RecentItems } from "../../../components/commons/dashboard/RecentItems";
 
 export default function SecretaireDashboardPage() {
   return (
-<<<<<<< HEAD
-    <div>
-      <DashboardHeader
-        title={secretaireDashboardConfig.title}
-        subtitle={secretaireDashboardConfig.subtitle}
-      />
-
-      <StatsCards items={secretaireDashboardConfig.stats} />
-
-      <div className="mt-6">
-        <RecentItems items={secretaireDashboardConfig.recentActivities} />
-      </div>
-=======
     <div className="flex min-h-screen">
       <main className="flex-1 p-6">
         <DashboardHeader
@@ -31,7 +18,6 @@ export default function SecretaireDashboardPage() {
           <RecentItems items={secretaireDashboardConfig.recentActivities} />
         </div>
       </main>
->>>>>>> origin/main
     </div>
   );
 }

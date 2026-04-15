@@ -1,12 +1,5 @@
-<<<<<<< HEAD
 import { Form } from "@components/ui/form";
 import { toast } from "sonner";
-import Text from "@components/commons/text";
-=======
-import React from "react";
-import { Form } from "@components/ui/form";
-import { toast } from "sonner";
->>>>>>> origin/main
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "./schemas/login-schema";
@@ -14,48 +7,24 @@ import TextInput from "@components/inputs/text-input";
 import PasswordInput from "@components/inputs/password-input";
 import { Button } from "@components/ui/button";
 import useAuthOperations from "@hooks/use-auth-operations";
-<<<<<<< HEAD
-import { ADMIN } from "@configs/vars";
-import { useTranslation } from "react-i18next";
-
-type FormType = {
-  username: string;
-  password: string;
-=======
 import { authService } from "@apis/services/auth";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Stethoscope, ShieldCheck, Mail, ArrowLeft } from "lucide-react";
 import { Input } from "@components/ui/input";
 
-
 type FormType = {
   u_key_auth: string;
   p_key_auth: string;
->>>>>>> origin/main
 };
 
 export function Login() {
   const { login } = useAuthOperations();
   const { t } = useTranslation();
+
   const form = useForm<FormType>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-<<<<<<< HEAD
-      username: "",
-      password: "",
-    },
-  });
-
-  function onSubmit(values: FormType) {
-    if (
-      ADMIN.username === values.username &&
-      ADMIN.password === values.password
-    ) {
-      login(values);
-    } else {
-      toast.error("Wrong username or password");
-=======
       u_key_auth: "",
       p_key_auth: "",
     },
@@ -67,45 +36,49 @@ export function Login() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!recoveryEmail) {
       toast.error("Veuillez entrer votre adresse e-mail");
       return;
     }
+
     setIsLoading(true);
+
     try {
       const resp = await authService.forgotPasswordEmail(recoveryEmail);
       const message = resp.message || "Demande traitée avec succès.";
-      
+
       if (message.includes("réservée au Dentiste")) {
         toast.info(message, { duration: 6000 });
       } else {
         toast.success(message);
       }
+
       setShowForgotPassword(false);
     } catch (error: any) {
       if (error.code === "ECONNABORTED" || !error.response) {
-        toast.info("Le traitement prend un peu de temps... Veuillez patienter quelques instants.");
+        toast.info("Le traitement prend un peu de temps... Veuillez patienter.");
       } else {
-        toast.error(error.response?.data?.message || "Erreur lors de la demande de réinitialisation.");
+        toast.error(error.response?.data?.message || "Erreur de réinitialisation.");
       }
     } finally {
       setIsLoading(false);
     }
   };
+
   async function onSubmit(values: FormType) {
     setIsLoading(true);
-    // Map back to API format
+
     const apiValues = {
       email: values.u_key_auth,
-      password: values.p_key_auth
+      password: values.p_key_auth,
     };
-
-    console.log("Tentative de connexion avec:", apiValues);
 
     try {
       const response = await authService.login(apiValues);
-      // Inject the entered email to ensure it's available for the UI
+
       login({ ...response, email: apiValues.email });
+
       if (response.notification) {
         toast.info(response.notification);
       }
@@ -114,186 +87,116 @@ export function Login() {
       toast.error(message);
     } finally {
       setIsLoading(false);
->>>>>>> origin/main
     }
   }
 
   return (
-<<<<<<< HEAD
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="border rounded-lg p-4 space-y-4 w-full sm:w-[400px]"
-      >
-        <div>
-          <Text size="xxl">{t("login.loginHere")}</Text>
-          <Text className="text-muted-foreground">
-            {`${t("login.username")} - admin | ${t(
-              "login.password"
-            )} - password`}
-          </Text>
-        </div>
-
-        <TextInput
-          label={t("login.username")}
-          placeholder={t("login.enterUsername")}
-          name="username"
-          withAsterisk
-          form={form}
-        />
-
-        <PasswordInput
-          label={t("login.password")}
-          placeholder={t("login.enterPassword")}
-          name="password"
-          withAsterisk
-          form={form}
-        />
-
-        <Button type="submit" fullWidth>
-          {t("login.login")}
-        </Button>
-      </form>
-    </Form>
-  );
-}
-=======
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
 
-
-      {/* Background Decorative Elements */}
+      {/* Background */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/20 blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px]" />
 
       <div className="relative z-10 w-full max-w-[600px] px-6">
-        <div className="glass rounded-[2rem] px-24 py-12 shadow-2xl glow-blue space-y-6">
 
+        <div className="glass rounded-[2rem] px-24 py-12 shadow-2xl space-y-6">
 
-
-
-
-          {/* Header/Branding */}
+          {/* Header */}
           <div className="flex flex-col items-center text-center space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center">
               <Stethoscope className="w-10 h-10 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Dental Clinic
-              </h1>
-              <p className="text-muted-foreground mt-2 text-sm font-medium">
-                Gestion intelligente & Dossier Patient Digital
-              </p>
 
-            </div>
+            <h1 className="text-3xl font-bold">Dental Clinic</h1>
+
+            <p className="text-muted-foreground text-sm">
+              Gestion intelligente & Dossier Patient Digital
+            </p>
           </div>
 
           {!showForgotPassword ? (
             <Form {...form}>
-              <form 
-                onSubmit={form.handleSubmit(onSubmit)} 
-                className="space-y-6"
-                autoComplete="off"
-              >
-                {/* "Anti-Autofill" Ultimate Hack: Decoy inputs with absolute positioning to fool the browser */}
-                <div style={{ position: 'absolute', top: '-1000px', left: '-1000px', opacity: 0, pointerEvents: 'none' }} aria-hidden="true">
-                  <input type="text" name="decoy_user" tabIndex={-1} autoComplete="off" />
-                  <input type="password" name="decoy_pass" tabIndex={-1} autoComplete="off" />
-                </div>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
                 <div className="space-y-4">
+
                   <TextInput
-                    label={<span>E&nbsp;m&nbsp;a&nbsp;i&nbsp;l</span>}
-                    placeholder=" "
+                    label="Email"
+                    placeholder=""
                     name="u_key_auth"
-                    withAsterisk
                     form={form}
+                    withAsterisk
                     autoComplete="off"
-                    className="bg-background/50 border-white/5 h-12 rounded-xl focus:ring-primary"
                   />
 
                   <PasswordInput
-                    label={<span>M&nbsp;o&nbsp;t&nbsp;d&nbsp;e&nbsp;p&nbsp;a&nbsp;s&nbsp;s&nbsp;e</span>}
-                    placeholder=" "
+                    label="Mot de passe"
+                    placeholder=""
                     name="p_key_auth"
-                    withAsterisk
                     form={form}
-                    autoComplete="new-password"
-                    className="bg-background/50 border-white/5 h-12 rounded-xl focus:ring-primary"
+                    withAsterisk
+                    autoComplete="off"
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-xs px-1">
-                  <label className="flex items-center space-x-2 text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-                    <input type="checkbox" className="rounded border-white/10 bg-white/5" />
-                    <span>Se souvenir de moi</span>
-                  </label>
-                  <button type="button" onClick={() => setShowForgotPassword(true)} className="text-primary hover:underline font-medium">
+                <div className="flex justify-between text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-primary"
+                  >
                     Mot de passe oublié ?
                   </button>
                 </div>
 
-                <Button
-                  type="submit"
-                  fullWidth
-                  disabled={isLoading}
-                  className="h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                      <span>Identification...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center space-x-2">
-                      <ShieldCheck className="w-5 h-5" />
-                      <span>{t("login.login")}</span>
-                    </div>
+                <Button type="submit" fullWidth disabled={isLoading}>
+                  {isLoading ? "Connexion..." : (
+                    <span className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4" />
+                      {t("login.login")}
+                    </span>
                   )}
                 </Button>
               </form>
             </Form>
           ) : (
             <form onSubmit={handleForgotPassword} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-semibold mb-2 block">{t("login.email")}</label>
-                  <Input
-                    placeholder="dentiste@clinic.com"
-                    value={recoveryEmail}
-                    onChange={(e) => setRecoveryEmail(e.target.value)}
-                    required
-                    type="email"
-                    autoComplete="off"
-                    className="bg-background/50 border-white/5 h-12 rounded-xl focus:ring-primary w-full"
-                  />
-                </div>
-              </div>
-              <Button type="submit" disabled={isLoading} className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold">
+
+              <Input
+                type="email"
+                placeholder="dentiste@clinic.com"
+                value={recoveryEmail}
+                onChange={(e) => setRecoveryEmail(e.target.value)}
+              />
+
+              <Button type="submit" fullWidth disabled={isLoading}>
                 {isLoading ? "Envoi..." : (
-                  <span className="flex items-center justify-center w-full"><Mail className="w-4 h-4 mr-2" /> Recevoir le lien</span>
+                  <span className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Recevoir le lien
+                  </span>
                 )}
               </Button>
-              <div className="text-center">
-                <button type="button" onClick={() => setShowForgotPassword(false)} className="text-sm text-muted-foreground hover:text-foreground flex justify-center w-full items-center">
-                  <ArrowLeft className="w-4 h-4 mr-1" /> Retour à la connexion
-                </button>
-              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(false)}
+                className="text-sm flex items-center justify-center w-full text-muted-foreground"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Retour
+              </button>
+
             </form>
           )}
 
         </div>
 
-        {/* Helper info for testing */}
-
-        <p className="text-center mt-8 text-[11px] text-muted-foreground/20 font-bold uppercase tracking-[0.3em]">
+        <p className="text-center mt-6 text-xs text-muted-foreground">
           Powered by Dental Clinic Secure Engine
         </p>
-
 
       </div>
     </div>
   );
 }
-
->>>>>>> origin/main

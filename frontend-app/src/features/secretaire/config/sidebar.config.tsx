@@ -1,16 +1,9 @@
 import {
   LayoutDashboard,
-<<<<<<< HEAD
-  Package,
-  Truck,
-  ShoppingCart,
-  ListOrdered,
-=======
   CalendarDays,
   Users,
   FileText,
   ClipboardList,
->>>>>>> origin/main
 } from "lucide-react";
 
 export const secretaireSidebarConfig = [
@@ -21,29 +14,6 @@ export const secretaireSidebarConfig = [
     childs: [],
   },
   {
-<<<<<<< HEAD
-    name: "Fournisseurs",
-    route: "/secretaire/fournisseurs",
-    icon: <Truck size={18} />,
-    childs: [],
-  },
-  {
-    name: "Produits",
-    route: "/secretaire/produits",
-    icon: <Package size={18} />,
-    childs: [],
-  },
-  {
-    name: "Commandes",
-    route: "/secretaire/commandes",
-    icon: <ShoppingCart size={18} />,
-    childs: [],
-  },
-  {
-    name: "Lignes de commande",
-    route: "/secretaire/lignes",
-    icon: <ListOrdered size={18} />,
-=======
     name: "Rendez-vous",
     route: "/secretaire/appointments",
     icon: <CalendarDays size={18} />,
@@ -71,7 +41,6 @@ export const secretaireSidebarConfig = [
     name: "Absences",
     route: "/secretaire/absences",
     icon: <FileText size={18} />,
->>>>>>> origin/main
     childs: [],
   },
 ];

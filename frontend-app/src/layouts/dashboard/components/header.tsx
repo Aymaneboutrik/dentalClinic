@@ -24,31 +24,21 @@ import SearchInput from "@components/inputs/search-input";
 import Logo from "@components/commons/logo";
 import { useModal } from "@saimin/react-modal-manager";
 import LogoutConfirmation from "@components/modals/logout-confirmation";
-<<<<<<< HEAD
-import { useState } from "react";
-import useAuthOperations from "@hooks/use-auth-operations";
-=======
 import ProfileModal from "@components/modals/profile-modal";
 import { useState } from "react";
 import useAuthOperations from "@hooks/use-auth-operations";
 import useAuthStore from "@stores/auth-store";
->>>>>>> origin/main
 
 export function Header() {
   const { sidebarCollapsed } = useUserPreference();
   const { setTheme, theme } = useTheme();
   const { open } = useModal();
   const { logout } = useAuthOperations();
-<<<<<<< HEAD
-=======
   const { user } = useAuthStore();
->>>>>>> origin/main
 
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const toggleSheet = () => {
-    setSheetOpen((prev) => !prev);
-  };
+  const toggleSheet = () => setSheetOpen((prev) => !prev);
 
   const handleOpenModal = () => {
     open("logout-confirmation", {
@@ -57,8 +47,6 @@ export function Header() {
     });
   };
 
-<<<<<<< HEAD
-=======
   const handleOpenProfile = () => {
     open("profile-modal", {
       content: <ProfileModal />,
@@ -66,17 +54,12 @@ export function Header() {
     });
   };
 
-  const initials = user 
-    ? (user.email ? user.email.charAt(0) : "U").toUpperCase() 
+  const initials = user?.email
+    ? user.email.charAt(0).toUpperCase()
     : "S";
 
->>>>>>> origin/main
   const handleToggleTheme = () => {
-    if (theme === "dark") {
-      setTheme("light");
-    } else {
-      setTheme("dark");
-    }
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
@@ -86,28 +69,22 @@ export function Header() {
         sidebarCollapsed ? "left-0 sm:left-[60px]" : "sm:left-[250px] left-0"
       )}
     >
-      {/* ======== Mobile Drawer Navbar ======== */}
+      {/* Mobile menu */}
       <Sheet open={sheetOpen} onOpenChange={toggleSheet}>
         <SheetTrigger asChild>
           <Button size="icon" variant="outline" className="sm:hidden">
             <PanelLeft className="h-5 w-5" />
-            <span className="sr-only">Toggle Menu</span>
           </Button>
         </SheetTrigger>
 
         <SheetContent side="left" className="sm:max-w-xs">
           <VisuallyHidden>
-<<<<<<< HEAD
-            <SheetTitle>Starter Template</SheetTitle>
-            <SheetDescription>Starter Template</SheetDescription>
-=======
             <SheetTitle>Dental Clinic</SheetTitle>
-
             <SheetDescription>Dental Clinic</SheetDescription>
-
->>>>>>> origin/main
           </VisuallyHidden>
+
           <Logo />
+
           <nav className="flex flex-col gap-1 mt-4">
             {menus.map((m) => (
               <SidebarItem
@@ -124,7 +101,7 @@ export function Header() {
         </SheetContent>
       </Sheet>
 
-      {/* ======== App Bar ======== */}
+      {/* Top bar */}
       <div className="flex-1 flex gap-4 items-center justify-between">
         <SearchInput />
 
@@ -133,7 +110,7 @@ export function Header() {
         <Button
           onClick={handleToggleTheme}
           variant="outline"
-          className="rounded-full h-9 w-9 flex items-center justify-center"
+          className="rounded-full h-9 w-9"
           size="icon"
         >
           {theme === "light" ? (
@@ -148,29 +125,23 @@ export function Header() {
             <Button
               variant="outline"
               size="icon"
-<<<<<<< HEAD
-              className="overflow-hidden rounded-full"
+              className="rounded-full font-bold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
             >
-              <div>S</div>
+              {initials}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleOpenModal}>
-=======
-              className="overflow-hidden rounded-full font-bold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-            >
-              <div>{initials}</div>
-            </Button>
-          </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={handleOpenProfile} className="cursor-pointer">
+            <DropdownMenuItem onClick={handleOpenProfile}>
               Profile
             </DropdownMenuItem>
+
             <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleOpenModal} className="cursor-pointer text-red-500 focus:text-red-600 focus:bg-red-50">
->>>>>>> origin/main
+
+            <DropdownMenuItem
+              onClick={handleOpenModal}
+              className="text-red-500 focus:text-red-600"
+            >
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

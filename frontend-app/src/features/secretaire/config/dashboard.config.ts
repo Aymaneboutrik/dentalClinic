@@ -1,24 +1,4 @@
 export const secretaireDashboardConfig = {
-<<<<<<< HEAD
-  title: "Secretaire Dashboard",
-  subtitle: "Vue générale de la secretaire",
-
-  stats: [
-    {
-      title: "Rendez-vous aujourd’hui",
-      value: "15",
-      description: "+3 depuis hier",
-    },
-    {
-      title: "Patients enregistrés",
-      value: "9",
-      description: "ce matin",
-    },
-    {
-      title: "Dossiers créés",
-      value: "4",
-      description: "nouveaux dossiers",
-=======
   title: "Espace Secrétariat",
   subtitle: "Gestion administrative et dossiers patients",
 
@@ -42,22 +22,11 @@ export const secretaireDashboardConfig = {
       title: "Paiements en attente",
       value: "3",
       description: "À régulariser ce jour",
->>>>>>> origin/main
     },
   ],
 
   recentActivities: [
     {
-<<<<<<< HEAD
-      title: "Rendez-vous ajouté",
-      name: "Nadia Karim",
-      time: "09:30",
-    },
-    {
-      title: "Patient enregistré",
-      name: "Youssef Amine",
-      time: "10:15",
-=======
       title: "Dossier Médical mis à jour",
       name: "Ahmed Mansouri",
       time: "Il y a 10 min",
@@ -71,7 +40,6 @@ export const secretaireDashboardConfig = {
       title: "Fiche patient créée",
       name: "Yassine Benjelloun",
       time: "Il y a 1 heure",
->>>>>>> origin/main
     },
   ],
 };

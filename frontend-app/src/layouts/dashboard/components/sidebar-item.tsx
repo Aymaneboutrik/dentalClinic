@@ -43,21 +43,13 @@ function SidebarItem({
   const { t } = useTranslation();
 
   const [showChilds, setShowChilds] = useState<boolean>(false);
-<<<<<<< HEAD
 
-  const getChildRoutes = (): string[] => {
-    if (childs) {
-      return childs.map((c) => c.route);
-    }
-=======
   const hasChildren = (childs?.length ?? 0) > 0;
 
   const getChildRoutes = (): string[] => {
     if (hasChildren) {
-  return childs!.map((c) => c.route);
-}
->>>>>>> origin/main
-
+      return childs!.map((c) => c.route);
+    }
     return [];
   };
 
@@ -67,49 +59,27 @@ function SidebarItem({
   };
 
   const hasActiveChild = (): boolean => {
-<<<<<<< HEAD
-    if (childs) {
-=======
     if (hasChildren) {
->>>>>>> origin/main
       const childRoutes = getChildRoutes();
-
       return childRoutes.includes(location.pathname.split("/").pop() as string);
     }
-
     return false;
   };
 
-<<<<<<< HEAD
   const handleClick = () => {
-    if (childs) {
+    if (hasChildren) {
       setShowChilds((prev) => !prev);
     } else {
       navigate(route);
       if (closeSheet) closeSheet((prev) => !prev);
     }
   };
-=======
- const handleClick = () => {
-  if (hasChildren) {
-    setShowChilds((prev) => !prev);
-  } else {
-    navigate(route);
-    if (closeSheet) closeSheet((prev) => !prev);
-  }
-};
->>>>>>> origin/main
 
   /** ======= Collapsed Sidebar ======= */
   if (sidebarCollapsed && collapsible) {
     return (
       <>
-        {/* ======= Collapsed item with child items ======= */}
-<<<<<<< HEAD
-        {childs ? (
-=======
         {hasChildren ? (
->>>>>>> origin/main
           <Popover>
             <PopoverTrigger>
               <Tooltip>
@@ -128,13 +98,10 @@ function SidebarItem({
                 <TooltipContent side="right">{name}</TooltipContent>
               </Tooltip>
             </PopoverTrigger>
+
             <PopoverContent side="right">
               <div>
-<<<<<<< HEAD
-                {childs.map((c) => (
-=======
-                {hasChildren && childs!.map((c) => (
->>>>>>> origin/main
+                {childs!.map((c) => (
                   <ChildItem
                     key={c.route}
                     icon={c.icon}
@@ -143,23 +110,17 @@ function SidebarItem({
                     collapsed={sidebarCollapsed}
                     closeSheet={closeSheet}
                   />
-                  // <div key={c.route}>{c.name}</div>÷
                 ))}
               </div>
             </PopoverContent>
           </Popover>
         ) : (
-          /* ======= Collapsed item without child items ======= */
           <Tooltip>
             <TooltipTrigger asChild>
               <div
                 onClick={handleClick}
                 className={clsx(
-<<<<<<< HEAD
                   "cursor-pointer my-1 ml-[5px] flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-primary md:h-8 md:w-8",
-=======
-                  "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
->>>>>>> origin/main
                   isActiveModule() || hasActiveChild()
                     ? "text-primary"
                     : "text-muted-foreground"
@@ -178,32 +139,23 @@ function SidebarItem({
   /** ======= Expanded Sidebar ======= */
   return (
     <>
-      {/*======= Parent Menu =======*/}
       <div
         onClick={handleClick}
         className={clsx(
-<<<<<<< HEAD
-          "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground",
-=======
           "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
->>>>>>> origin/main
           (isActiveModule() || hasActiveChild()) &&
             "bg-primary text-primary-foreground",
           !(isActiveModule() || hasActiveChild()) && "hover:bg-primary/10"
         )}
       >
-        <div className={clsx("flex items-center gap-2")}>
+        <div className="flex items-center gap-2">
           <div>{icon}</div>
           <div className="min-w-[150px] overflow-hidden">
             <Text>{t(name)}</Text>
           </div>
         </div>
 
-<<<<<<< HEAD
-        {childs && (
-=======
         {hasChildren && (
->>>>>>> origin/main
           <ChevronDown
             className={clsx(
               "h-[15px] w-[15px] transition-all duration-500",
@@ -213,27 +165,22 @@ function SidebarItem({
         )}
       </div>
 
-      {/*======= Child Menus =======*/}
       <div
         className={clsx(
           "overflow-hidden transition-all duration-500",
           showChilds ? "max-h-[100vh]" : "max-h-0"
         )}
       >
-<<<<<<< HEAD
-        {childs?.map((c) => (
-=======
         {hasChildren &&
           childs!.map((c) => (
->>>>>>> origin/main
-          <ChildItem
-            key={c.route}
-            icon={c.icon}
-            name={c.name}
-            route={c.route}
-            closeSheet={closeSheet}
-          />
-        ))}
+            <ChildItem
+              key={c.route}
+              icon={c.icon}
+              name={c.name}
+              route={c.route}
+              closeSheet={closeSheet}
+            />
+          ))}
       </div>
     </>
   );
@@ -256,15 +203,9 @@ function ChildItem({
 
   return (
     <div
-<<<<<<< HEAD
       onClick={handleClick}
       className={clsx(
-        "flex align-middle gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground",
-=======
-    onClick={handleClick}
-      className={clsx(
-            "flex align-middle gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
->>>>>>> origin/main
+        "flex align-middle gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
         isMatched && "text-primary",
         !isMatched && "hover:text-primary",
         !collapsed && "pl-6"
