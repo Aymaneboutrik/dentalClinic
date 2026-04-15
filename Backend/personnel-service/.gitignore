@@ -1,0 +1,26 @@
+﻿# Visual Studio
+.vs/
+*.user
+*.suo
+*.cache
+
+# Build
+bin/
+obj/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+appsettings.Development.json
+
+# Docker
+docker-compose.override.yml
+
+# Rider / VSCode (optionnel)
+.idea/
+.vscode/
