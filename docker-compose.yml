@@ -161,4 +161,3 @@ volumes:
   stock_data:
   patient_db_data:
   servicepersonnel_personnel_db_data:
-    external: true
