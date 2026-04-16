@@ -8,21 +8,15 @@ const resources = {
   en: {
     translation: en,
   },
-<<<<<<< HEAD
-=======
   fr: {
     translation: en, // Fallback to English for French browsers for now
   },
->>>>>>> origin/main
   mm: {
     translation: mm,
   },
 };
 
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/main
 i18n.use(initReactI18next).init({
   resources,
   lng: useUserPreference.getState().lang || "en",

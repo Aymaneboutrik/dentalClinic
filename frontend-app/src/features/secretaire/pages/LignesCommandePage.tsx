@@ -9,7 +9,7 @@ import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "/api/stock";
 
 const ligneSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
@@ -141,6 +141,7 @@ export default function LignesCommandePage() {
   };
 
   const columns: ColumnDef<LigneCommande>[] = [
+    { accessorKey: "id", header: "ID" },
     { accessorKey: "nom", header: "Produit" },
     { accessorKey: "quantite", header: "Quantité" },
     { accessorKey: "prixUnitaire", header: "Prix unitaire" },

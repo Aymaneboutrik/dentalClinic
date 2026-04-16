@@ -24,25 +24,17 @@ import SearchInput from "@components/inputs/search-input";
 import Logo from "@components/commons/logo";
 import { useModal } from "@saimin/react-modal-manager";
 import LogoutConfirmation from "@components/modals/logout-confirmation";
-<<<<<<< HEAD
-import { useState } from "react";
-import useAuthOperations from "@hooks/use-auth-operations";
-=======
 import ProfileModal from "@components/modals/profile-modal";
 import { useState } from "react";
 import useAuthOperations from "@hooks/use-auth-operations";
 import useAuthStore from "@stores/auth-store";
->>>>>>> origin/main
 
 export function Header() {
   const { sidebarCollapsed } = useUserPreference();
   const { setTheme, theme } = useTheme();
   const { open } = useModal();
   const { logout } = useAuthOperations();
-<<<<<<< HEAD
-=======
   const { user } = useAuthStore();
->>>>>>> origin/main
 
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -57,8 +49,6 @@ export function Header() {
     });
   };
 
-<<<<<<< HEAD
-=======
   const handleOpenProfile = () => {
     open("profile-modal", {
       content: <ProfileModal />,
@@ -70,7 +60,6 @@ export function Header() {
     ? (user.email ? user.email.charAt(0) : "U").toUpperCase() 
     : "S";
 
->>>>>>> origin/main
   const handleToggleTheme = () => {
     if (theme === "dark") {
       setTheme("light");
@@ -97,15 +86,10 @@ export function Header() {
 
         <SheetContent side="left" className="sm:max-w-xs">
           <VisuallyHidden>
-<<<<<<< HEAD
-            <SheetTitle>Starter Template</SheetTitle>
-            <SheetDescription>Starter Template</SheetDescription>
-=======
             <SheetTitle>Dental Clinic</SheetTitle>
 
             <SheetDescription>Dental Clinic</SheetDescription>
 
->>>>>>> origin/main
           </VisuallyHidden>
           <Logo />
           <nav className="flex flex-col gap-1 mt-4">
@@ -148,17 +132,6 @@ export function Header() {
             <Button
               variant="outline"
               size="icon"
-<<<<<<< HEAD
-              className="overflow-hidden rounded-full"
-            >
-              <div>S</div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleOpenModal}>
-=======
               className="overflow-hidden rounded-full font-bold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
             >
               <div>{initials}</div>
@@ -170,7 +143,6 @@ export function Header() {
             </DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuItem onClick={handleOpenModal} className="cursor-pointer text-red-500 focus:text-red-600 focus:bg-red-50">
->>>>>>> origin/main
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

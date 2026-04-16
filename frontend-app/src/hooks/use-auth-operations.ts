@@ -2,28 +2,13 @@
 import Cookie from "js-cookie";
 import { REFRESH_TOKEN, TOKEN } from "@configs/vars";
 import { useNavigate } from "react-router-dom";
-<<<<<<< HEAD
-=======
 import useAuthStore from "@stores/auth-store";
->>>>>>> origin/main
 
 /**
  * useAuthOperations hook that provides authentication & authorization methods
  */
 const useAuthOperations = () => {
   const navigate = useNavigate();
-<<<<<<< HEAD
-
-  function login(value: Record<string, string>) {
-    Cookie.set(TOKEN, value.token);
-    Cookie.set(REFRESH_TOKEN, value.refreshToken);
-    navigate("/");
-  }
-
-  function logout() {
-    Cookie.remove(TOKEN);
-    Cookie.remove(REFRESH_TOKEN);
-=======
   const { login: storeLogin, logout: storeLogout } = useAuthStore();
 
   function login(value: any) {
@@ -58,7 +43,6 @@ const useAuthOperations = () => {
     Cookie.remove(TOKEN);
     Cookie.remove(REFRESH_TOKEN);
     storeLogout();
->>>>>>> origin/main
     navigate("/auth/login");
   }
 

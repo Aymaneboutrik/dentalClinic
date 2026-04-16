@@ -1,12 +1,6 @@
-<<<<<<< HEAD
-import { Form } from "@components/ui/form";
-import { toast } from "sonner";
-import Text from "@components/commons/text";
-=======
 import React from "react";
 import { Form } from "@components/ui/form";
 import { toast } from "sonner";
->>>>>>> origin/main
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "./schemas/login-schema";
@@ -14,14 +8,6 @@ import TextInput from "@components/inputs/text-input";
 import PasswordInput from "@components/inputs/password-input";
 import { Button } from "@components/ui/button";
 import useAuthOperations from "@hooks/use-auth-operations";
-<<<<<<< HEAD
-import { ADMIN } from "@configs/vars";
-import { useTranslation } from "react-i18next";
-
-type FormType = {
-  username: string;
-  password: string;
-=======
 import { authService } from "@apis/services/auth";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
@@ -32,7 +18,6 @@ import { Input } from "@components/ui/input";
 type FormType = {
   u_key_auth: string;
   p_key_auth: string;
->>>>>>> origin/main
 };
 
 export function Login() {
@@ -41,21 +26,6 @@ export function Login() {
   const form = useForm<FormType>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-<<<<<<< HEAD
-      username: "",
-      password: "",
-    },
-  });
-
-  function onSubmit(values: FormType) {
-    if (
-      ADMIN.username === values.username &&
-      ADMIN.password === values.password
-    ) {
-      login(values);
-    } else {
-      toast.error("Wrong username or password");
-=======
       u_key_auth: "",
       p_key_auth: "",
     },
@@ -114,50 +84,10 @@ export function Login() {
       toast.error(message);
     } finally {
       setIsLoading(false);
->>>>>>> origin/main
     }
   }
 
   return (
-<<<<<<< HEAD
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="border rounded-lg p-4 space-y-4 w-full sm:w-[400px]"
-      >
-        <div>
-          <Text size="xxl">{t("login.loginHere")}</Text>
-          <Text className="text-muted-foreground">
-            {`${t("login.username")} - admin | ${t(
-              "login.password"
-            )} - password`}
-          </Text>
-        </div>
-
-        <TextInput
-          label={t("login.username")}
-          placeholder={t("login.enterUsername")}
-          name="username"
-          withAsterisk
-          form={form}
-        />
-
-        <PasswordInput
-          label={t("login.password")}
-          placeholder={t("login.enterPassword")}
-          name="password"
-          withAsterisk
-          form={form}
-        />
-
-        <Button type="submit" fullWidth>
-          {t("login.login")}
-        </Button>
-      </form>
-    </Form>
-  );
-}
-=======
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
 
 
@@ -296,4 +226,3 @@ export function Login() {
   );
 }
 
->>>>>>> origin/main

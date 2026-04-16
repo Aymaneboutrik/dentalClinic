@@ -4,6 +4,7 @@ using StockApi.Services;
 using StockApi.Repositories.Interfaces;
 using StockApi.Repositories.Implementations;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics;
 
 // 🔹 Fix PostgreSQL DateTime UTC
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);

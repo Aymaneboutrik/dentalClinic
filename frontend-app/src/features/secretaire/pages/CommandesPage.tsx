@@ -9,7 +9,7 @@ import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "/api/stock";
 
 const commandeSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
@@ -91,25 +91,31 @@ export default function CommandesPage() {
 
   const handleSubmit = async (values: CommandeForm) => {
     try {
+      let res;
       if (editing) {
-        await fetch(`${BASE_URL}/Commande/${editing.id}`, {
+        res = await fetch(`${BASE_URL}/Commande/${editing.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: editing.id, ...values, statut: editing.statut }),
         });
       } else {
-        await fetch(`${BASE_URL}/Commande`, {
+        res = await fetch(`${BASE_URL}/Commande`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: 0, ...values, statut: 0 }),
         });
       }
+      
+      if (!res.ok) {
+         throw new Error("L'identifiant du fournisseur n'existe pas ou erreur serveur.");
+      }
+
       form.reset();
       setShowForm(false);
       setEditing(null);
       fetchCommandes();
-    } catch {
-      alert("Erreur lors de la sauvegarde");
+    } catch (err: any) {
+      alert("Erreur lors de la sauvegarde: " + err.message);
     }
   };
 
@@ -145,6 +151,7 @@ export default function CommandesPage() {
   );
 
   const columns: ColumnDef<Commande>[] = [
+    { accessorKey: "id", header: "ID" },
     { accessorKey: "nom", header: "Nom" },
     {
       accessorKey: "date",

@@ -10,23 +10,6 @@ type RecentItemsProps = {
 
 export function RecentItems({ items }: RecentItemsProps) {
   return (
-<<<<<<< HEAD
-    <div className="p-6 border rounded-xl">
-      <h2 className="mb-4 text-xl font-semibold">Activités récentes</h2>
-
-      <div className="space-y-4">
-        {items.map((item, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between pb-3 border-b last:border-b-0"
-          >
-            <div>
-              <p className="font-semibold">{item.title}</p>
-              <p className="text-muted-foreground">{item.name}</p>
-            </div>
-
-            <span>{item.time}</span>
-=======
     <div className="glass p-8 border-white/5 shadow-2xl rounded-[2rem]">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold tracking-tight text-foreground">Activités récentes</h2>
@@ -52,14 +35,10 @@ export function RecentItems({ items }: RecentItemsProps) {
             <div className="text-right">
               <span className="text-sm font-semibold text-muted-foreground/80">{item.time}</span>
             </div>
->>>>>>> origin/main
           </div>
         ))}
       </div>
     </div>
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/main
   );
 }

@@ -5,22 +5,6 @@ import { DashboardLayout } from "@layouts/dashboard/dashboard-layout";
 import RootLayout from "@layouts/root/root-layout";
 
 import { Error404, Error500, Login } from "@pages/index";
-<<<<<<< HEAD
-
-import AssistantDashboardPage from "../features/assistant/pages/AssistantDashboardPage";
-import DoctorDashboardPage from "../features/doctor/pages/DoctorDashboardPage";
-import SecretaireDashboardPage from "../features/secretaire/pages/SecretaireDashboardPage";
-
-import FournisseursPage from "../features/secretaire/pages/FournisseursPage";
-import ProduitsPage from "../features/secretaire/pages/ProduitsPage";
-import CommandesPage from "../features/secretaire/pages/CommandesPage";
-import LignesCommandePage from "../features/secretaire/pages/LignesCommandePage";
-
-import CommandesDoctorPage from "../features/doctor/pages/CommandesDoctorPage";
-
-import MouvementsStockPage from "../features/assistant/pages/MouvementsStockPage";
-
-=======
 import ResetPasswordPage from "../pages/login/reset-password-page";
 
 import { RoleGuard } from "../components/commons/RoleGuard";
@@ -43,64 +27,29 @@ import SecretairePlanningPage from "../features/secretaire/pages/SecretairePlann
 import SecretaireAbsencePage from "../features/secretaire/pages/SecretaireAbsencePage";
 import PatientListPage from "../features/secretaire/pages/PatientListPage";
 import PatientHistoryPage from "../features/secretaire/pages/PatientHistoryPage";
->>>>>>> origin/main
+import ProduitsPage from "../features/secretaire/pages/ProduitsPage";
+import CommandesPage from "../features/secretaire/pages/CommandesPage";
+import FournisseursPage from "../features/secretaire/pages/FournisseursPage";
+import LignesCommandePage from "../features/secretaire/pages/LignesCommandePage";
+
+import CommandesDoctorPage from "../features/doctor/pages/CommandesDoctorPage";
+
+import MouvementsStockPage from "../features/assistant/pages/MouvementsStockPage";
+
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
     children: [
       {
-<<<<<<< HEAD
-=======
         path: "reset-password",
         element: <ResetPasswordPage />,
       },
       {
->>>>>>> origin/main
         element: <DashboardLayout />,
         children: [
           {
             index: true,
-<<<<<<< HEAD
-            element: <Navigate to="/doctor" replace />,
-          },
-          {
-            path: "doctor",
-            element: <DoctorDashboardPage />,
-          },
-          {
-            path: "doctor/stock",
-            element: <CommandesDoctorPage />,
-          },
-          {
-            path: "secretaire",
-            element: <SecretaireDashboardPage />,
-          },
-          {
-            path: "secretaire/fournisseurs",
-            element: <FournisseursPage />,
-          },
-          {
-            path: "secretaire/produits",
-            element: <ProduitsPage />,
-          },
-          {
-            path: "secretaire/commandes",
-            element: <CommandesPage />,
-          },
-          {
-            path: "secretaire/lignes",
-            element: <LignesCommandePage />,
-          },
-          {
-            path: "assistant",
-            element: <AssistantDashboardPage />,
-          },
-          {
-            path: "assistant/mouvements",
-            element: <MouvementsStockPage />,
-          },
-=======
             element: <Navigate to="/auth/login" replace />,
           },
 
@@ -135,6 +84,10 @@ export const router = createBrowserRouter([
             element: <AbsencePage />,
           },
           {
+            path: "doctor/stock/commandes",
+            element: <CommandesDoctorPage />,
+          },
+          {
             path: "secretaire",
             element: <RoleGuard allowedRoles={["Secretaire"]} />,
             children: [
@@ -152,16 +105,32 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            path: "/secretaire/demandes-absence",
+            path: "secretaire/demandes-absence",
             element: <SecretaireDemandeAbsencePage />,
           },
           {
-            path: "/secretaire/absences",
+            path: "secretaire/absences",
             element: <SecretaireAbsencePage />,
           },
           {
-            path: "/secretaire/planning",
+            path: "secretaire/planning",
             element: <SecretairePlanningPage />,
+          },
+          {
+            path: "secretaire/stock/produits",
+            element: <ProduitsPage />,
+          },
+          {
+            path: "secretaire/stock/commandes",
+            element: <CommandesPage />,
+          },
+          {
+            path: "secretaire/stock/fournisseurs",
+            element: <FournisseursPage />,
+          },
+          {
+            path: "secretaire/stock/lignes-commande",
+            element: <LignesCommandePage />,
           },
           {
             path: "assistant",
@@ -181,18 +150,21 @@ export const router = createBrowserRouter([
             ],
           },
           {
-              path: "/assistant/demandes-absence",
+              path: "assistant/demandes-absence",
               element: <AssistantDemandeAbsencePage />,
             },
             {
-              path: "/assistant/planning",
+              path: "assistant/planning",
               element: <AssistantPlanningPage />,
             },
             {
-              path: "/assistant/absences",
+              path: "assistant/absences",
               element: <AssistantAbsencePage />,
             },
->>>>>>> origin/main
+            {
+              path: "assistant/stock/mouvements",
+              element: <MouvementsStockPage />,
+            },
           {
             path: "404",
             element: <Error404 />,
@@ -219,9 +191,5 @@ export const router = createBrowserRouter([
     path: "*",
     element: <Navigate to="/404" replace />,
   },
-<<<<<<< HEAD
-]);
-=======
    
 ]);
->>>>>>> origin/main

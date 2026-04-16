@@ -12,13 +12,6 @@ export function StatsCards({ items }: StatsCardsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {items.map((item) => (
-<<<<<<< HEAD
-        <div key={item.title} className="p-6 border rounded-xl">
-          <h3 className="text-sm font-medium">{item.title}</h3>
-          <p className="mt-4 text-3xl font-bold">{item.value}</p>
-          <p className="text-sm text-muted-foreground">{item.description}</p>
-        </div>
-=======
         <div key={item.title} className="p-6 glass border-white/5 shadow-xl hover:shadow-primary/5 transition-all duration-300 group">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">{item.title}</h3>
           <p className="mt-4 text-4xl font-extrabold text-foreground">{item.value}</p>
@@ -27,7 +20,6 @@ export function StatsCards({ items }: StatsCardsProps) {
           </div>
         </div>
 
->>>>>>> origin/main
       ))}
     </div>
   );
