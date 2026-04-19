@@ -22,25 +22,20 @@ import {
   TableHeader,
   TableRow,
 } from "@components/ui/table";
-
 import DataTableLoader from "./data-table-loader";
 import { DataTablePagination } from "./data-table-pagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-
   manualPagination?: boolean;
-
   paginationState?: {
     pageIndex: number;
     pageSize: number;
   };
-
   onPaginationChange?: React.Dispatch<
     React.SetStateAction<{ pageIndex: number; pageSize: number }>
   >;
-
   rowCount?: number;
   loading?: boolean;
 }
@@ -57,42 +52,29 @@ export function DataTable<TData, TValue>({
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] =
-    React.useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
   const [sorting, setSorting] = React.useState<SortingState>([]);
-
-  // ✅ FIX: internal pagination fallback (important from HEAD version)
-  const [internalPagination, setInternalPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-
-  const resolvedPagination = paginationState ?? internalPagination;
-  const resolvedOnPaginationChange =
-    onPaginationChange ?? setInternalPagination;
 
   const table = useReactTable({
     data: loading ? [] : data,
-    columns,
-
+    columns: columns,
     state: {
       sorting,
       columnVisibility,
       rowSelection,
       columnFilters,
-      pagination: resolvedPagination,
+      ...(paginationState ? { pagination: paginationState } : {}),
     },
-
     enableRowSelection: true,
-    manualPagination,
-    rowCount,
-
-    onPaginationChange: resolvedOnPaginationChange,
+    manualPagination: manualPagination,
+    rowCount: rowCount,
+    onPaginationChange: onPaginationChange,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -106,7 +88,7 @@ export function DataTable<TData, TValue>({
       {loading ? (
         <DataTableLoader
           table={table}
-          rowCount={resolvedPagination.pageSize}
+          rowCount={paginationState?.pageSize as number}
         />
       ) : (
         <div className="rounded-md border">
@@ -114,22 +96,23 @@ export function DataTable<TData, TValue>({
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  ))}
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
               ))}
             </TableHeader>
-
             <TableBody>
-              {table.getRowModel().rows.length ? (
+              {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -159,7 +142,6 @@ export function DataTable<TData, TValue>({
           </Table>
         </div>
       )}
-
       {manualPagination && <DataTablePagination table={table} />}
     </div>
   );

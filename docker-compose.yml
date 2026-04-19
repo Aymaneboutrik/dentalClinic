@@ -54,21 +54,6 @@ services:
     networks:
       - dental-network
 
-  personnel-service:
-    build:
-      context: ./Backend/personnel-service/ServicePersonnel
-      dockerfile: Dockerfile
-    container_name: personnel-service
-    ports:
-      - "5001:8080"
-    depends_on:
-      - personnel-db
-    environment:
-      ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: Host=personnel-db;Port=5432;Database=personnel_db;Username=personnel_user;Password=personnel_pass
-    networks:
-      - dental-network
-
   patient-db:
     image: postgres:15-alpine
     container_name: patient-db
@@ -91,6 +76,36 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://patient-db:5432/patient_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+    networks:
+      - dental-network
+
+  pgadmin:
+    image: dpage/pgadmin4:8.14
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - personnel-db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - dental-network
+
+  personnel-service:
+    build:
+      context: ./Backend/personnel-service/ServicePersonnel
+      dockerfile: Dockerfile
+    container_name: personnel-service
+    ports:
+      - "5001:8080"
+    depends_on:
+      - personnel-db
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=personnel-db;Port=5432;Database=personnel_db;Username=personnel_user;Password=personnel_pass
     networks:
       - dental-network
 
@@ -121,21 +136,6 @@ services:
     networks:
       - dental-network
 
-  pgadmin:
-    image: dpage/pgadmin4:8.14
-    container_name: pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
-    depends_on:
-      - personnel-db
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - dental-network
-
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -157,7 +157,12 @@ networks:
 
 volumes:
   auth_postgres_data:
+  personnel_db_data:
   pgadmin_data:
   stock_data:
   patient_db_data:
   servicepersonnel_personnel_db_data:
+    external: true
+
+
+

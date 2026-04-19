@@ -4,6 +4,7 @@ import {
   Users,
   FileText,
   ClipboardList,
+  Package,
 } from "lucide-react";
 
 export const secretaireSidebarConfig = [
@@ -42,5 +43,16 @@ export const secretaireSidebarConfig = [
     route: "/secretaire/absences",
     icon: <FileText size={18} />,
     childs: [],
+  },
+  {
+    name: "Gestion Stock",
+    route: "/secretaire/stock",
+    icon: <Package size={18} />,
+    childs: [
+      { name: "Produits", route: "/secretaire/stock/produits" },
+      { name: "Fournisseurs", route: "/secretaire/stock/fournisseurs" },
+      { name: "Commandes", route: "/secretaire/stock/commandes" },
+      { name: "Lignes Commande", route: "/secretaire/stock/lignes-commande" },
+    ],
   },
 ];

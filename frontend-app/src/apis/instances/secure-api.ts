@@ -1,4 +1,4 @@
-import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
+import axios from "axios";
 import Cookie from "js-cookie";
 import { TOKEN } from "@configs/vars";
 
@@ -7,42 +7,43 @@ const secureApi = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor (attach token)
+// Add a request interceptor
 secureApi.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  function (config) {
     const token = Cookie.get(TOKEN);
-
-    if (token && config.headers) {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
-    console.log("secure request");
-
     return config;
   },
-  (error: AxiosError) => {
+  function (error) {
+    // Do something with request error
     return Promise.reject(error);
   }
 );
 
-// Response interceptor
+// Add a response interceptor
 secureApi.interceptors.response.use(
-  (response: AxiosResponse) => {
+  function (response) {
     console.log("secure response");
+    // Any status code that lie within the range of 2xx cause this function to trigger
+    // Do something with response data
     return response;
   },
-  (error: AxiosError) => {
-    // Handle expired/invalid token
-    if (error.response?.status === 401) {
+  function (error) {
+    // If we get a 401 (Unauthorized), it means the token is invalid or expired
+    if (error.response && error.response.status === 401) {
       console.warn("Unauthorized request detected (401). Logging out...");
-
+      
+      // Clear authentication data
       Cookie.remove(TOKEN);
-
+      
+      // Redirect to login page only if not already there
       if (!window.location.pathname.includes("/auth/login")) {
         window.location.href = "/auth/login";
       }
     }
-
+    
     return Promise.reject(error);
   }
 );

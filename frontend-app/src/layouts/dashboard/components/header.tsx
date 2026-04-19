@@ -38,7 +38,9 @@ export function Header() {
 
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const toggleSheet = () => setSheetOpen((prev) => !prev);
+  const toggleSheet = () => {
+    setSheetOpen((prev) => !prev);
+  };
 
   const handleOpenModal = () => {
     open("logout-confirmation", {
@@ -54,12 +56,16 @@ export function Header() {
     });
   };
 
-  const initials = user?.email
-    ? user.email.charAt(0).toUpperCase()
+  const initials = user 
+    ? (user.email ? user.email.charAt(0) : "U").toUpperCase() 
     : "S";
 
   const handleToggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    if (theme === "dark") {
+      setTheme("light");
+    } else {
+      setTheme("dark");
+    }
   };
 
   return (
@@ -69,22 +75,23 @@ export function Header() {
         sidebarCollapsed ? "left-0 sm:left-[60px]" : "sm:left-[250px] left-0"
       )}
     >
-      {/* Mobile menu */}
+      {/* ======== Mobile Drawer Navbar ======== */}
       <Sheet open={sheetOpen} onOpenChange={toggleSheet}>
         <SheetTrigger asChild>
           <Button size="icon" variant="outline" className="sm:hidden">
             <PanelLeft className="h-5 w-5" />
+            <span className="sr-only">Toggle Menu</span>
           </Button>
         </SheetTrigger>
 
         <SheetContent side="left" className="sm:max-w-xs">
           <VisuallyHidden>
             <SheetTitle>Dental Clinic</SheetTitle>
+
             <SheetDescription>Dental Clinic</SheetDescription>
+
           </VisuallyHidden>
-
           <Logo />
-
           <nav className="flex flex-col gap-1 mt-4">
             {menus.map((m) => (
               <SidebarItem
@@ -101,7 +108,7 @@ export function Header() {
         </SheetContent>
       </Sheet>
 
-      {/* Top bar */}
+      {/* ======== App Bar ======== */}
       <div className="flex-1 flex gap-4 items-center justify-between">
         <SearchInput />
 
@@ -110,7 +117,7 @@ export function Header() {
         <Button
           onClick={handleToggleTheme}
           variant="outline"
-          className="rounded-full h-9 w-9"
+          className="rounded-full h-9 w-9 flex items-center justify-center"
           size="icon"
         >
           {theme === "light" ? (
@@ -125,23 +132,17 @@ export function Header() {
             <Button
               variant="outline"
               size="icon"
-              className="rounded-full font-bold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+              className="overflow-hidden rounded-full font-bold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
             >
-              {initials}
+              <div>{initials}</div>
             </Button>
           </DropdownMenuTrigger>
-
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={handleOpenProfile}>
+            <DropdownMenuItem onClick={handleOpenProfile} className="cursor-pointer">
               Profile
             </DropdownMenuItem>
-
             <DropdownMenuItem>Settings</DropdownMenuItem>
-
-            <DropdownMenuItem
-              onClick={handleOpenModal}
-              className="text-red-500 focus:text-red-600"
-            >
+            <DropdownMenuItem onClick={handleOpenModal} className="cursor-pointer text-red-500 focus:text-red-600 focus:bg-red-50">
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

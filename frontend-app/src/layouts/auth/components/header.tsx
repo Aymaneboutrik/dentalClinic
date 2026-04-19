@@ -4,11 +4,16 @@ import clsx from "clsx";
 import LangDropdown from "@components/commons/lang-dropdown";
 import { useTheme } from "@components/theme/theme-provider";
 
+
 export function Header() {
   const { setTheme, theme } = useTheme();
 
   const handleToggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    if (theme === "dark") {
+      setTheme("light");
+    } else {
+      setTheme("dark");
+    }
   };
 
   return (
@@ -17,7 +22,12 @@ export function Header() {
         "w-full absolute top-0 left-0 z-50 flex gap-4 px-8 py-6 bg-transparent transition-all duration-300"
       )}
     >
+
+      {/* ======== App Bar ======== */}
+      {/* Removed Redundant Logo for Auth Pages */}
       <div className="flex-1 flex gap-4 items-center justify-end">
+
+
         <div className="flex gap-2">
           <LangDropdown />
 

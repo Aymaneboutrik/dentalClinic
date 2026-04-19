@@ -43,13 +43,13 @@ function SidebarItem({
   const { t } = useTranslation();
 
   const [showChilds, setShowChilds] = useState<boolean>(false);
-
   const hasChildren = (childs?.length ?? 0) > 0;
 
   const getChildRoutes = (): string[] => {
     if (hasChildren) {
-      return childs!.map((c) => c.route);
-    }
+  return childs!.map((c) => c.route);
+}
+
     return [];
   };
 
@@ -61,24 +61,27 @@ function SidebarItem({
   const hasActiveChild = (): boolean => {
     if (hasChildren) {
       const childRoutes = getChildRoutes();
+
       return childRoutes.includes(location.pathname.split("/").pop() as string);
     }
+
     return false;
   };
 
-  const handleClick = () => {
-    if (hasChildren) {
-      setShowChilds((prev) => !prev);
-    } else {
-      navigate(route);
-      if (closeSheet) closeSheet((prev) => !prev);
-    }
-  };
+ const handleClick = () => {
+  if (hasChildren) {
+    setShowChilds((prev) => !prev);
+  } else {
+    navigate(route);
+    if (closeSheet) closeSheet((prev) => !prev);
+  }
+};
 
   /** ======= Collapsed Sidebar ======= */
   if (sidebarCollapsed && collapsible) {
     return (
       <>
+        {/* ======= Collapsed item with child items ======= */}
         {hasChildren ? (
           <Popover>
             <PopoverTrigger>
@@ -98,10 +101,9 @@ function SidebarItem({
                 <TooltipContent side="right">{name}</TooltipContent>
               </Tooltip>
             </PopoverTrigger>
-
             <PopoverContent side="right">
               <div>
-                {childs!.map((c) => (
+                {hasChildren && childs!.map((c) => (
                   <ChildItem
                     key={c.route}
                     icon={c.icon}
@@ -110,17 +112,19 @@ function SidebarItem({
                     collapsed={sidebarCollapsed}
                     closeSheet={closeSheet}
                   />
+                  // <div key={c.route}>{c.name}</div>÷
                 ))}
               </div>
             </PopoverContent>
           </Popover>
         ) : (
+          /* ======= Collapsed item without child items ======= */
           <Tooltip>
             <TooltipTrigger asChild>
               <div
                 onClick={handleClick}
                 className={clsx(
-                  "cursor-pointer my-1 ml-[5px] flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:text-primary md:h-8 md:w-8",
+                  "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
                   isActiveModule() || hasActiveChild()
                     ? "text-primary"
                     : "text-muted-foreground"
@@ -139,6 +143,7 @@ function SidebarItem({
   /** ======= Expanded Sidebar ======= */
   return (
     <>
+      {/*======= Parent Menu =======*/}
       <div
         onClick={handleClick}
         className={clsx(
@@ -148,7 +153,7 @@ function SidebarItem({
           !(isActiveModule() || hasActiveChild()) && "hover:bg-primary/10"
         )}
       >
-        <div className="flex items-center gap-2">
+        <div className={clsx("flex items-center gap-2")}>
           <div>{icon}</div>
           <div className="min-w-[150px] overflow-hidden">
             <Text>{t(name)}</Text>
@@ -165,6 +170,7 @@ function SidebarItem({
         )}
       </div>
 
+      {/*======= Child Menus =======*/}
       <div
         className={clsx(
           "overflow-hidden transition-all duration-500",
@@ -173,14 +179,14 @@ function SidebarItem({
       >
         {hasChildren &&
           childs!.map((c) => (
-            <ChildItem
-              key={c.route}
-              icon={c.icon}
-              name={c.name}
-              route={c.route}
-              closeSheet={closeSheet}
-            />
-          ))}
+          <ChildItem
+            key={c.route}
+            icon={c.icon}
+            name={c.name}
+            route={c.route}
+            closeSheet={closeSheet}
+          />
+        ))}
       </div>
     </>
   );
@@ -203,9 +209,9 @@ function ChildItem({
 
   return (
     <div
-      onClick={handleClick}
+    onClick={handleClick}
       className={clsx(
-        "flex align-middle gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
+            "flex align-middle gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
         isMatched && "text-primary",
         !isMatched && "hover:text-primary",
         !collapsed && "pl-6"

@@ -9,7 +9,7 @@ import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "/api/stock";
 
 const fournisseurSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
@@ -99,6 +99,7 @@ export default function FournisseursPage() {
   );
 
   const columns: ColumnDef<Fournisseur>[] = [
+    { accessorKey: "id", header: "ID" },
     { accessorKey: "nom", header: "Nom" },
     { accessorKey: "adresse", header: "Adresse" },
     { accessorKey: "telephone", header: "Téléphone" },

@@ -9,17 +9,18 @@ const resources = {
     translation: en,
   },
   fr: {
-    translation: en // fallback English for now
+    translation: en, // Fallback to English for French browsers for now
   },
   mm: {
     translation: mm,
   },
 };
 
+
 i18n.use(initReactI18next).init({
   resources,
   lng: useUserPreference.getState().lang || "en",
-  fallbackLng: "en",
+  fallbackLng: useUserPreference.getState().lang || "en",
   interpolation: {
     escapeValue: false,
   },

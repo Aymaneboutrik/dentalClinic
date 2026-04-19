@@ -20,6 +20,7 @@ interface Props {
   autoComplete?: string;
 }
 
+
 function TextInput({
   label,
   placeholder,
@@ -30,6 +31,7 @@ function TextInput({
   className,
   autoComplete,
 }: Props) {
+
   return (
     <FormField
       control={form.control}
@@ -38,26 +40,21 @@ function TextInput({
         <FormItem>
           {(label || withAsterisk) && (
             <FormLabel className="flex items-center gap-1">
-              {label}
-              {withAsterisk && (
-                <span className="mt-1 text-destructive">*</span>
-              )}
+              {label}{" "}
+              {withAsterisk && <span className="mt-1 text-destructive">*</span>}
             </FormLabel>
           )}
-
           <FormControl>
-            <Input
-              placeholder={placeholder}
-              className={className}
+            <Input 
+              placeholder={placeholder} 
+              className={className} 
               autoComplete={autoComplete}
-              {...field}
+              {...field} 
             />
           </FormControl>
 
-          {description && (
-            <FormDescription>{description}</FormDescription>
-          )}
 
+          {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
       )}

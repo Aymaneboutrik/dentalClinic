@@ -6,6 +6,7 @@ import {
   FileText,
   ClipboardMinus,
   ShieldAlert,
+  Package,
 } from "lucide-react";
 
 export const doctorSidebarConfig = [
@@ -16,20 +17,14 @@ export const doctorSidebarConfig = [
     childs: [],
   },
   {
-    name: "Employés",
-    route: "/doctor/employees",
+    name: "Fiches Employés",
+    route: "/doctor/personnel",
     icon: <Users size={18} />,
     childs: [],
   },
   {
-    name: "Fiches Employés",
-    route: "/doctor/personnel",
-    icon: <UserRound size={18} />,
-    childs: [],
-  },
-  {
     name: "Comptes & Sécurité",
-    route: "/doctor/security",
+    route: "/doctor/employees",
     icon: <ShieldAlert size={18} />,
     childs: [],
   },
@@ -61,6 +56,12 @@ export const doctorSidebarConfig = [
     name: "Rendez-vous",
     route: "/doctor/appointments",
     icon: <CalendarDays size={18} />,
+    childs: [],
+  },
+  {
+    name: "Commandes Stock",
+    route: "/doctor/stock/commandes",
+    icon: <Package size={18} />,
     childs: [],
   },
 ];

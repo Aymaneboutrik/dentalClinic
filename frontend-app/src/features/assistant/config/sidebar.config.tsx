@@ -4,6 +4,7 @@ import {
   Users,
   FileText,
   ClipboardList,
+  Package,
 } from "lucide-react";
 
 export const assistantSidebarConfig = [
@@ -47,6 +48,12 @@ export const assistantSidebarConfig = [
     name: "Absences",
     route: "/assistant/absences",
     icon: <FileText size={18} />,
+    childs: [],
+  },
+  {
+    name: "Mouvements Stock",
+    route: "/assistant/stock/mouvements",
+    icon: <Package size={18} />,
     childs: [],
   },
 ];

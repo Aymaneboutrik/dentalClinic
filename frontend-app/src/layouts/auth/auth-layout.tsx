@@ -8,6 +8,7 @@ function AuthLayout() {
 
   return (
     <div className="relative w-full h-[100vh] p-4">
+
       <Center>
         <Header />
         <Outlet />

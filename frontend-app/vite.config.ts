@@ -18,7 +18,6 @@ export default defineConfig({
       "@apis": path.resolve(__dirname, "./src/apis"),
     },
   },
-
   server: {
     host: true,
     watch: {

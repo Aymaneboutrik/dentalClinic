@@ -1,33 +1,29 @@
 /// <reference types="vite/client" />
-import axios, {
-  InternalAxiosRequestConfig,
-  AxiosResponse,
-  AxiosError,
-} from "axios";
+import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 
 const publicApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
   timeout: 15000,
 });
 
-// Request interceptor
+// Add a request interceptor
 publicApi.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  function (config: InternalAxiosRequestConfig) {
     console.log("public request");
     return config;
   },
-  (error: AxiosError) => {
+  function (error: AxiosError) {
     return Promise.reject(error);
   }
 );
 
-// Response interceptor
+// Add a response interceptor
 publicApi.interceptors.response.use(
-  (response: AxiosResponse) => {
+  function (response: AxiosResponse) {
     console.log("public response");
     return response;
   },
-  (error: AxiosError) => {
+  function (error: AxiosError) {
     return Promise.reject(error);
   }
 );

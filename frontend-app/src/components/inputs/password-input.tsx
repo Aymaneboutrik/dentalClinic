@@ -8,7 +8,7 @@ import {
 } from "@components/ui/form";
 import { Input } from "@components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
-import { useState, ReactNode, useMemo } from "react";
+import { useState, useMemo, ReactNode } from "react";
 import { PasswordStrengthMeter } from "@components/commons/PasswordStrengthMeter";
 
 interface Props {
@@ -23,6 +23,7 @@ interface Props {
   showStrength?: boolean;
 }
 
+
 function PasswordInput({
   label,
   placeholder,
@@ -34,11 +35,17 @@ function PasswordInput({
   autoComplete,
   showStrength = false,
 }: Props) {
-  const [visiblePassword, setVisiblePassword] = useState(false);
+
+  const [isReadOnly, setIsReadOnly] = useState(true);
+  const [visiblePassword, setVisiblePassword] = useState<boolean>(false);
+
+  const togglePasswordVisibility = () => {
+    setVisiblePassword((prev) => !prev);
+  };
 
   const stableId = useMemo(() => {
-    const suffix = Math.random().toString(36).slice(2, 7);
-    return form?.id ? `${form.id}_${name}_${suffix}` : `pwd_${name}_${suffix}`;
+    const randomSuffix = Math.random().toString(36).slice(2, 7);
+    return form?.id ? `${form.id}_${name}_${randomSuffix}` : `v_${name}_${randomSuffix}`;
   }, [form?.id, name]);
 
   return (
@@ -48,35 +55,44 @@ function PasswordInput({
       render={({ field }) => (
         <FormItem>
           {(label || withAsterisk) && (
-            <FormLabel className="flex items-center gap-1" htmlFor={stableId}>
+            <FormLabel
+              htmlFor={form.id + name}
+              className="flex items-center gap-1"
+            >
               {label}
-              {withAsterisk && (
-                <span className="mt-1 text-destructive">*</span>
-              )}
+              {withAsterisk && <span className="mt-1 text-destructive">*</span>}
             </FormLabel>
           )}
-
           <FormControl>
-            <div className="relative">
+            <div className="relative flex items-center justify-between">
+              <div
+                onClick={togglePasswordVisibility}
+                className="absolute right-0 z-10 flex items-center justify-center h-full px-4 border-l cursor-pointer"
+              >
+                {!visiblePassword ? (
+                  <EyeOff className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
               <Input
                 {...field}
                 id={stableId}
-                type={visiblePassword ? "text" : "password"}
+                type={isReadOnly ? "text" : (visiblePassword ? "text" : "password")}
                 placeholder={placeholder}
-                className={className}
-                autoComplete={autoComplete}   // ✅ FIX ICI
+                  className={className}
+                autoComplete={autoComplete}
+                readOnly={isReadOnly}
+                
+                onFocus={() => {
+                    setIsReadOnly(false);
+                }}
+              onBlur={() => {
+                setIsReadOnly(true);
+                field.onBlur();
+              }}
               />
 
-              <div
-                onClick={() => setVisiblePassword((v) => !v)}
-                className="absolute right-0 top-0 h-full px-4 flex items-center cursor-pointer"
-              >
-                {visiblePassword ? (
-                  <Eye className="w-4 h-4 text-muted-foreground" />
-                ) : (
-                  <EyeOff className="w-4 h-4 text-muted-foreground" />
-                )}
-              </div>
             </div>
           </FormControl>
 
