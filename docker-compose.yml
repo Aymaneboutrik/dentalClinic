@@ -62,7 +62,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - patient_db_data:/var/lib/postgresql/data
+      - patient-service_patient-db-data:/var/lib/postgresql/data
     networks:
       - dental-network
 
@@ -76,6 +76,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://patient-db:5432/patient_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      FILE_UPLOAD_DIR: /uploads
+    volumes:
+      - patient_uploads:/uploads
     networks:
       - dental-network
 
@@ -160,9 +163,8 @@ volumes:
   personnel_db_data:
   pgadmin_data:
   stock_data:
-  patient_db_data:
   servicepersonnel_personnel_db_data:
     external: true
-
-
-
+  patient-service_patient-db-data:
+    external: true
+  patient_uploads:

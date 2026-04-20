@@ -72,8 +72,11 @@ public interface PatientMapper {
     LigneOrdonnance toLigneEntity(LigneOrdonnanceDto ligneDto);
     List<OrdonnanceDto> toOrdonnanceDtoList(List<Ordonnance> ordonnances);
 
+    ActeDto toActeDto(Acte acte);
+
     // --- Secretary Mapping (Restreinte) ---
     @Mapping(source = "dossierMedical.id", target = "dossierId")
+    @Mapping(source = "dossierMedical.archived", target = "archived")
     SecretaryPatientDto toSecretaryDto(Patient patient);
 
     List<SecretaryPatientDto> toSecretaryDtoList(List<Patient> patients);

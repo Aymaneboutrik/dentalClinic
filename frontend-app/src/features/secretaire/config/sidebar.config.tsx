@@ -21,7 +21,7 @@ export const secretaireSidebarConfig = [
     childs: [],
   },
   {
-    name: "Patients",
+    name: "Dossier Patient",
     route: "/secretaire/patients",
     icon: <Users size={18} />,
     childs: [],

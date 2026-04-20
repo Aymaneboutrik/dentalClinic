@@ -27,8 +27,9 @@ public class DocumentController {
     public ResponseEntity<DocumentMedicalDto> uploadMedicalDocument(
             @PathVariable Long dossierId,
             @RequestParam("file") MultipartFile file,
+            @RequestParam(required = false) String nom,
             @RequestParam(defaultValue = "MEDICAL") String type) throws IOException {
-        DocumentMedical doc = documentService.uploadDocumentToDossier(dossierId, file, type);
+        DocumentMedical doc = documentService.uploadDocumentToDossier(dossierId, file, nom, type);
         return ResponseEntity.ok(patientMapper.toDocumentDto(doc));
     }
 
@@ -36,8 +37,9 @@ public class DocumentController {
     public ResponseEntity<DocumentMedicalDto> uploadToConsultation(
             @PathVariable Long consultationId,
             @RequestParam("file") MultipartFile file,
+            @RequestParam(required = false) String nom,
             @RequestParam(defaultValue = "MEDICAL") String type) throws IOException {
-        DocumentMedical doc = documentService.uploadDocument(consultationId, file, type);
+        DocumentMedical doc = documentService.uploadDocument(consultationId, file, nom, type);
         return ResponseEntity.ok(patientMapper.toDocumentDto(doc));
     }
 
@@ -60,5 +62,19 @@ public class DocumentController {
                 .contentType(MediaType.parseMediaType(download.contentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + download.fileName() + "\"")
                 .body(download.content());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDocument(@PathVariable Long id) throws IOException {
+        documentService.deleteDocument(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/name")
+    public ResponseEntity<DocumentMedicalDto> updateDocumentName(
+            @PathVariable Long id,
+            @RequestParam String nom) {
+        DocumentMedical doc = documentService.updateDocumentName(id, nom);
+        return ResponseEntity.ok(patientMapper.toDocumentDto(doc));
     }
 }

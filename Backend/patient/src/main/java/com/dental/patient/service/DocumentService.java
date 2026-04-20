@@ -33,7 +33,7 @@ public class DocumentService {
     @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
-    public DocumentMedical uploadDocument(Long consultationId, MultipartFile file, String type) throws IOException {
+    public DocumentMedical uploadDocument(Long consultationId, MultipartFile file, String nom, String type) throws IOException {
         Consultation consultation = consultationRepository.findById(consultationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Consultation non trouvée: " + consultationId));
 
@@ -47,7 +47,7 @@ public class DocumentService {
         Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
         DocumentMedical document = DocumentMedical.builder()
-                .nom(file.getOriginalFilename())
+                .nom(nom != null && !nom.isBlank() ? nom : file.getOriginalFilename())
                 .type(type)
                 .chemin(targetPath.toString())
                 .consultation(consultation)
@@ -56,7 +56,7 @@ public class DocumentService {
         return documentRepository.save(document);
     }
 
-    public DocumentMedical uploadDocumentToDossier(Long dossierId, MultipartFile file, String type) throws IOException {
+    public DocumentMedical uploadDocumentToDossier(Long dossierId, MultipartFile file, String nom, String type) throws IOException {
         DossierMedical dossier = dossierMedicalRepository.findById(dossierId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dossier non trouvé: " + dossierId));
 
@@ -70,7 +70,7 @@ public class DocumentService {
         Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
         DocumentMedical document = DocumentMedical.builder()
-                .nom(file.getOriginalFilename())
+                .nom(nom != null && !nom.isBlank() ? nom : file.getOriginalFilename())
                 .type(type)
                 .chemin(targetPath.toString())
                 .dossier(dossier)
@@ -101,5 +101,26 @@ public class DocumentService {
 
     public List<DocumentMedical> getDocumentsByDossier(Long dossierId) {
         return documentRepository.findByDossierId(dossierId);
+    }
+
+    public List<DocumentMedical> getDocumentsByDossierAndType(Long dossierId, String type) {
+        return documentRepository.findByDossierIdAndType(dossierId, type);
+    }
+
+    public void deleteDocument(Long id) throws IOException {
+        DocumentMedical document = getDocumentById(id);
+        
+        // Delete physical file
+        Path path = Paths.get(document.getChemin());
+        Files.deleteIfExists(path);
+        
+        // Delete from database
+        documentRepository.delete(document);
+    }
+
+    public DocumentMedical updateDocumentName(Long id, String newName) {
+        DocumentMedical document = getDocumentById(id);
+        document.setNom(newName);
+        return documentRepository.save(document);
     }
 }

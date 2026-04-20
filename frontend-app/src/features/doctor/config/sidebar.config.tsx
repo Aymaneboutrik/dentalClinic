@@ -47,7 +47,7 @@ export const doctorSidebarConfig = [
     childs: [],
   },
   {
-    name: "Patients",
+    name: "Dossier Patient",
     route: "/doctor/patients",
     icon: <UserRound size={18} />,
     childs: [],

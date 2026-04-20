@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardHeader } from "../../../components/commons/dashboard/DashboardHeader";
 import { patientService, Patient, Consultation } from "@apis/services/patient";
@@ -11,25 +11,50 @@ import {
   Download,
   Upload,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Edit,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import { toast } from "sonner";
+import { PatientActionModal } from "../components/PatientActionModal";
+import { ConsultationModal } from "../components/ConsultationModal";
+import { PrescriptionModal } from "../components/PrescriptionModal";
+import { DocumentUploadModal } from "../components/DocumentUploadModal";
+import { ConsultationDocsModal } from "../components/ConsultationDocsModal";
+import { AddObservationModal } from "../components/AddObservationModal";
+import useAuthStore from "@stores/auth-store";
+import { Plus } from "lucide-react";
+
+import { useSearchStore } from "@stores/use-search-store";
 
 export default function PatientHistoryPage() {
-  const [searchParams] = useSearchParams();
+  const { user } = useAuthStore();
+  const searchParams = useSearchParams()[0];
   const cinFromUrl = searchParams.get("cin");
   
-  const [searchTerm, setSearchTerm] = useState(cinFromUrl || "");
+  const { searchTerm, setSearchTerm } = useSearchStore();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [history, setHistory] = useState<Consultation[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConsultModalOpen, setIsConsultModalOpen] = useState(false);
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [isConsultDocsModalOpen, setIsConsultDocsModalOpen] = useState(false);
+  const [isAddObservationModalOpen, setIsAddObservationModalOpen] = useState(false);
+  const [selectedConsultId, setSelectedConsultId] = useState<number | null>(null);
+  const [selectedConsultDate, setSelectedConsultDate] = useState("");
+  const [uploading, setUploading] = useState(false);
+  // Remove direct file ref usage as we now use DocumentUploadModal
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (cinFromUrl) {
       handleSearch(cinFromUrl);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cinFromUrl]);
 
   const handleSearch = async (cinValue: string = searchTerm) => {
@@ -43,47 +68,85 @@ export default function PatientHistoryPage() {
       
       const historyData = await patientService.secretaryGetHistoryByCin(cinValue);
       setHistory(historyData);
+
+      if (patientData?.dossierId) {
+        const docs = user?.role === "Secretaire" 
+          ? await patientService.secretaryGetDossierDocuments(patientData.dossierId)
+          : await patientService.getDossierDocuments(patientData.dossierId);
+        setDocuments(docs);
+      }
     } catch {
       setPatient(null);
       setHistory([]);
+      setDocuments([]);
       toast.error("Patient non trouvé ou erreur serveur");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRenameDocument = async (id: number, currentName: string) => {
+    const newName = window.prompt("Entrez le nouveau nom du document :", currentName);
+    if (newName && newName !== currentName) {
+      try {
+        await patientService.renameDocument(id, newName);
+        toast.success("Document renommé");
+        if (cinFromUrl) handleSearch(cinFromUrl);
+        else if (patient?.cin) handleSearch(patient.cin);
+      } catch (error) {
+        toast.error("Erreur lors du changement de nom");
+        console.error(error);
+      }
+    }
+  };
+
+  const handleDeleteDocument = async (id: number) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce document ? Cette action est irréversible.")) {
+      try {
+        await patientService.deleteDocument(id);
+        toast.success("Document supprimé");
+        if (cinFromUrl) handleSearch(cinFromUrl);
+        else if (patient?.cin) handleSearch(patient.cin);
+      } catch (error) {
+        toast.error("Erreur lors de la suppression");
+        console.error(error);
+      }
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !patient?.dossierId) return;
+
+    setUploading(true);
+    try {
+      await patientService.uploadDossierDocument(patient.dossierId, file);
+      toast.success("Document ajouté avec succès");
+      // Refresh the page data if needed, or at least the document list if it was dynamic
+      if (cinFromUrl) handleSearch(cinFromUrl);
+    } catch (error) {
+      toast.error("Erreur lors de l'envoi du document");
+      console.error(error);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const getBackPath = () => {
+    const role = user?.role || "";
+    if (["Dentiste", "Doctor", "Medecin"].includes(role)) return "/doctor/patients";
+    if (["Assistant", "Assistante"].includes(role)) return "/assistant/patients";
+    return "/secretaire/patients";
+  };
+
   return (
     <div className="space-y-8 pb-10">
       <DashboardHeader
         title="Dossier Médical"
-        subtitle="Consultation de l'historique et des documents par CIN"
+        subtitle="Historique des consultations et gestion du profil"
+        backPath={getBackPath()}
       />
-
-      {/* Search Section */}
-      <div className="glass border-white/5 p-6 rounded-[2rem] shadow-xl">
-        <form 
-          onSubmit={(e) => { e.preventDefault(); handleSearch(); }}
-          className="flex flex-col md:flex-row gap-4"
-        >
-          <div className="relative group flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <input 
-              type="text"
-              placeholder="Saisissez le CIN du patient (ex: AB12345)..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
-            />
-          </div>
-          <button 
-            type="submit"
-            disabled={loading}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-primary/20 disabled:opacity-50"
-          >
-            {loading ? "Recherche..." : "Charger le dossier"}
-          </button>
-        </form>
-      </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
@@ -104,7 +167,18 @@ export default function PatientHistoryPage() {
                   </div>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tight">{patient.prenom} {patient.nom}</h2>
+                  <div className="flex items-center justify-center space-x-2">
+                    <h2 className="text-2xl font-black tracking-tight capitalize">{patient.prenom} {patient.nom}</h2>
+                    {user?.role !== "Assistant" && user?.role !== "Assistante" && (
+                      <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="p-2 hover:bg-primary/20 rounded-xl text-primary transition-all active:scale-90"
+                        title="Modifier les coordonnées personnelles (Nom, CIN, etc.)"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
                   <p className="text-primary font-bold tracking-widest uppercase text-xs mt-1">CIN: {patient.cin}</p>
                 </div>
               </div>
@@ -130,10 +204,15 @@ export default function PatientHistoryPage() {
                 </div>
               </div>
 
-              <button className="w-full mt-6 flex items-center justify-center space-x-2 bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-2xl font-bold transition-all">
-                <Upload className="w-4 h-4" />
-                <span>Ajouter un document</span>
-              </button>
+              {user?.role !== "Assistant" && user?.role !== "Assistante" && (
+                <button 
+                  onClick={() => setIsDocModalOpen(true)}
+                  className="w-full mt-6 flex items-center justify-center space-x-2 bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-2xl font-bold transition-all"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Ajouter un document administratif</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -147,6 +226,15 @@ export default function PatientHistoryPage() {
                   <Clock className="w-5 h-5 text-primary" />
                   <span>Historique des consultations</span>
                 </h3>
+                {["Dentiste", "Doctor", "Medecin"].includes(user?.role || "") && (
+                  <button 
+                    className="flex items-center space-x-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-xl font-bold transition-all active:scale-95"
+                    onClick={() => setIsConsultModalOpen(true)}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Nouvelle Consultation</span>
+                  </button>
+                )}
               </div>
 
               <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
@@ -160,10 +248,70 @@ export default function PatientHistoryPage() {
                         <time className="font-mono text-xs font-bold text-primary">{consult.dateConsultation || "Date inconnue"}</time>
                       </div>
                       <div className="text-foreground font-bold mb-1">{consult.motif}</div>
-                      <div className="text-muted-foreground text-sm line-clamp-2">Observations médicales confidentielles</div>
-                      <div className="mt-4 flex space-x-2">
-                        <button className="text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full hover:bg-primary/20 transition-colors">Détails</button>
-                        <button className="text-[10px] font-bold uppercase tracking-widest bg-white/5 text-muted-foreground px-3 py-1 rounded-full hover:bg-white/10 transition-colors">Documents</button>
+                      {["Dentiste", "Doctor", "Medecin", "Assistant", "Assistante"].includes(user?.role || "") ? (
+                        <div className="space-y-2 mt-2">
+                          {consult.observations && consult.observations.length > 0 ? (
+                            consult.observations.map((obs: any, i: number) => (
+                              <div key={i} className="space-y-1">
+                                <p className="text-sm text-muted-foreground bg-white/5 p-2 rounded-lg border border-white/5 italic">
+                                  "{obs.contenu}"
+                                </p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-primary/60 px-2 flex items-center">
+                                  {obs.typeAuteur === "ASSISTANTE" ? "Note Assistant" : "Note Dentiste"}
+                                </p>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic">Aucune observation consignée</p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-muted-foreground text-sm line-clamp-2">Observations médicales confidentielles</div>
+                      )}
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {["Dentiste", "Doctor", "Medecin"].includes(user?.role || "") && (
+                           <button 
+                            className="text-[10px] font-bold uppercase tracking-widest bg-green-500/10 text-green-500 px-3 py-1 rounded-full hover:bg-green-500/20 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (consult.id) {
+                                setSelectedConsultId(consult.id);
+                                setIsPrescriptionModalOpen(true);
+                              }
+                            }}
+                           >
+                            Ordonnance
+                           </button>
+                        )}
+                        {user?.role !== "Secretaire" && (
+                          <button 
+                            className="text-[10px] font-bold uppercase tracking-widest bg-white/5 text-muted-foreground px-3 py-1 rounded-full hover:bg-white/10 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (consult.id) {
+                                setSelectedConsultId(consult.id);
+                                setSelectedConsultDate(consult.dateConsultation || "");
+                                setIsConsultDocsModalOpen(true);
+                              }
+                            }}
+                          >
+                            Documents
+                          </button>
+                        )}
+                        {["Assistant", "Assistante", "Dentiste", "Doctor", "Medecin"].includes(user?.role || "") && (
+                          <button 
+                            className="text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full hover:bg-blue-500/20 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (consult.id) {
+                                setSelectedConsultId(consult.id);
+                                setIsAddObservationModalOpen(true);
+                              }
+                            }}
+                          >
+                            {user?.role === "Assistant" || user?.role === "Assistante" ? "+ Note Assistant" : "+ Note"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -175,26 +323,93 @@ export default function PatientHistoryPage() {
               </div>
             </div>
 
-            {/* Documents Section */}
+            {/* Administrative Documents Section */}
             <div className="glass border-white/5 p-8 rounded-[2rem] shadow-xl">
               <h3 className="text-xl font-bold mb-6 flex items-center space-x-2">
                 <FileText className="w-5 h-5 text-primary" />
-                <span>Documents administratifs</span>
+                <span>Documents Administratifs</span>
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between hover:bg-white/10 transition-colors cursor-pointer group">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center text-red-500">
-                      <FileText className="w-5 h-5" />
+              {documents.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {documents.map((doc) => (
+                    <div 
+                      key={doc.id}
+                      className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between hover:bg-white/10 transition-all group gap-4"
+                    >
+                      {/* Left: Icon & Info */}
+                      <div className="flex items-center space-x-4 min-w-0 flex-1">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${doc.type === 'MEDICAL' ? 'bg-primary/20 text-primary' : 'bg-blue-500/20 text-blue-500'}`}>
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors" title={doc.nom}>
+                            {doc.nom}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {doc.dateAjout || "Date inconnue"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: Actions */}
+                      <div className="flex items-center space-x-1 shrink-0">
+                        {user?.role !== "Assistant" && user?.role !== "Assistante" && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); doc.id && handleRenameDocument(doc.id, doc.nom); }}
+                            className="p-2 text-muted-foreground hover:text-primary hover:bg-white/10 rounded-xl transition-all"
+                            title="Renommer"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (doc.id) {
+                              const downloadFn = user?.role === "Secretaire" 
+                                ? patientService.secretaryDownloadDocument(doc.id)
+                                : patientService.downloadDocument(doc.id);
+                                
+                              downloadFn.then(blob => {
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.style.display = 'none';
+                                a.href = url;
+                                a.download = doc.nom || "document";
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                document.body.removeChild(a);
+                              }).catch(error => {
+                                console.error("Download error:", error);
+                                toast.error("Erreur lors du téléchargement du document.");
+                              });
+                            }
+                          }}
+                          className="p-2 text-muted-foreground hover:text-primary hover:bg-white/10 rounded-xl transition-all"
+                          title="Télécharger"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        {user?.role !== "Assistant" && user?.role !== "Assistante" && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); doc.id && handleDeleteDocument(doc.id); }}
+                            className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold truncate max-w-[150px]">Carte d'identité.pdf</p>
-                      <p className="text-[10px] text-muted-foreground">Scanné le 10/01/2024</p>
-                    </div>
-                  </div>
-                  <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="py-6 text-center">
+                  <p className="text-muted-foreground text-sm italic">Aucun document dans le dossier.</p>
+                </div>
+              )}
             </div>
 
           </div>
@@ -225,6 +440,67 @@ export default function PatientHistoryPage() {
           </div>
         </div>
       )}
+
+      {/* Patient Action Modal */}
+      <PatientActionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          if (cinFromUrl) handleSearch(cinFromUrl);
+          else if (patient?.cin) handleSearch(patient.cin);
+        }}
+        mode="edit"
+        patient={patient}
+      />
+
+      <ConsultationModal
+        isOpen={isConsultModalOpen}
+        onClose={() => setIsConsultModalOpen(false)}
+        onSuccess={() => {
+          if (cinFromUrl) handleSearch(cinFromUrl);
+          else if (patient?.cin) handleSearch(patient.cin);
+        }}
+        patientId={patient?.id || 0}
+      />
+
+      <PrescriptionModal
+        isOpen={isPrescriptionModalOpen}
+        onClose={() => setIsPrescriptionModalOpen(false)}
+        onSuccess={() => {
+          if (cinFromUrl) handleSearch(cinFromUrl);
+          else if (patient?.cin) handleSearch(patient.cin);
+        }}
+        consultationId={selectedConsultId}
+      />
+
+      <DocumentUploadModal
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+        onSuccess={() => {
+          if (cinFromUrl) handleSearch(cinFromUrl);
+          else if (patient?.cin) handleSearch(patient.cin);
+        }}
+        targetId={patient?.dossierId || 0}
+        targetType="dossier"
+        defaultDocType="ADMIN"
+      />
+
+      <ConsultationDocsModal
+        isOpen={isConsultDocsModalOpen}
+        onClose={() => setIsConsultDocsModalOpen(false)}
+        consultationId={selectedConsultId}
+        consultationDate={selectedConsultDate}
+      />
+
+      <AddObservationModal
+        isOpen={isAddObservationModalOpen}
+        onClose={() => setIsAddObservationModalOpen(false)}
+        onSuccess={() => {
+          if (cinFromUrl) handleSearch(cinFromUrl);
+          else if (patient?.cin) handleSearch(patient.cin);
+        }}
+        consultationId={selectedConsultId}
+      />
     </div>
   );
 }
