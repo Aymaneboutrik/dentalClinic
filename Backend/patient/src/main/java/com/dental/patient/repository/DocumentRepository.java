@@ -10,4 +10,5 @@ import java.util.List;
 public interface DocumentRepository extends JpaRepository<DocumentMedical, Long> {
     List<DocumentMedical> findByConsultationId(Long consultationId);
     List<DocumentMedical> findByDossierId(Long dossierId);
+    List<DocumentMedical> findByDossierIdAndType(Long dossierId, String type);
 }

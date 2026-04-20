@@ -10,6 +10,7 @@ export interface Patient {
   dateNaissance?: string;
   sexe?: string;
   archived?: boolean;
+  dossierId?: number;
 }
 
 export interface Consultation {
@@ -67,10 +68,16 @@ export const patientService = {
     return response.data;
   },
 
+  addAssistantObservation: async (consultationId: number, contenu: string) => {
+    const response = await secureApi.post(`/assistant/consultations/${consultationId}/observations`, { contenu });
+    return response.data;
+  },
+
   // Documents
-  uploadDossierDocument: async (dossierId: number, file: File, type: string = "MEDICAL") => {
+  uploadDossierDocument: async (dossierId: number, file: File, nom?: string, type: string = "MEDICAL") => {
     const formData = new FormData();
     formData.append("file", file);
+    if (nom) formData.append("nom", nom);
     formData.append("type", type);
     const response = await secureApi.post(`/documents/dossier/${dossierId}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -78,9 +85,10 @@ export const patientService = {
     return response.data;
   },
 
-  uploadConsultationDocument: async (consultationId: number, file: File, type: string = "MEDICAL") => {
+  uploadConsultationDocument: async (consultationId: number, file: File, nom?: string, type: string = "MEDICAL") => {
     const formData = new FormData();
     formData.append("file", file);
+    if (nom) formData.append("nom", nom);
     formData.append("type", type);
     const response = await secureApi.post(`/documents/consultation/${consultationId}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -95,6 +103,15 @@ export const patientService = {
 
   getConsultationDocuments: async (consultationId: number) => {
     const response = await secureApi.get(`/documents/consultation/${consultationId}`);
+    return response.data;
+  },
+
+  deleteDocument: async (id: number) => {
+    await secureApi.delete(`/documents/${id}`);
+  },
+
+  renameDocument: async (id: number, name: string) => {
+    const response = await secureApi.patch(`/documents/${id}/name?nom=${encodeURIComponent(name)}`);
     return response.data;
   },
 
@@ -119,6 +136,15 @@ export const patientService = {
     return response.data;
   },
 
+  updateOrdonnance: async (id: number, lignes: any[]) => {
+    const response = await secureApi.put(`/ordonnances/${id}`, lignes);
+    return response.data;
+  },
+
+  deleteOrdonnance: async (id: number) => {
+    await secureApi.delete(`/ordonnances/${id}`);
+  },
+
   // Role Specific - Assistant
   assistantSearchPatients: async (query?: string) => {
     const response = await secureApi.get(`/assistant/patients/search`, { params: { query } });
@@ -138,6 +164,36 @@ export const patientService = {
 
   secretaryGetHistoryByCin: async (cin: string) => {
     const response = await secureApi.get(`/sec/patients/history-by-cin`, { params: { cin } });
+    return response.data;
+  },
+
+  secretaryAddPatient: async (data: Patient) => {
+    const response = await secureApi.post("/sec/patients", data);
+    return response.data;
+  },
+
+  secretaryUpdatePatient: async (id: number, data: Patient) => {
+    const response = await secureApi.put(`/sec/patients/${id}`, data);
+    return response.data;
+  },
+
+  secretaryArchivePatient: async (id: number) => {
+    const response = await secureApi.patch(`/sec/patients/${id}/archive`);
+    return response.data;
+  },
+
+  secretaryUnarchivePatient: async (id: number) => {
+    const response = await secureApi.patch(`/sec/patients/${id}/unarchive`);
+    return response.data;
+  },
+
+  secretaryGetDossierDocuments: async (dossierId: number) => {
+    const response = await secureApi.get(`/sec/patients/${dossierId}/documents`);
+    return response.data;
+  },
+
+  secretaryDownloadDocument: async (id: number) => {
+    const response = await secureApi.get(`/sec/documents/${id}`, { responseType: "blob" });
     return response.data;
   }
 };

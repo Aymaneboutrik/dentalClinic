@@ -13,6 +13,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class OrdonnanceDto {
+    private Long id;
+
     @NotNull(message = "La date de l'ordonnance est obligatoire")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime dateOrdonnance;

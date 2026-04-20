@@ -20,15 +20,9 @@ export const assistantSidebarConfig = [
     childs: [],
   },
   {
-    name: "Patients",
+    name: "Dossier Patient",
     route: "/assistant/patients",
     icon: <Users size={18} />,
-    childs: [],
-  },
-  {
-    name: "Dossiers",
-    route: "/assistant/files",
-    icon: <FileText size={18} />,
     childs: [],
   },
   {

@@ -4,6 +4,7 @@ import com.dental.patient.domain.DocumentMedical;
 import com.dental.patient.domain.Patient;
 import com.dental.patient.dto.ConsultationDto;
 import com.dental.patient.dto.DocumentMedicalDto;
+import com.dental.patient.dto.PatientDto;
 import com.dental.patient.dto.SecretaryPatientDto;
 import com.dental.patient.mapper.PatientMapper;
 import com.dental.patient.repository.PatientRepository;
@@ -59,22 +60,52 @@ public class SecretaryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/patients")
+    public ResponseEntity<SecretaryPatientDto> addPatient(@RequestBody PatientDto patientDto) {
+        var patient = patientMapper.toPatientEntity(patientDto);
+        Patient saved = patientService.addPatient(patient);
+        return ResponseEntity.ok(patientMapper.toSecretaryDto(saved));
+    }
+
+    @PutMapping("/patients/{id}")
+    public ResponseEntity<SecretaryPatientDto> updatePatient(@PathVariable Long id, @RequestBody PatientDto patientDto) {
+        var patient = patientMapper.toPatientEntity(patientDto);
+        Patient updated = patientService.updatePatient(id, patient);
+        return ResponseEntity.ok(patientMapper.toSecretaryDto(updated));
+    }
+
+    @PatchMapping("/patients/{id}/archive")
+    public ResponseEntity<Void> archivePatient(@PathVariable Long id) {
+        patientService.archivePatient(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/patients/{id}/unarchive")
+    public ResponseEntity<Void> unarchivePatient(@PathVariable Long id) {
+        patientService.unarchivePatient(id);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/patients/{dossierId}/documents")
     public ResponseEntity<DocumentMedicalDto> uploadAdminDocument(
             @PathVariable Long dossierId,
             @RequestParam("file") MultipartFile file) throws IOException {
-        DocumentMedical doc = documentService.uploadDocumentToDossier(dossierId, file, "ADMIN");
+        DocumentMedical doc = documentService.uploadDocumentToDossier(dossierId, file, null, "ADMIN");
         return ResponseEntity.ok(patientMapper.toDocumentDto(doc));
     }
 
     @GetMapping("/patients/{dossierId}/documents")
     public ResponseEntity<List<DocumentMedicalDto>> listDocuments(@PathVariable Long dossierId) {
-        List<DocumentMedical> docs = documentService.getDocumentsByDossier(dossierId);
+        List<DocumentMedical> docs = documentService.getDocumentsByDossierAndType(dossierId, "ADMIN");
         return ResponseEntity.ok(docs.stream().map(patientMapper::toDocumentDto).toList());
     }
 
     @GetMapping("/documents/{id}")
     public ResponseEntity<byte[]> downloadDocument(@PathVariable Long id) throws IOException {
+        DocumentMedical doc = documentService.getDocumentById(id);
+        if (!"ADMIN".equalsIgnoreCase(doc.getType())) {
+            return ResponseEntity.status(403).build();
+        }
         var download = documentService.loadDocumentForDownload(id);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(download.contentType()))

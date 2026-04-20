@@ -56,6 +56,13 @@ export const router = createBrowserRouter([
                 path: "employees",
                 element: <DoctorEmployeesPage />,
               },
+              {
+                path: "patients",
+                children: [
+                   { index: true, element: <PatientListPage /> },
+                   { path: "history", element: <PatientHistoryPage /> }
+                ]
+              }
             ],
           },
           {

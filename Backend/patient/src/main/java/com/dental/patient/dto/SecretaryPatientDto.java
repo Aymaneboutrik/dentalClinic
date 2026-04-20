@@ -39,4 +39,5 @@ public class SecretaryPatientDto {
     
     private String sexe;
     private String profession;
+    private boolean archived;
 }

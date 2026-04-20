@@ -22,4 +22,5 @@ public class ConsultationDto {
     private String motif;
     
     private List<ObservationDto> observations;
+    private List<ActeDto> actes;
 }
