@@ -21,8 +21,9 @@ export default defineConfig({
   server: {
     host: true,
     watch: {
-      usePolling: true,
-      interval: 50,
+      usePolling: process.env.VITE_USE_POLLING === "true" || process.env.CHOKIDAR_USEPOLLING === "true",
+      interval: 1000,
+      ignored: ["**/node_modules/**", "**/.git/**", "**/dist/**"],
     },
     proxy: {
       "/api": {

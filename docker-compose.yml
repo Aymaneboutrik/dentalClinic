@@ -6,12 +6,12 @@ services:
     container_name: frontend-react
     ports:
       - "5173:5173"
-    volumes:
-      - ./frontend-app:/app
-      - /app/node_modules
+    #volumes:
+      # - ./frontend-app:/app
+      #- /app/node_modules
     environment:
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=false
+      - VITE_USE_POLLING=false
     networks:
       - dental-network
 
@@ -139,6 +139,73 @@ services:
     networks:
       - dental-network
 
+  rendezvous-db:
+    image: postgres:16
+    container_name: rendezvous-db
+    environment:
+      POSTGRES_DB: rendezvous_db
+      POSTGRES_USER: rendezvous_user
+      POSTGRES_PASSWORD: rendezvous_pass
+    volumes:
+      - rendezvous_db_data:/var/lib/postgresql/data
+    networks:
+      - dental-network
+
+  rendezvous-service:
+    build:
+      context: "./Backend/rendez-vous/Service Rendez-vous"
+      dockerfile: Dockerfile
+    container_name: rendezvous-service
+    ports:
+      - "5004:8080"
+    depends_on:
+      - rendezvous-db
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=rendezvous-db;Port=5432;Database=rendezvous_db;Username=rendezvous_user;Password=rendezvous_pass
+    networks:
+      - dental-network
+
+  paiement-db:
+    image: postgres:16
+    container_name: paiement-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: paiementdb
+    volumes:
+      - paiement-data:/var/lib/postgresql/data
+      - ./Backend/facturation-service/init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d paiementdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - dental-network
+
+  paiement-api:
+    build:
+      context: ./Backend/facturation-service/paiement-api
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    container_name: paiement-api
+    depends_on:
+      paiement-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://paiement-db:5432/paiementdb
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "5005:8080"
+    networks:
+      - dental-network
+
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -151,6 +218,8 @@ services:
       - auth-service
       - stock-api
       - patient-service
+      - rendezvous-service
+      - paiement-api
     networks:
       - dental-network
 
@@ -168,3 +237,5 @@ volumes:
   patient-service_patient-db-data:
     external: true
   patient_uploads:
+  rendezvous_db_data:
+  paiement-data:
