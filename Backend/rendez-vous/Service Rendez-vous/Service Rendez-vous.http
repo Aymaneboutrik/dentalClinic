@@ -1,0 +1,6 @@
+@Service_Rendez_vous_HostAddress = http://localhost:5237
+
+GET {{Service_Rendez_vous_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
