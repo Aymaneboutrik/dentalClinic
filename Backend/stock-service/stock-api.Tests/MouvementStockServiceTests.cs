@@ -3,116 +3,112 @@ using Moq;
 using StockApi.Services;
 using StockApi.Repositories.Interfaces;
 using StockApi.Models;
-using StockApi.DTOs;
 using StockApi.Enums;
+using StockApi.Exceptions;
+using System;
+using System.Collections.Generic;
 
 public class MouvementStockServiceTests
 {
-    private readonly Mock<IMouvementStockRepository> _mouvRepo = new();
-    private readonly Mock<IProduitRepository> _prodRepo = new();
-    private readonly Mock<ISortieRepository> _sortieRepo = new();
+    private readonly Mock<IMouvementStockRepository> _mouvementStockRepo = new();
+    private readonly Mock<IProduitRepository> _produitRepo = new();
 
-    [Fact]
-    public void ModifierMouvement_Entree_Valide_ReturnTrue()
+    private MouvementStockService CreateService()
     {
-        // Arrange : mouvement existant de type Entrée avec 5
-        var mouvement = new MouvementStock
-        {
-            Id = 1,
-            TypeMouvement = TypeMouvement.Entree,
-            Quantite = 5,
-            ProduitId = 1,
-            DateMouvement = DateTime.Today
-        };
-
-        _mouvRepo.Setup(x => x.GetById(1)).Returns(mouvement);
-
-        var service = new MouvementStockService(
-            _mouvRepo.Object,
-            _prodRepo.Object,
-            _sortieRepo.Object
-        );
-
-        // Act : on modifie uniquement la date
-        var nouvelleDate = DateTime.Today.AddDays(1);
-        var result = service.ModifierMouvement(1, nouvelleDate: nouvelleDate);
-
-        // Assert : vérifie que la modification a réussi
-        Assert.True(result);
-
-        // Vérifier que la mise à jour du mouvement a été effectuée
-        _mouvRepo.Verify(x => x.Update(It.IsAny<MouvementStock>()), Times.Once);
-        _mouvRepo.Verify(x => x.Save(), Times.Once);
-
-        // Vérifie que le produit et la sortie n’ont pas été touchés
-        _prodRepo.Verify(x => x.GetById(It.IsAny<int>()), Times.Never);
-        _sortieRepo.Verify(x => x.GetByProduitId(It.IsAny<int>()), Times.Never);
-
-        // Vérifier que seule la date a changé
-        Assert.Equal(nouvelleDate, mouvement.DateMouvement);
-        Assert.Equal(5, mouvement.Quantite); // Quantité inchangée
+        return new MouvementStockService(_mouvementStockRepo.Object, _produitRepo.Object);
     }
 
     [Fact]
-    public void ModifierMouvement_Sortie_Valide_ReturnTrue()
+    public void CreateEntreeMouvement_CreatesMouvementAndUpdatesStock()
     {
-        var mouvement = new MouvementStock
+        // Arrange
+        var service = CreateService();
+        var ligneCommande = new LigneCommande
         {
             Id = 1,
-            TypeMouvement = TypeMouvement.Sortie,
+            ProduitId = 10,
             Quantite = 5,
-            ProduitId = 1
+            PrixUnitaire = 10.0m
         };
+        var produit = new Produit { Id = 10, Quantite = 20 };
+        _produitRepo.Setup(x => x.GetById(10)).Returns(produit);
 
-        var produit = new Produit
-        {
-            Id = 1,
-            Quantite = 2
-        };
+        // Act
+        service.CreateEntreeMouvement(ligneCommande);
 
-        _mouvRepo.Setup(x => x.GetById(1)).Returns(mouvement);
-        _prodRepo.Setup(x => x.GetById(1)).Returns(produit);
-
-        var service = new MouvementStockService(
-            _mouvRepo.Object,
-            _prodRepo.Object,
-            _sortieRepo.Object
-        );
-
-        var result = service.ModifierMouvement(1, 8);
-
-        Assert.True(result);
-
-        _mouvRepo.Verify(x => x.Update(It.IsAny<MouvementStock>()), Times.Once);
-        _prodRepo.Verify(x => x.GetById(It.IsAny<int>()), Times.Once);
-        _sortieRepo.Verify(x => x.GetByProduitId(It.IsAny<int>()), Times.Once);
-        _mouvRepo.Verify(x => x.Save(), Times.Once);
-
-        // 🔥 Vérifier que la quantité du produit n'est pas négative
-        Assert.True(produit.Quantite >= 0);
-        // Vérifier que la quantité du mouvement a bien été mise à jour
-        Assert.Equal(8, mouvement.Quantite);
+        // Assert
+        _mouvementStockRepo.Verify(x => x.Add(It.Is<MouvementStock>(m =>
+            m.TypeMouvement == TypeMouvement.Entree &&
+            m.Quantite == 5 &&
+            m.ProduitId == 10 &&
+            m.LigneCommandeId == 1)), Times.Once);
+        Assert.Equal(25, produit.Quantite); // 20 + 5
+        _produitRepo.Verify(x => x.Update(produit), Times.Once);
     }
 
     [Fact]
-    public void ModifierMouvement_NotFound_ReturnFalse()
+    public void CreateSortieMouvement_CreatesMouvementAndUpdatesStock()
     {
-        _mouvRepo.Setup(x => x.GetById(1)).Returns((MouvementStock)null);
+        // Arrange
+        var service = CreateService();
+        var produit = new Produit { Id = 10, Quantite = 20, Actif = true };
+        _produitRepo.Setup(x => x.GetById(10)).Returns(produit);
 
-        var service = new MouvementStockService(
-            _mouvRepo.Object,
-            _prodRepo.Object,
-            _sortieRepo.Object
-        );
+        // Act
+        service.CreateSortieMouvement(10, 3);
 
-        var result = service.ModifierMouvement(1, 5);
+        // Assert
+        _mouvementStockRepo.Verify(x => x.Add(It.Is<MouvementStock>(m =>
+            m.TypeMouvement == TypeMouvement.Sortie &&
+            m.Quantite == 3 &&
+            m.ProduitId == 10 &&
+            m.LigneCommandeId == null)), Times.Once);
+        Assert.Equal(17, produit.Quantite); // 20 - 3
+        _produitRepo.Verify(x => x.Update(produit), Times.Once);
+    }
 
-        Assert.False(result);
+    [Fact]
+    public void CreateSortieMouvement_ProduitInactif_ThrowsException()
+    {
+        // Arrange
+        var service = CreateService();
+        var produit = new Produit { Id = 10, Quantite = 20, Actif = false };
+        _produitRepo.Setup(x => x.GetById(10)).Returns(produit);
 
-        // Vérifier qu'aucune mise à jour n'a été faite
-        _mouvRepo.Verify(x => x.Update(It.IsAny<MouvementStock>()), Times.Never);
-        _prodRepo.Verify(x => x.GetById(It.IsAny<int>()), Times.Never);
-        _sortieRepo.Verify(x => x.GetByProduitId(It.IsAny<int>()), Times.Never);
-        _mouvRepo.Verify(x => x.Save(), Times.Never);
+        // Act & Assert
+        Assert.Throws<ProduitInactifException>(() => service.CreateSortieMouvement(10, 3));
+    }
+
+    [Fact]
+    public void CreateSortieMouvement_InsufficientStock_ThrowsException()
+    {
+        // Arrange
+        var service = CreateService();
+        var produit = new Produit { Id = 10, Quantite = 2, Actif = true };
+        _produitRepo.Setup(x => x.GetById(10)).Returns(produit);
+
+        // Act & Assert
+        Assert.Throws<InsufficientStockException>(() => service.CreateSortieMouvement(10, 5));
+    }
+
+    [Fact]
+    public void CreateEntreeMouvement_ProduitNotFound_DoesNotUpdateStock()
+    {
+        // Arrange
+        var service = CreateService();
+        var ligneCommande = new LigneCommande
+        {
+            Id = 1,
+            ProduitId = 10,
+            Quantite = 5
+        };
+        _produitRepo.Setup(x => x.GetById(10)).Returns((Produit)null);
+
+        // Act
+        service.CreateEntreeMouvement(ligneCommande);
+
+        // Assert
+        _mouvementStockRepo.Verify(x => x.Add(It.IsAny<MouvementStock>()), Times.Once);
+        _produitRepo.Verify(x => x.Update(It.IsAny<Produit>()), Times.Never);
     }
 }

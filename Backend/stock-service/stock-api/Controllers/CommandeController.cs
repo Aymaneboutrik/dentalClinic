@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using StockApi.DTOs;
+using StockApi.Exceptions;
 using StockApi.Mappers;
 using StockApi.Models;
 using StockApi.Repositories.Interfaces;
+using System.Linq;
 
 namespace StockApi.Controllers
 {
@@ -11,14 +13,17 @@ namespace StockApi.Controllers
     public class CommandeController : ControllerBase
     {
         private readonly ICommandeRepository _commandeRepository;
-        private readonly ILigneCommandeRepository _ligneCommandeRepository;
+        private readonly IFournisseurRepository _fournisseurRepository;
+        private readonly ILigneCommandeRepository _ligneRepository;
 
         public CommandeController(
             ICommandeRepository commandeRepository,
-            ILigneCommandeRepository ligneCommandeRepository)
+            IFournisseurRepository fournisseurRepository,
+            ILigneCommandeRepository ligneRepository)
         {
             _commandeRepository = commandeRepository;
-            _ligneCommandeRepository = ligneCommandeRepository;
+            _fournisseurRepository = fournisseurRepository;
+            _ligneRepository = ligneRepository;
         }
 
         [HttpGet]
@@ -32,68 +37,52 @@ namespace StockApi.Controllers
         [HttpPost]
         public IActionResult Create(CommandeDto dto)
         {
+            var fournisseur = _fournisseurRepository.GetById(dto.FournisseurId);
+            if (fournisseur == null) throw new FournisseurNotFoundException("Fournisseur introuvable.");
+
             var commande = CommandeMapper.ToEntity(dto);
+            commande.Date = DateTime.UtcNow; // Date automatique
+            commande.Statut = Enums.OrderStatus.EnAttente;
+
             _commandeRepository.Add(commande);
             _commandeRepository.Save();
-            return Ok(CommandeMapper.ToDto(commande));
-        }
-
-        [HttpPut("{id}")]
-        public IActionResult Update(int id, CommandeDto dto)
-        {
-            var commande = _commandeRepository.GetById(id);
-            if (commande == null)
-                return NotFound("Commande introuvable");
-
-            commande.Nom = dto.Nom;
-            commande.Date = dto.Date;
-            _commandeRepository.Update(commande);
-            _commandeRepository.Save();
 
             return Ok(CommandeMapper.ToDto(commande));
-        }
-
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
-        {
-            var commande = _commandeRepository.GetById(id);
-            if (commande == null)
-                return NotFound("Commande introuvable");
-
-            // Suppression en cascade : supprimer toutes les lignes de commande associées
-            var lignes = _ligneCommandeRepository.GetByCommandeId(id);
-            foreach (var ligne in lignes)
-            {
-                _ligneCommandeRepository.Delete(ligne);
-            }
-            _ligneCommandeRepository.Save();
-
-            _commandeRepository.Delete(commande);
-            _commandeRepository.Save();
-
-            return Ok("Commande et ses lignes supprimées");
         }
 
         [HttpGet("{id}/bon")]
         public IActionResult GetBonCommande(int id)
         {
             var commande = _commandeRepository.GetById(id);
-            if (commande == null)
-                return NotFound("Commande introuvable");
+            if (commande == null) throw new NotFoundException("Commande introuvable.");
 
-            var lignes = _ligneCommandeRepository.GetByCommandeId(id);
+            var fournisseur = _fournisseurRepository.GetById(commande.FournisseurId);
+            var lignes = _ligneRepository.GetByCommandeId(id);
 
-            var dto = new CommandeAvecLignesDto
+            var bonDto = new
             {
                 Id = commande.Id,
                 Nom = commande.Nom,
                 Date = commande.Date,
                 Statut = commande.Statut,
                 FournisseurId = commande.FournisseurId,
-                Lignes = lignes.Select(LigneCommandeMapper.ToDto).ToList()
+                Fournisseur = fournisseur != null ? new { fournisseur.Id, fournisseur.Nom, fournisseur.Telephone, fournisseur.Adresse } : null,
+                Lignes = lignes.Select(l => new { l.Id, l.ProduitId, l.Quantite, l.PrixUnitaire, l.SousTotal })
             };
 
-            return Ok(dto);
+            return Ok(bonDto);
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var commande = _commandeRepository.GetById(id);
+            if (commande == null) return NotFound();
+
+            _commandeRepository.Delete(commande);
+            _commandeRepository.Save();
+
+            return NoContent();
         }
     }
 }

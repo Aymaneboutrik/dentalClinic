@@ -14,7 +14,8 @@ namespace StockApi.Mappers
                 Quantite = entity.Quantite,
                 DateMouvement = entity.DateMouvement,
                 ProduitId = entity.ProduitId,
-                CommandeId = entity.CommandeId
+                LigneCommandeId = entity.LigneCommandeId,
+                ProduitActif = entity.Produit?.Actif ?? false
             };
         }
 
@@ -27,7 +28,7 @@ namespace StockApi.Mappers
                 Quantite = dto.Quantite,
                 DateMouvement = dto.DateMouvement,
                 ProduitId = dto.ProduitId,
-                CommandeId = dto.CommandeId
+                LigneCommandeId = dto.LigneCommandeId
             };
         }
     }

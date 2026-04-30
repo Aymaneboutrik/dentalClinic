@@ -1,46 +1,68 @@
 using StockApi.Models;
 using StockApi.Repositories.Interfaces;
-using StockApi.Enums;
-using StockApi.DTOs;
+using System.Collections.Generic;
+using System;
 
 namespace StockApi.Services
 {
     public class ProduitService
     {
         private readonly IProduitRepository _produitRepository;
-        private readonly IMouvementStockRepository _mouvementRepository;
+        private readonly NotificationService _notificationService;
 
-        public ProduitService(
-            IProduitRepository produitRepository,
-            IMouvementStockRepository mouvementRepository)
+        public ProduitService(IProduitRepository produitRepository, NotificationService notificationService)
         {
             _produitRepository = produitRepository;
-            _mouvementRepository = mouvementRepository;
+            _notificationService = notificationService;
         }
 
-        public virtual Produit CreerDepuisLigneCommande(LigneCommande ligne, ProduitDto produitDto)
+        public virtual List<Produit> GetAllProduits()
         {
-            var nouveauProduit = new Produit
+            var produits = _produitRepository.GetAll();
+            CheckPeremptionAlerts(produits);
+            return produits;
+        }
+
+        public Produit? GetProduitById(int id)
+        {
+            return _produitRepository.GetById(id);
+        }
+
+        private void CheckPeremptionAlerts(List<Produit> produits)
+        {
+            bool hasChanges = false;
+            foreach (var produit in produits)
             {
-                Nom = ligne.Nom,
-                Quantite = ligne.Quantite,
-                Description = produitDto?.Description ?? "",
-                SeuilAlerte = produitDto?.SeuilAlerte ?? 0,
-                DatePeremption = produitDto?.DatePeremption ?? DateTime.Now
-            };
+                // Si périmé aujourd'hui ou déjà périmé
+                if (produit.DatePeremption <= DateTime.UtcNow)
+                {
+                    if (produit.Actif)
+                    {
+                        produit.Actif = false;
+                        _produitRepository.Update(produit);
+                        hasChanges = true;
+                    }
+                    _notificationService.AlertePeremption(produit.Nom, produit.DatePeremption);
+                }
+                else if (produit.DatePeremption <= DateTime.UtcNow.AddDays(7)) // Alerte préventive 7 jours avant
+                {
+                    _notificationService.AlertePeremption(produit.Nom, produit.DatePeremption);
+                }
 
-            _produitRepository.Add(nouveauProduit);
-            _produitRepository.Save();
+                if (produit.Quantite <= produit.SeuilAlerte)
+                {
+                    _notificationService.AlerteSeuilCritique(produit.Nom, produit.Quantite, produit.SeuilAlerte);
+                }
+                if (produit.Quantite == 0)
+                {
+                    _notificationService.AlerteStockEpuise(produit.Nom);
+                }
+            }
 
-            // ⚠️ Le mouvement stock est créé dans LigneCommandeController
-            // avec le bon CommandeId — ne pas le créer ici
-
-            return nouveauProduit;
-        }
-
-        public List<Produit> GetAllProduits()
-        {
-            return _produitRepository.GetAll();
+            if (hasChanges)
+            {
+                _produitRepository.Save();
+            }
         }
     }
 }

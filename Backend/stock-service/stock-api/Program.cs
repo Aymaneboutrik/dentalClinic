@@ -5,7 +5,6 @@ using StockApi.Services;
 using StockApi.Repositories.Interfaces;
 using StockApi.Repositories.Implementations;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Diagnostics;
 
 // 🔹 Fix PostgreSQL DateTime UTC
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -31,17 +30,16 @@ builder.Services.AddControllers()
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddScoped<ICommandeRepository, CommandeRepository>();
 builder.Services.AddScoped<IFournisseurRepository, FournisseurRepository>();
+builder.Services.AddScoped<ICommandeRepository, CommandeRepository>();
 builder.Services.AddScoped<ILigneCommandeRepository, LigneCommandeRepository>();
 builder.Services.AddScoped<IProduitRepository, ProduitRepository>();
 builder.Services.AddScoped<IMouvementStockRepository, MouvementStockRepository>();
-builder.Services.AddScoped<ISortieRepository, SortieRepository>();
+builder.Services.AddScoped<ICommandeValidationRepository, CommandeValidationRepository>();
 
-builder.Services.AddScoped<ProduitService>();
-builder.Services.AddScoped<SortieService>();
-builder.Services.AddScoped<MouvementStockService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<ProduitService>();
+builder.Services.AddScoped<MouvementStockService>();
 
 var app = builder.Build();
 

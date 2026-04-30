@@ -8,10 +8,12 @@ namespace StockApi.Models
 		public int Id { get; set; }
 		public TypeMouvement TypeMouvement { get; set; }
 		public int Quantite { get; set; }
-		public DateTime? DateMouvement { get; set; }  // null par défaut = "à saisir"
+		public DateTime DateMouvement { get; set; } = DateTime.Now;
 
-		// Lien avec Produit ou Commande si nécessaire
 		public int? ProduitId { get; set; }
-		public int? CommandeId { get; set; }
+		public Produit? Produit { get; set; }
+
+		public int? LigneCommandeId { get; set; }
+		public LigneCommande? LigneCommande { get; set; }
 	}
 }

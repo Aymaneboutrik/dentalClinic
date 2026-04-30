@@ -12,8 +12,8 @@ using StockApi.Data;
 namespace StockApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260412014732_FixDateTime")]
-    partial class FixDateTime
+    [Migration("20260428211659_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,6 +53,36 @@ namespace StockApi.Migrations
                     b.ToTable("Commandes");
                 });
 
+            modelBuilder.Entity("StockApi.Models.CommandeValidation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CommandeId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Commentaire")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DateValidation")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("TypeAction")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommandeId")
+                        .IsUnique();
+
+                    b.ToTable("CommandeValidation");
+                });
+
             modelBuilder.Entity("StockApi.Models.Fournisseur", b =>
                 {
                     b.Property<int>("Id")
@@ -90,15 +120,11 @@ namespace StockApi.Migrations
                     b.Property<int>("CommandeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Etat")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Nom")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<decimal>("PrixUnitaire")
                         .HasColumnType("numeric");
+
+                    b.Property<int>("ProduitId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Quantite")
                         .HasColumnType("integer");
@@ -106,6 +132,8 @@ namespace StockApi.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CommandeId");
+
+                    b.HasIndex("ProduitId");
 
                     b.ToTable("LignesCommandes");
                 });
@@ -118,11 +146,11 @@ namespace StockApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CommandeId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DateMouvement")
+                    b.Property<DateTime>("DateMouvement")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("LigneCommandeId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("ProduitId")
                         .HasColumnType("integer");
@@ -135,6 +163,10 @@ namespace StockApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("LigneCommandeId");
+
+                    b.HasIndex("ProduitId");
+
                     b.ToTable("MouvementsStock");
                 });
 
@@ -145,6 +177,9 @@ namespace StockApi.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Actif")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("DatePeremption")
                         .HasColumnType("timestamp without time zone");
@@ -166,30 +201,12 @@ namespace StockApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Nom")
+                        .IsUnique();
+
                     b.ToTable("Produits");
                 });
 
-            modelBuilder.Entity("StockApi.Models.Sortie", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("DateSortie")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<int>("ProduitId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Quantite")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Sorties");
-                });
 
             modelBuilder.Entity("StockApi.Models.Commande", b =>
                 {
@@ -202,6 +219,17 @@ namespace StockApi.Migrations
                     b.Navigation("Fournisseur");
                 });
 
+            modelBuilder.Entity("StockApi.Models.CommandeValidation", b =>
+                {
+                    b.HasOne("StockApi.Models.Commande", "Commande")
+                        .WithOne()
+                        .HasForeignKey("StockApi.Models.CommandeValidation", "CommandeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Commande");
+                });
+
             modelBuilder.Entity("StockApi.Models.LigneCommande", b =>
                 {
                     b.HasOne("StockApi.Models.Commande", "Commande")
@@ -210,7 +238,32 @@ namespace StockApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("StockApi.Models.Produit", "Produit")
+                        .WithMany("Lignes")
+                        .HasForeignKey("ProduitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Commande");
+
+                    b.Navigation("Produit");
+                });
+
+            modelBuilder.Entity("StockApi.Models.MouvementStock", b =>
+                {
+                    b.HasOne("StockApi.Models.LigneCommande", "LigneCommande")
+                        .WithMany()
+                        .HasForeignKey("LigneCommandeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("StockApi.Models.Produit", "Produit")
+                        .WithMany()
+                        .HasForeignKey("ProduitId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("LigneCommande");
+
+                    b.Navigation("Produit");
                 });
 
             modelBuilder.Entity("StockApi.Models.Commande", b =>
@@ -221,6 +274,11 @@ namespace StockApi.Migrations
             modelBuilder.Entity("StockApi.Models.Fournisseur", b =>
                 {
                     b.Navigation("Commandes");
+                });
+
+            modelBuilder.Entity("StockApi.Models.Produit", b =>
+                {
+                    b.Navigation("Lignes");
                 });
 #pragma warning restore 612, 618
         }

@@ -3,82 +3,66 @@ using Moq;
 using StockApi.Services;
 using StockApi.Repositories.Interfaces;
 using StockApi.Models;
-using StockApi.DTOs;
-using StockApi.Enums;
+using System;
+using System.Collections.Generic;
 
 public class ProduitServiceTests
 {
     private readonly Mock<IProduitRepository> _produitRepo = new();
-    private readonly Mock<IMouvementStockRepository> _mouvRepo = new();
+    private readonly Mock<NotificationService> _notificationService = new();
 
     private ProduitService CreateService()
     {
-        return new ProduitService(_produitRepo.Object, _mouvRepo.Object);
+        return new ProduitService(_produitRepo.Object, _notificationService.Object);
     }
 
     [Fact]
-    public void CreerDepuisLigneCommande_CreeProduit_DonneesCorrectes()
+    public void GetAllProduits_ReturnsAllProduits()
     {
         var service = CreateService();
-        var ligne = new LigneCommande
+        var produits = new List<Produit>
         {
-            Nom = "ProduitTest",
-            Quantite = 5
+            new Produit { Id = 1, Nom = "Produit1", Actif = true },
+            new Produit { Id = 2, Nom = "Produit2", Actif = false }
         };
-        var dto = new ProduitDto
-        {
-            Description = "Desc",
-            SeuilAlerte = 2
-        };
+        _produitRepo.Setup(x => x.GetAll()).Returns(produits);
 
-        var result = service.CreerDepuisLigneCommande(ligne, dto);
+        var result = service.GetAllProduits();
 
-        // Vérifier le produit exact ajouté
-        _produitRepo.Verify(x => x.Add(It.Is<Produit>(p =>
-            p.Nom == "ProduitTest" &&
-            p.Quantite == 5 &&
-            p.Description == "Desc" &&
-            p.SeuilAlerte == 2
-        )), Times.Once);
-
-        // Le mouvement est créé dans LigneCommandeController, pas ici
-        _mouvRepo.Verify(x => x.Add(It.IsAny<MouvementStock>()), Times.Never);
-
-        Assert.Equal("ProduitTest", result.Nom);
-        Assert.Equal(5, result.Quantite);
-        Assert.Equal("Desc", result.Description);
-        Assert.Equal(2, result.SeuilAlerte);
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Produit1", result[0].Nom);
+        Assert.Equal("Produit2", result[1].Nom);
     }
 
     [Fact]
-    public void CreerDepuisLigneCommande_QuantiteInferieureSeuil_CreeProduitSansMouvement()
+    public void GetAllProduits_ProduitPerime_EnvoieNotification()
     {
         var service = CreateService();
-        var ligne = new LigneCommande
+        var produits = new List<Produit>
         {
-            Nom = "ProduitCritique",
-            Quantite = 1
+            new Produit { Id = 1, Nom = "ProduitPerime", DatePeremption = DateTime.UtcNow.AddDays(-1) }
         };
-        var dto = new ProduitDto
+        _produitRepo.Setup(x => x.GetAll()).Returns(produits);
+
+        var result = service.GetAllProduits();
+
+        _notificationService.Verify(x => x.EnvoyerNotification("Secretaire", It.Is<string>(msg => msg.Contains("ProduitPerime") && msg.Contains("péremption"))), Times.Once);
+        Assert.Single(result);
+    }
+
+    [Fact]
+    public void GetAllProduits_ProduitNonPerime_PasDeNotification()
+    {
+        var service = CreateService();
+        var produits = new List<Produit>
         {
-            Description = "DescCritique",
-            SeuilAlerte = 5
+            new Produit { Id = 1, Nom = "ProduitValide", DatePeremption = DateTime.UtcNow.AddDays(30), Quantite = 10, SeuilAlerte = 5 }
         };
+        _produitRepo.Setup(x => x.GetAll()).Returns(produits);
 
-        var result = service.CreerDepuisLigneCommande(ligne, dto);
+        var result = service.GetAllProduits();
 
-        // Vérifier création produit exact
-        _produitRepo.Verify(x => x.Add(It.Is<Produit>(p =>
-            p.Nom == "ProduitCritique" &&
-            p.Quantite == 1 &&
-            p.Description == "DescCritique" &&
-            p.SeuilAlerte == 5
-        )), Times.Once);
-
-        // Le mouvement est créé dans LigneCommandeController, pas ici
-        _mouvRepo.Verify(x => x.Add(It.IsAny<MouvementStock>()), Times.Never);
-
-        Assert.Equal("ProduitCritique", result.Nom);
-        Assert.Equal(1, result.Quantite);
+        _notificationService.Verify(x => x.EnvoyerNotification(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        Assert.Single(result);
     }
 }

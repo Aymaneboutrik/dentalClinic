@@ -5,7 +5,6 @@ namespace StockApi.Mappers
 {
     public static class ProduitMapper
     {
-        // DTO -> Entity
         public static Produit ToEntity(ProduitDto dto)
         {
             return new Produit
@@ -15,11 +14,11 @@ namespace StockApi.Mappers
                 Description = dto.Description,
                 Quantite = dto.Quantite,
                 SeuilAlerte = dto.SeuilAlerte,
-                DatePeremption = dto.DatePeremption
+                DatePeremption = dto.DatePeremption,
+                Actif = dto.Actif
             };
         }
 
-        // Entity -> DTO
         public static ProduitDto ToDto(Produit entity)
         {
             return new ProduitDto
@@ -29,7 +28,8 @@ namespace StockApi.Mappers
                 Description = entity.Description,
                 Quantite = entity.Quantite,
                 SeuilAlerte = entity.SeuilAlerte,
-                DatePeremption = entity.DatePeremption
+                DatePeremption = entity.DatePeremption,
+                Actif = entity.Actif
             };
         }
     }

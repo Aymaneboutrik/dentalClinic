@@ -10,5 +10,6 @@ namespace StockApi.DTOs
 		public int Quantite { get; set; }
 		public int SeuilAlerte { get; set; }
 		public DateTime DatePeremption { get; set; }
+		public bool Actif { get; set; }
 	}
 }
