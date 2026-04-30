@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using StockApi.Data;
 using StockApi.Models;
 using StockApi.Repositories.Interfaces;
@@ -13,7 +14,7 @@ namespace StockApi.Repositories.Implementations
             _context = context;
         }
 
-        public List<MouvementStock> GetAll() => _context.MouvementsStock.ToList();
+        public List<MouvementStock> GetAll() => _context.MouvementsStock.Include(m => m.Produit).ToList();
 
         public MouvementStock? GetById(int id) => _context.MouvementsStock.Find(id);
 

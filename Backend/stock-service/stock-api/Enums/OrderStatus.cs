@@ -4,7 +4,6 @@ namespace StockApi.Enums
 	{
 		EnAttente = 0,          // Valeur par défaut
 		Validee = 1,
-		Refusee = 2,
-		ModificationExigee = 3
+		Refusee = 2
 	}
 }

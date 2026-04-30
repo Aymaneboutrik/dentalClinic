@@ -9,9 +9,10 @@ namespace StockApi.DTOs
         public int Id { get; set; }
         public TypeMouvement TypeMouvement { get; set; }
         public int Quantite { get; set; }
-        public DateTime? DateMouvement { get; set; }  // null par défaut = "à saisir"
+        public DateTime DateMouvement { get; set; }
 
         public int? ProduitId { get; set; }
-        public int? CommandeId { get; set; }
+        public int? LigneCommandeId { get; set; }
+        public bool ProduitActif { get; set; }
     }
 }

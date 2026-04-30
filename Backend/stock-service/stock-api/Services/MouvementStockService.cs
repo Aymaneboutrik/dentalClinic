@@ -1,78 +1,66 @@
 using StockApi.Models;
 using StockApi.Repositories.Interfaces;
+using StockApi.Enums;
+using StockApi.Exceptions;
 
 namespace StockApi.Services
 {
     public class MouvementStockService
     {
-        private readonly IMouvementStockRepository _mouvementRepo;
-        private readonly IProduitRepository _produitRepo;
-        private readonly ISortieRepository _sortieRepo;
+        private readonly IMouvementStockRepository _mouvementStockRepository;
+        private readonly IProduitRepository _produitRepository;
 
-        public MouvementStockService(IMouvementStockRepository mouvementRepo,
-                                     IProduitRepository produitRepo,
-                                     ISortieRepository sortieRepo)
+        public MouvementStockService(
+            IMouvementStockRepository mouvementStockRepository,
+            IProduitRepository produitRepository)
         {
-            _mouvementRepo = mouvementRepo;
-            _produitRepo = produitRepo;
-            _sortieRepo = sortieRepo;
+            _mouvementStockRepository = mouvementStockRepository;
+            _produitRepository = produitRepository;
         }
 
-        public List<MouvementStock> GetAll()
+        public void CreateEntreeMouvement(LigneCommande ligne)
         {
-            return _mouvementRepo.GetAll();
-        }
-
-        // Modification par l'assistant selon les règles
-        public bool ModifierMouvement(int id, int? nouvelleQuantite = null, DateTime? nouvelleDate = null)
-        {
-            var mouv = _mouvementRepo.GetById(id);
-            if (mouv == null) return false;
-
-            switch (mouv.TypeMouvement)
+            var mouvement = new MouvementStock
             {
-                case TypeMouvement.Sortie:
-                    if (nouvelleQuantite.HasValue)
-                    {
-                        int diff = mouv.Quantite - nouvelleQuantite.Value;
+                TypeMouvement = TypeMouvement.Entree,
+                Quantite = ligne.Quantite,
+                DateMouvement = DateTime.UtcNow,
+                ProduitId = ligne.ProduitId,
+                LigneCommandeId = ligne.Id
+            };
 
-                        // Mettre à jour mouvement
-                        mouv.Quantite = nouvelleQuantite.Value;
+            _mouvementStockRepository.Add(mouvement);
 
-                        // Mettre à jour sortie correspondante
-                        var sortie = _sortieRepo.GetByProduitId(mouv.ProduitId!.Value);
-                        if (sortie != null) sortie.Quantite = nouvelleQuantite.Value;
-
-                        // Mettre à jour produit
-                        var produit = _produitRepo.GetById(mouv.ProduitId!.Value);
-                        if (produit != null) produit.Quantite -= diff;
-                    }
-
-                    if (nouvelleDate.HasValue)
-                    {
-                        mouv.DateMouvement = nouvelleDate.Value;
-
-                        // Mettre à jour date dans sortie correspondante
-                        var sortie = _sortieRepo.GetByProduitId(mouv.ProduitId!.Value);
-                        if (sortie != null) sortie.DateSortie = nouvelleDate.Value;
-                    }
-                    break;
-
-                case TypeMouvement.Entree:
-                    if (nouvelleDate.HasValue)
-                        mouv.DateMouvement = nouvelleDate.Value; // Seule modification autorisée
-                    break;
-
-                case TypeMouvement.Modifiee:
-                    if (nouvelleDate.HasValue)
-                        mouv.DateMouvement = nouvelleDate.Value;
-                    // Impossible de modifier, date se met à jour automatiquement via CommandeValidation
-                    break;
+            var produit = _produitRepository.GetById(ligne.ProduitId);
+            if (produit != null)
+            {
+                produit.Quantite += ligne.Quantite;
+                _produitRepository.Update(produit);
             }
+        }
 
-            _mouvementRepo.Update(mouv);
-            _mouvementRepo.Save();
-            return true;
+        public void CreateSortieMouvement(int produitId, int quantite, int? ligneCommandeId = null)
+        {
+            var produit = _produitRepository.GetById(produitId);
+            if (produit == null) throw new NotFoundException("Produit introuvable.");
+
+            if (!produit.Actif) throw new ProduitInactifException("Impossible de faire une sortie sur un produit inactif.");
+            if (quantite <= 0) throw new InvalidQuantityException("La quantité de sortie doit être strictement positive.");
+            if (produit.Quantite < quantite) throw new InsufficientStockException("Stock insuffisant.");
+
+            var mouvement = new MouvementStock
+            {
+                TypeMouvement = TypeMouvement.Sortie,
+                Quantite = quantite,
+                DateMouvement = DateTime.UtcNow,
+                ProduitId = produitId,
+                LigneCommandeId = ligneCommandeId
+            };
+
+            _mouvementStockRepository.Add(mouvement);
+
+            produit.Quantite -= quantite;
+            _produitRepository.Update(produit);
         }
     }
 }

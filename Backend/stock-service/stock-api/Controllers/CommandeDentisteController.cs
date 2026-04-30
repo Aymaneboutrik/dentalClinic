@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using StockApi.DTOs;
+using StockApi.Enums;
 using StockApi.Repositories.Interfaces;
 using StockApi.Services;
 using StockApi.Models;
-using StockApi.Enums;
+using StockApi.Exceptions;
 
 namespace StockApi.Controllers
 {
@@ -12,81 +14,71 @@ namespace StockApi.Controllers
     {
         private readonly ICommandeRepository _commandeRepository;
         private readonly ILigneCommandeRepository _ligneCommandeRepository;
-        private readonly IMouvementStockRepository _mouvementRepository;
-        private readonly NotificationService _notificationService;
+        private readonly MouvementStockService _mouvementStockService;
+        private readonly ICommandeValidationRepository _validationRepository;
 
         public CommandeDentisteController(
             ICommandeRepository commandeRepository,
             ILigneCommandeRepository ligneCommandeRepository,
-            IMouvementStockRepository mouvementRepository,
-            NotificationService notificationService)
+            MouvementStockService mouvementStockService,
+            ICommandeValidationRepository validationRepository)
         {
             _commandeRepository = commandeRepository;
             _ligneCommandeRepository = ligneCommandeRepository;
-            _mouvementRepository = mouvementRepository;
-            _notificationService = notificationService;
+            _mouvementStockService = mouvementStockService;
+            _validationRepository = validationRepository;
         }
 
         [HttpPost("{id}/valider")]
         public IActionResult Valider(int id)
         {
             var commande = _commandeRepository.GetById(id);
-            if (commande == null) return NotFound();
+            if (commande == null) throw new NotFoundException("Commande introuvable.");
+
+            if (commande.Statut != OrderStatus.EnAttente)
+                throw new StockApi.Exceptions.InvalidOperationException("La commande n'est pas en attente.");
 
             commande.Statut = OrderStatus.Validee;
             _commandeRepository.Update(commande);
-            _commandeRepository.Save();
 
-            _notificationService.EnvoyerNotification("Secretaire", $"Commande {id} validée");
-            return Ok("Commande validée");
+            // Créer mouvements automatiques d'entrée
+            var lignes = _ligneCommandeRepository.GetByCommandeId(id);
+            foreach (var ligne in lignes)
+            {
+                _mouvementStockService.CreateEntreeMouvement(ligne);
+            }
+
+            _commandeRepository.Save();
+            _ligneCommandeRepository.Save();
+
+            return Ok(new { message = "Commande validée et stock mis à jour." });
         }
 
         [HttpPost("{id}/refuser")]
         public IActionResult Refuser(int id, [FromBody] string note)
         {
             var commande = _commandeRepository.GetById(id);
-            if (commande == null) return NotFound();
+            if (commande == null) throw new NotFoundException("Commande introuvable.");
+
+            if (commande.Statut != OrderStatus.EnAttente)
+                throw new StockApi.Exceptions.InvalidOperationException("La commande n'est pas en attente.");
 
             commande.Statut = OrderStatus.Refusee;
             _commandeRepository.Update(commande);
-            _commandeRepository.Save();
 
-            _notificationService.EnvoyerNotification("Secretaire", $"Commande {id} refusée. Note: {note}");
-            return Ok("Commande refusée avec note");
-        }
-
-        [HttpPost("{id}/exiger-modif")]
-        public IActionResult ExigerModification(int id)
-        {
-            var commande = _commandeRepository.GetById(id);
-            if (commande == null) return NotFound();
-
-            commande.Statut = OrderStatus.ModificationExigee;
-
-            _commandeRepository.Update(commande);
-            _commandeRepository.Save();
-
-            // 🔹 récupérer les lignes de commande
-            var lignes = _ligneCommandeRepository.GetByCommandeId(id);
-
-            // 🔹 calcul somme des quantités
-            int sommeQuantites = lignes.Sum(l => l.Quantite);
-
-            // 🔥 création mouvement stock "modifiee"
-            var mouvementModifiee = new MouvementStock
+            var validation = new CommandeValidation
             {
-                TypeMouvement = TypeMouvement.Modifiee,
-                Quantite = sommeQuantites,
-                DateMouvement = null,
-                CommandeId = id
+                CommandeId = id,
+                TypeAction = "Refusee",
+                Commentaire = note,
+                DateValidation = DateTime.UtcNow
             };
+            _validationRepository.Add(validation);
 
-            _mouvementRepository.Add(mouvementModifiee);
-            _mouvementRepository.Save();
+            _commandeRepository.Save();
+            _validationRepository.Save();
 
-            _notificationService.EnvoyerNotification("Secretaire", $"Commande {id} nécessite une modification");
-
-            return Ok("Modification exigée");
+            return Ok(new { message = "Commande refusée." });
         }
     }
 }

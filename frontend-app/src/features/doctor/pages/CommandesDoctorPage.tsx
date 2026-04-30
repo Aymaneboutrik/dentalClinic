@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -6,24 +6,21 @@ import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@components/data-table/data-table";
 import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
-import TextInput from "@components/inputs/text-input";
 import TextareaInput from "@components/inputs/textarea-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/stock";
+const BASE_URL = "/api/CommandeDentiste";
 
 const statutLabels: Record<string, string> = {
   EnAttente: "En attente",
   Validee: "Validée",
   Refusee: "Refusée",
-  ModificationExigee: "Modification exigée",
 };
 
 const statutColors: Record<string, string> = {
-  EnAttente: "bg-yellow-100 text-yellow-800",
-  Validee: "bg-green-100 text-green-800",
-  Refusee: "bg-red-100 text-red-800",
-  ModificationExigee: "bg-orange-100 text-orange-800",
+  EnAttente: "bg-amber-100 text-amber-800 border-amber-200",
+  Validee: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Refusee: "bg-rose-100 text-rose-800 border-rose-200",
 };
 
 interface Commande {
@@ -39,19 +36,11 @@ const refusSchema = z.object({
 });
 type RefusForm = z.infer<typeof refusSchema>;
 
-const sortieSchema = z.object({
-  produitId: z.coerce.number().min(1, "L'ID produit est obligatoire"),
-  quantite: z.coerce.number().min(1, "La quantité est obligatoire"),
-  dateSortie: z.string().min(1, "La date de sortie est obligatoire"),
-});
-type SortieForm = z.infer<typeof sortieSchema>;
-
 export default function CommandesDoctorPage() {
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
   const [showRefusForm, setShowRefusForm] = useState(false);
-  const [showSortieForm, setShowSortieForm] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const refusForm = useForm<RefusForm>({
@@ -59,33 +48,45 @@ export default function CommandesDoctorPage() {
     defaultValues: { note: "" },
   });
 
-  const sortieForm = useForm<SortieForm>({
-    resolver: zodResolver(sortieSchema),
-    defaultValues: { produitId: 0, quantite: 1, dateSortie: "" },
-  });
-
   const fetchCommandes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/Commande`);
+      const res = await fetch("/api/Commande");
+      if (!res.ok) throw new Error();
       const data = await res.json();
-      setCommandes(data);
+      const mappedData = data.map((c: any) => ({
+        ...c,
+        statut: c.statut === 0 ? "EnAttente" : c.statut === 1 ? "Validee" : "Refusee"
+      }));
+      setCommandes(mappedData);
       setFetched(true);
     } catch {
-      alert("Erreur lors du chargement des commandes");
+      console.error("Erreur lors du chargement des commandes");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchCommandes();
+  }, []);
+
   const handleValider = async (id: number) => {
-    if (!confirm(`Valider la commande #${id} ?`)) return;
-    const res = await fetch(`${BASE_URL}/CommandeDentiste/${id}/valider`, { method: "POST" });
-    if (res.ok) {
-      alert("Commande validée");
-      fetchCommandes();
-    } else {
-      alert("Erreur lors de la validation");
+    if (!confirm(`Valider la commande #${id} ? Cela mettra à jour le stock automatiquement.`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/${id}/valider`, { method: "POST" });
+      if (res.ok) {
+        alert("Commande validée avec succès.");
+        await fetchCommandes();
+      } else {
+        const errorData = await res.json();
+        alert(`Erreur : ${errorData.message || 'Action impossible'}`);
+        setLoading(false);
+      }
+    } catch {
+      alert("Erreur réseau.");
+      setLoading(false);
     }
   };
 
@@ -97,63 +98,52 @@ export default function CommandesDoctorPage() {
 
   const handleRefuser = async (values: RefusForm) => {
     if (!selectedId) return;
-    const res = await fetch(`${BASE_URL}/CommandeDentiste/${selectedId}/refuser`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values.note),
-    });
-    if (res.ok) {
-      alert("Commande refusée avec note");
-      setShowRefusForm(false);
-      setSelectedId(null);
-      refusForm.reset();
-      fetchCommandes();
-    } else {
-      alert("Erreur lors du refus");
-    }
-  };
-
-  const handleExigerModif = async (id: number) => {
-    if (!confirm(`Exiger une modification pour la commande #${id} ?`)) return;
-    const res = await fetch(`${BASE_URL}/CommandeDentiste/${id}/exiger-modif`, { method: "POST" });
-    if (res.ok) {
-      alert("Modification exigée");
-      fetchCommandes();
-    } else {
-      alert("Erreur lors de l'opération");
-    }
-  };
-
-  const handleSortie = async (values: SortieForm) => {
-    const res = await fetch(`${BASE_URL}/Sortie`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: 0, ...values }),
-    });
-    if (res.ok) {
-      alert("Sortie enregistrée avec succès");
-      setShowSortieForm(false);
-      sortieForm.reset();
-    } else {
-      const msg = await res.text();
-      alert(`Erreur : ${msg}`);
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/${selectedId}/refuser`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values.note),
+      });
+      if (res.ok) {
+        alert("Commande refusée.");
+        setShowRefusForm(false);
+        setSelectedId(null);
+        refusForm.reset();
+        await fetchCommandes();
+      } else {
+        const errorData = await res.json();
+        alert(`Erreur : ${errorData.message || 'Action impossible'}`);
+        setLoading(false);
+      }
+    } catch {
+      alert("Erreur réseau.");
+      setLoading(false);
     }
   };
 
   const columns: ColumnDef<Commande>[] = [
     { accessorKey: "id", header: "ID" },
-    { accessorKey: "nom", header: "Nom" },
+    { 
+      accessorKey: "nom", 
+      header: "Libellé",
+      cell: ({ row }) => <span className="font-medium text-gray-900">{row.original.nom}</span>
+    },
     {
       accessorKey: "date",
-      header: "Date",
-      cell: ({ row }) => row.original.date?.split("T")[0] ?? "-",
+      header: "Date de création",
+      cell: ({ row }) => row.original.date ? new Date(row.original.date).toLocaleDateString() : "-",
     },
-    { accessorKey: "fournisseurId", header: "Fournisseur ID" },
+    { 
+      accessorKey: "fournisseurId", 
+      header: "ID Fournisseur",
+      cell: ({ row }) => <span className="text-xs bg-gray-100 px-2 py-0.5 rounded border">{row.original.fournisseurId}</span>
+    },
     {
       accessorKey: "statut",
       header: "Statut",
       cell: ({ row }) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statutColors[row.original.statut] ?? "bg-gray-100 text-gray-700"}`}>
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statutColors[row.original.statut] ?? "bg-gray-100 text-gray-700"}`}>
           {statutLabels[row.original.statut] ?? row.original.statut}
         </span>
       ),
@@ -162,125 +152,89 @@ export default function CommandesDoctorPage() {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            size="sm"
-            className="bg-green-600 hover:bg-green-700 text-white"
-            onClick={() => handleValider(row.original.id)}
-          >
-            Valider
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => openRefusForm(row.original.id)}
-          >
-            Refuser
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleExigerModif(row.original.id)}
-          >
-            Exiger modification
-          </Button>
+        <div className="flex gap-2">
+          {row.original.statut === "EnAttente" && (
+            <>
+              <Button
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                onClick={() => handleValider(row.original.id)}
+                disabled={loading}
+              >
+                Valider
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                onClick={() => openRefusForm(row.original.id)}
+                disabled={loading}
+              >
+                Refuser
+              </Button>
+            </>
+          )}
         </div>
       ),
     },
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <p className="text-primary text-sm font-medium">Stock</p>
-          <PageTitle title="Gestion des commandes" desc="Validez, refusez ou demandez une modification des commandes" />
+          <p className="text-primary text-sm font-semibold uppercase tracking-wider">Interface Doctor</p>
+          <PageTitle title="Approbation des Commandes" desc="Revoyez les commandes en attente et validez-les pour approvisionner le stock." />
         </div>
-        <Button
-          onClick={() => {
-            setShowSortieForm(true);
-            sortieForm.reset();
-          }}
-        >
-          Enregistrer une sortie
-        </Button>
       </div>
 
       {showRefusForm && (
-        <div className="border rounded-xl p-6 mb-6 border-destructive">
-          <h2 className="text-xl font-bold mb-2">Refuser la commande #{selectedId}</h2>
-          <p className="text-muted-foreground mb-4">
-            Ajoutez une note expliquant la raison du refus.
-          </p>
+        <div className="border border-rose-200 rounded-2xl p-8 bg-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Motif du Refus</h2>
+              <p className="text-sm text-muted-foreground">Veuillez indiquer pourquoi la commande #{selectedId} est refusée.</p>
+            </div>
+          </div>
+          
           <Form {...refusForm}>
-            <form onSubmit={refusForm.handleSubmit(handleRefuser)} className="space-y-4">
+            <form onSubmit={refusForm.handleSubmit(handleRefuser)} className="space-y-6">
               <TextareaInput
-                label="Note de refus"
+                label="Commentaire de refus"
                 name="note"
                 form={refusForm}
-                placeholder="Expliquez la raison du refus..."
+                placeholder="Ex: Prix trop élevé, produit non conforme..."
                 withAsterisk
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => { setShowRefusForm(false); setSelectedId(null); refusForm.reset(); }}
+                  disabled={loading}
                 >
                   Annuler
                 </Button>
-                <Button type="submit" variant="destructive">Confirmer le refus</Button>
+                <Button type="submit" variant="destructive" className="px-8 shadow-md" disabled={loading}>
+                  {loading ? "Traitement..." : "Confirmer le Refus"}
+                </Button>
               </div>
             </form>
           </Form>
         </div>
       )}
 
-      {showSortieForm && (
-        <div className="border rounded-xl p-6 mb-6">
-          <h2 className="text-xl font-bold mb-2">Enregistrer une sortie</h2>
-          <p className="text-muted-foreground mb-4">
-            Enregistrez une sortie de stock pour un produit donné.
-          </p>
-          <Form {...sortieForm}>
-            <form onSubmit={sortieForm.handleSubmit(handleSortie)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TextInput label="ID Produit" name="produitId" form={sortieForm} placeholder="ID du produit" withAsterisk />
-                <TextInput label="Quantité" name="quantite" form={sortieForm} placeholder="Quantité sortante" withAsterisk />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium">
-                  Date de sortie <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="date"
-                  className="border rounded px-3 py-2 bg-background text-sm"
-                  {...sortieForm.register("dateSortie")}
-                />
-                {sortieForm.formState.errors.dateSortie && (
-                  <p className="text-destructive text-xs">{sortieForm.formState.errors.dateSortie.message}</p>
-                )}
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setShowSortieForm(false); sortieForm.reset(); }}
-                >
-                  Annuler
-                </Button>
-                <Button type="submit">Enregistrer la sortie</Button>
-              </div>
-            </form>
-          </Form>
-        </div>
-      )}
-
-      <div className="border rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-lg">Liste des commandes</h3>
-          <Button variant="outline" onClick={fetchCommandes} disabled={loading}>
-            {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
+      <div className="border rounded-2xl p-6 bg-white shadow-sm border-gray-100">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-lg text-gray-800">Commandes à traiter</h3>
+            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{commandes.length} au total</span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={fetchCommandes} disabled={loading} className="text-primary">
+            {loading ? "Chargement..." : "Actualiser"}
           </Button>
         </div>
         <DataTable columns={columns} data={commandes} loading={loading} />

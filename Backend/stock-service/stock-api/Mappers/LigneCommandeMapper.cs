@@ -10,12 +10,11 @@ namespace StockApi.Mappers
 			return new LigneCommandeDto
 			{
 				Id = entity.Id,
-				Nom = entity.Nom,
+				ProduitId = entity.ProduitId,
 				Quantite = entity.Quantite,
 				PrixUnitaire = entity.PrixUnitaire,
 				SousTotal = entity.SousTotal,
-				CommandeId = entity.CommandeId,
-				Etat = entity.Etat
+				CommandeId = entity.CommandeId
 			};
 		}
 
@@ -24,11 +23,10 @@ namespace StockApi.Mappers
 			return new LigneCommande
 			{
 				Id = dto.Id,
-				Nom = dto.Nom,
+				ProduitId = dto.ProduitId,
 				Quantite = dto.Quantite,
 				PrixUnitaire = dto.PrixUnitaire,
-				CommandeId = dto.CommandeId,
-				Etat = dto.Etat
+				CommandeId = dto.CommandeId
 			};
 		}
 	}
