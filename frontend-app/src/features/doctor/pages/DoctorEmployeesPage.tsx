@@ -304,8 +304,8 @@ export default function DoctorEmployeesPage() {
                     required 
                     autoComplete="new-password"
                     readOnly
-                    onFocus={(e) => e.target.removeAttribute('readonly')}
-                    onMouseEnter={(e) => e.target.removeAttribute('readonly')}
+                    onFocus={(e) => (e.target as HTMLInputElement).removeAttribute('readonly')}
+                    onMouseEnter={(e) => (e.target as HTMLInputElement).removeAttribute('readonly')}
                     value={newUser.password} 
                     onChange={e => setNewUser({...newUser, password: e.target.value})} 
                     placeholder=" " 
