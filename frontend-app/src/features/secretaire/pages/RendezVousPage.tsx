@@ -62,9 +62,16 @@ const RendezVousPage = () => {
     try {
       setLoading(true);
       const data = await getRendezVous();
+      console.log("Rendez-vous récupérés (Secrétaire):", data);
       // RÈGLE MÉTIER : Ne pas afficher les rendez-vous annulés (statut 3)
-      setAppointments(data.filter((app: RendezVous) => app.statutId !== 3));
+      const validAppointments = data.filter((app: RendezVous) => app.statutId !== 3);
+      setAppointments(validAppointments.sort((a: RendezVous, b: RendezVous) => {
+        const dateA = new Date(`${a.date}T${a.heureDebut}`);
+        const dateB = new Date(`${b.date}T${b.heureDebut}`);
+        return dateA.getTime() - dateB.getTime();
+      }));
     } catch (err) {
+      console.error("Erreur récupération rendez-vous:", err);
       setError("Impossible de charger les rendez-vous.");
     } finally {
       setLoading(false);
@@ -150,6 +157,22 @@ const RendezVousPage = () => {
     if (!formData.heureDebut) errors.heureDebut = "L'heure de début est obligatoire.";
     if (!formData.heureFinPrevue) errors.heureFinPrevue = "L'heure de fin prévue est obligatoire.";
     if (!formData.motif.trim()) errors.motif = "Le motif est obligatoire.";
+
+    if (formData.date) {
+      const selectedDate = new Date(formData.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        errors.date = "La date ne peut pas être dans le passé.";
+      }
+    }
+
+    if (formData.heureDebut && formData.heureFinPrevue) {
+      if (formData.heureDebut >= formData.heureFinPrevue) {
+        errors.heureDebut = "L'heure de début doit être inférieure à l'heure de fin.";
+        errors.heureFinPrevue = "L'heure de fin doit être après l'heure de début.";
+      }
+    }
 
     return errors;
   };

@@ -9,7 +9,7 @@ const publicApi = axios.create({
 // Add a request interceptor
 publicApi.interceptors.request.use(
   function (config: InternalAxiosRequestConfig) {
-    console.log("public request");
+    console.log("public request:", config.method?.toUpperCase(), config.url, config.data);
     return config;
   },
   function (error: AxiosError) {

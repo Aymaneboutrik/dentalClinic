@@ -64,13 +64,14 @@ export function Login() {
   };
   async function onSubmit(values: FormType) {
     setIsLoading(true);
-    // Map back to API format
+    
+    // Map back to API format and trim
     const apiValues = {
-      email: values.u_key_auth,
+      email: values.u_key_auth.trim(),
       password: values.p_key_auth
     };
 
-    console.log("Tentative de connexion avec:", apiValues);
+    console.log("Tentative de connexion avec:", JSON.stringify(apiValues));
 
     try {
       const response = await authService.login(apiValues);
@@ -80,7 +81,17 @@ export function Login() {
         toast.info(response.notification);
       }
     } catch (error: any) {
-      const message = error.response?.data?.message || "Erreur de connexion";
+      console.error("Login Error Details:", error.response?.data);
+      const backendMessage = error.response?.data?.message;
+      const validationErrors = error.response?.data?.errors;
+      
+      let message = backendMessage || "Erreur de connexion";
+      
+      if (validationErrors) {
+        const firstError = Object.values(validationErrors)[0];
+        if (Array.isArray(firstError)) message = firstError[0];
+      }
+
       toast.error(message);
     } finally {
       setIsLoading(false);

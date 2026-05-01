@@ -57,5 +57,15 @@ namespace Service_Rendez_vous.Repositories
                 .OrderByDescending(h => h.DateModification)
                 .ToListAsync();
         }
+
+        public async Task DeleteAsync(int id)
+        {
+            var rdv = await _context.RendezVous.FindAsync(id);
+            if (rdv != null)
+            {
+                _context.RendezVous.Remove(rdv);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

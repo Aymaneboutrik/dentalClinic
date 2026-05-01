@@ -21,7 +21,12 @@ import PlanningPage from "../features/doctor/pages/PlanningPage";
 import DemandesAbsencePage from "../features/doctor/pages/DemandesAbsencePage";
 import AbsencePage from "../features/doctor/pages/AbsencePage";
 
+import CommandesDoctorPage from "../features/doctor/pages/CommandesDoctorPage";
+import DoctorRendezVousPage from "../features/doctor/pages/DoctorRendezVousPage";
+import RendezVousHistoryPage from "../features/doctor/pages/RendezVousHistoryPage";
+
 import SecretaireDashboardPage from "../features/secretaire/pages/SecretaireDashboardPage";
+import RendezVousPage from "../features/secretaire/pages/RendezVousPage";
 import SecretaireDemandeAbsencePage from "../features/secretaire/pages/SecretaireDemandeAbsencePage";
 import SecretairePlanningPage from "../features/secretaire/pages/SecretairePlanningPage";
 import SecretaireAbsencePage from "../features/secretaire/pages/SecretaireAbsencePage";
@@ -31,8 +36,6 @@ import ProduitsPage from "../features/secretaire/pages/ProduitsPage";
 import CommandesPage from "../features/secretaire/pages/CommandesPage";
 import FournisseursPage from "../features/secretaire/pages/FournisseursPage";
 import LignesCommandePage from "../features/secretaire/pages/LignesCommandePage";
-
-import CommandesDoctorPage from "../features/doctor/pages/CommandesDoctorPage";
 
 import MouvementsStockPage from "../features/assistant/pages/MouvementsStockPage";
 
@@ -71,6 +74,14 @@ export const router = createBrowserRouter([
                    { index: true, element: <PatientListPage /> },
                    { path: "history", element: <PatientHistoryPage /> }
                 ]
+              },
+              {
+                path: "rendez-vous",
+                element: <DoctorRendezVousPage />,
+              },
+              {
+                path: "historique",
+                element: <RendezVousHistoryPage />,
               }
             ],
           },
@@ -108,6 +119,10 @@ export const router = createBrowserRouter([
                    { index: true, element: <PatientListPage /> },
                    { path: "history", element: <PatientHistoryPage /> }
                 ]
+              },
+              {
+                path: "rendez-vous",
+                element: <RendezVousPage />,
               }
             ],
           },

@@ -229,7 +229,6 @@ networks:
 
 volumes:
   auth_postgres_data:
-  personnel_db_data:
   pgadmin_data:
   stock_data:
   servicepersonnel_personnel_db_data:
@@ -238,4 +237,6 @@ volumes:
     external: true
   patient_uploads:
   rendezvous_db_data:
+    external:
+      name: dentalclinic_rendezvous_db_data
   paiement-data:

@@ -30,9 +30,9 @@ export interface UpdateRendezVousRequest {
 }
 
 export interface RescheduleRendezVousRequest {
-  nouvelleDate: string;
-  nouvelleHeureDebut: string;
-  nouvelleHeureFinPrevue: string;
+  date: string;
+  heureDebut: string;
+  heureFinPrevue: string;
   modifiePar: number;
 }
 

@@ -54,9 +54,12 @@ export const doctorSidebarConfig = [
   },
   {
     name: "Rendez-vous",
-    route: "/doctor/appointments",
+    route: "/doctor/rendez-vous",
     icon: <CalendarDays size={18} />,
-    childs: [],
+    childs: [
+      { name: "Gestion", route: "/doctor/rendez-vous" },
+      { name: "Historique", route: "/doctor/historique" }
+    ],
   },
   {
     name: "Commandes Stock",

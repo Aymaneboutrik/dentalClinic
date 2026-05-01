@@ -12,5 +12,9 @@ namespace Service_Rendez_vous.Models
         public TimeSpan HeureFinPrevue { get; set; }
         public TimeSpan? HeureFinReelle { get; set; }
         public bool? EstUrgent { get; set; }
+
+        // Navigation properties
+        public virtual StatutRDV? Statut { get; set; }
+        public virtual ICollection<HistoriqueRDV>? Historiques { get; set; }
     }
 }

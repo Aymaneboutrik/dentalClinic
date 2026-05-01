@@ -16,8 +16,13 @@ namespace Service_Rendez_vous.Mappers
                 AncienStatut = model.AncienStatut,
                 NouveauStatut = model.NouveauStatut,
                 DateModification = model.DateModification,
-                ModifiePar = model.ModifiePar,
-                TypeModification = model.TypeModification
+                TypeModification = model.TypeModification,
+                PatientId = model.PatientId ?? model.RendezVous?.PatientId,
+                DentisteId = model.DentisteId ?? model.RendezVous?.DentisteId,
+                Date = (model.Date ?? model.RendezVous?.Date)?.ToString("yyyy-MM-dd"),
+                HeureDebut = (model.HeureDebut ?? model.RendezVous?.HeureDebut)?.ToString(@"hh\:mm"),
+                Motif = model.Motif ?? model.RendezVous?.Motif,
+                EstUrgent = model.EstUrgent ?? model.RendezVous?.EstUrgent
             };
         }
     }

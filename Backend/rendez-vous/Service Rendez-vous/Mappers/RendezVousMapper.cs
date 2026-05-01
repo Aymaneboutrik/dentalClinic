@@ -17,7 +17,7 @@ namespace Service_Rendez_vous.Mappers
                 Date = model.Date,
                 HeureDebut = model.HeureDebut,
                 Motif = model.Motif,
-                StatutId = model.StatutId,
+                StatutId = model.StatutId == 5 ? 6 : model.StatutId, // Map DB 5 (Reporté) to Frontend 6 (Reporté)
                 HeureFinPrevue = model.HeureFinPrevue,
                 HeureFinReelle = model.HeureFinReelle,
                 EstUrgent = model.EstUrgent

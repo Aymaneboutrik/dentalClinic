@@ -40,19 +40,22 @@ const DoctorRendezVousPage = () => {
   // Reschedule Form State
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [rescheduleData, setRescheduleData] = useState<RescheduleRendezVousRequest>({
-    nouvelleDate: "",
-    nouvelleHeureDebut: "",
-    nouvelleHeureFinPrevue: "",
+    date: "",
+    heureDebut: "",
+    heureFinPrevue: "",
     modifiePar: 1,
   });
   const [rescheduleId, setRescheduleId] = useState<number | null>(null);
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
 
   const fetchAppointments = async () => {
     try {
       setLoading(true);
       const data = await getRendezVous();
+      console.log("Rendez-vous récupérés (Docteur):", data);
       setAppointments(data);
     } catch (err) {
+      console.error("Erreur récupération rendez-vous:", err);
       setError("Impossible de charger les rendez-vous.");
     } finally {
       setLoading(false);
@@ -87,14 +90,15 @@ const DoctorRendezVousPage = () => {
   }, [user]);
 
   useEffect(() => {
-    if (successMessage || error) {
+    if (successMessage || error || rescheduleError) {
       const timer = setTimeout(() => {
         setSuccessMessage(null);
         setError(null);
+        setRescheduleError(null);
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [successMessage, error]);
+  }, [successMessage, error, rescheduleError]);
 
 
 
@@ -145,10 +149,11 @@ const DoctorRendezVousPage = () => {
 
   const handleOpenReschedule = (app: RendezVous) => {
     setRescheduleId(app.id);
+    setRescheduleError(null);
     setRescheduleData({
-      nouvelleDate: app.date,
-      nouvelleHeureDebut: app.heureDebut,
-      nouvelleHeureFinPrevue: app.heureFinPrevue,
+      date: app.date,
+      heureDebut: app.heureDebut,
+      heureFinPrevue: app.heureFinPrevue,
       modifiePar: currentDoctor?.idEmploye || 1,
     });
     setShowRescheduleModal(true);
@@ -158,14 +163,23 @@ const DoctorRendezVousPage = () => {
     e.preventDefault();
     if (!rescheduleId) return;
 
+    setRescheduleError(null);
+
     // Validation frontend
-    const selectedDate = new Date(rescheduleData.nouvelleDate);
+    const selectedDate = new Date(rescheduleData.date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     if (selectedDate < today) {
-      setError("La date ne peut pas être dans le passé.");
+      setRescheduleError("La date ne peut pas être dans le passé.");
       return;
+    }
+
+    if (rescheduleData.heureDebut && rescheduleData.heureFinPrevue) {
+      if (rescheduleData.heureDebut >= rescheduleData.heureFinPrevue) {
+        setRescheduleError("L'heure de début doit être inférieure à l'heure de fin.");
+        return;
+      }
     }
 
     try {
@@ -174,9 +188,9 @@ const DoctorRendezVousPage = () => {
       setSuccessMessage("Rendez-vous reporté.");
       setShowRescheduleModal(false);
       fetchAppointments();
-    } catch (err) {
-      const apiError = err as ApiError;
-      setError(apiError.message);
+    } catch (err: any) {
+      const apiError = err.response?.data?.message || err.message || "Erreur lors du report.";
+      setRescheduleError(apiError);
     } finally {
       setActionLoading(false);
     }
@@ -202,13 +216,19 @@ const DoctorRendezVousPage = () => {
 
   // --- Variables Calculées ---
   const filteredAppointments = useMemo(() => {
-    return appointments.filter((app) => {
+    const filtered = appointments.filter((app) => {
       // RÈGLE MÉTIER : Ne pas afficher les rendez-vous annulés (statut 3)
       if (app.statutId === 3) return false;
       
       if (currentDoctor && app.dentisteId !== currentDoctor.idEmploye) return false;
       const patientName = getPatientName(app.patientId).toLowerCase();
       return patientName.includes(searchTerm.toLowerCase());
+    });
+
+    return filtered.sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.heureDebut}`);
+      const dateB = new Date(`${b.date}T${b.heureDebut}`);
+      return dateA.getTime() - dateB.getTime();
     });
   }, [appointments, currentDoctor, searchTerm, patients]);
 
@@ -324,13 +344,14 @@ const DoctorRendezVousPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#081028] p-6 shadow-2xl">
             <h2 className="text-xl font-semibold text-white mb-6">Reporter le rendez-vous</h2>
+            {rescheduleError && <p className="mb-4 text-sm text-red-500">{rescheduleError}</p>}
             <form onSubmit={handleRescheduleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-200">Nouvelle Date</label>
                 <input
                   type="date"
-                  value={rescheduleData.nouvelleDate}
-                  onChange={(e) => setRescheduleData({ ...rescheduleData, nouvelleDate: e.target.value })}
+                  value={rescheduleData.date}
+                  onChange={(e) => setRescheduleData({ ...rescheduleData, date: e.target.value })}
                   className="w-full rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
                   required
                 />
@@ -340,8 +361,8 @@ const DoctorRendezVousPage = () => {
                   <label className="text-sm font-medium text-slate-200">Heure Début</label>
                   <input
                     type="time"
-                    value={rescheduleData.nouvelleHeureDebut}
-                    onChange={(e) => setRescheduleData({ ...rescheduleData, nouvelleHeureDebut: e.target.value })}
+                    value={rescheduleData.heureDebut}
+                    onChange={(e) => setRescheduleData({ ...rescheduleData, heureDebut: e.target.value })}
                     className="w-full rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
                     required
                   />
@@ -350,8 +371,8 @@ const DoctorRendezVousPage = () => {
                   <label className="text-sm font-medium text-slate-200">Heure Fin Prévue</label>
                   <input
                     type="time"
-                    value={rescheduleData.nouvelleHeureFinPrevue}
-                    onChange={(e) => setRescheduleData({ ...rescheduleData, nouvelleHeureFinPrevue: e.target.value })}
+                    value={rescheduleData.heureFinPrevue}
+                    onChange={(e) => setRescheduleData({ ...rescheduleData, heureFinPrevue: e.target.value })}
                     className="w-full rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
                     required
                   />

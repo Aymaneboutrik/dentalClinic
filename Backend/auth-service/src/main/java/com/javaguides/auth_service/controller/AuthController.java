@@ -24,8 +24,15 @@ public class AuthController {
     // ResponseEntity<?> permet de renvoyer une réponse HTTP standard (statut,
     // headers, corps en JSON)
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        java.util.Map<String, Object> response = authService.login(request);
-        return ResponseEntity.ok(response);
+        System.out.println("Login attempt for email: " + request.getEmail());
+        try {
+            java.util.Map<String, Object> response = authService.login(request);
+            System.out.println("Login successful for: " + request.getEmail());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Login failed for " + request.getEmail() + ": " + e.getMessage());
+            throw e;
+        }
     }
 
     @PostMapping("/forgot-password")

@@ -13,5 +13,6 @@ namespace Service_Rendez_vous.Repositories.Interfaces
         Task AddHistoriqueAsync(HistoriqueRDV historique);
         Task<IEnumerable<HistoriqueRDV>> GetHistoryByRendezVousIdAsync(int rdvId);
         Task<IEnumerable<HistoriqueRDV>> GetAllHistoryAsync();
+        Task DeleteAsync(int id);
     }
 }

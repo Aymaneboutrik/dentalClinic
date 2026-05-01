@@ -22,11 +22,13 @@ const RendezVousHistoryPage = () => {
         patientService.secretaryListPatients(),
         getEmployees(),
       ]);
+      console.log("Historique récupéré:", historyData);
       setHistory(historyData.sort((a, b) => new Date(b.dateModification).getTime() - new Date(a.dateModification).getTime()));
       setAppointments(rdvData);
       setPatients(patientsData);
       setEmployees(employeesData);
     } catch (err) {
+      console.error("Erreur récupération historique:", err);
       setError("Impossible de charger l'historique.");
     } finally {
       setLoading(false);
@@ -131,7 +133,6 @@ const RendezVousHistoryPage = () => {
                 <th className="px-4 py-4 font-semibold">Ancien Statut</th>
                 <th className="px-4 py-4 font-semibold">Nouveau Statut</th>
                 <th className="px-4 py-4 font-semibold">Action</th>
-                <th className="px-4 py-4 font-semibold">Modifié par</th>
                 <th className="px-4 py-4 font-semibold">Urgent</th>
               </tr>
             </thead>
@@ -178,9 +179,6 @@ const RendezVousHistoryPage = () => {
                        <span className="text-[10px] bg-white/5 px-2 py-1 rounded border border-white/10 text-primary font-semibold uppercase">
                          {getTypeModification(item.typeModification)}
                        </span>
-                    </td>
-                    <td className="px-4 py-4 text-slate-300 font-medium">
-                      {getEmployeeName(item.modifiePar)}
                     </td>
                     <td className="px-4 py-4">
                       {item.estUrgent ? (

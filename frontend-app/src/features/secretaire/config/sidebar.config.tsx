@@ -16,7 +16,7 @@ export const secretaireSidebarConfig = [
   },
   {
     name: "Rendez-vous",
-    route: "/secretaire/appointments",
+    route: "/secretaire/rendez-vous",
     icon: <CalendarDays size={18} />,
     childs: [],
   },
