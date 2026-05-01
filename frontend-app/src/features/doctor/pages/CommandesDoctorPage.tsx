@@ -9,7 +9,7 @@ import { Form } from "@components/ui/form";
 import TextareaInput from "@components/inputs/textarea-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/CommandeDentiste";
+const BASE_URL = "/api/stock/CommandeDentiste";
 
 const statutLabels: Record<string, string> = {
   EnAttente: "En attente",

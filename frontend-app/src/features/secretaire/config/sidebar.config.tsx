@@ -55,4 +55,17 @@ export const secretaireSidebarConfig = [
       { name: "Lignes Commande", route: "/secretaire/stock/lignes-commande" },
     ],
   },
+  {
+    name: "Facturation & Paiement",
+    route: "/secretaire/facturation",
+    icon: <FileText size={18} />,
+    childs: [
+      { name: "Factures", route: "/secretaire/facturation/factures" },
+      { name: "Paiements", route: "/secretaire/facturation/paiements" },
+      { name: "Actes Médicaux", route: "/secretaire/facturation/actes" },
+      { name: "Remises", route: "/secretaire/facturation/remises" },
+      { name: "Transactions", route: "/secretaire/facturation/transactions" },
+      { name: "Lignes de Facture", route: "/secretaire/facturation/lignes-facture" },
+    ],
+  },
 ];

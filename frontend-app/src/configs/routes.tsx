@@ -39,6 +39,20 @@ import LignesCommandePage from "../features/secretaire/pages/LignesCommandePage"
 
 import MouvementsStockPage from "../features/assistant/pages/MouvementsStockPage";
 
+import DoctorActesMedicauxPage from "../features/doctor/pages/DoctorActesMedicauxPage";
+import DoctorFacturesPage from "../features/doctor/pages/DoctorFacturesPage";
+import DoctorLignesFacturePage from "../features/doctor/pages/DoctorLignesFacturePage";
+import DoctorPaiementsPage from "../features/doctor/pages/DoctorPaiementsPage";
+import DoctorRemisesPage from "../features/doctor/pages/DoctorRemisesPage";
+import DoctorTransactionsPage from "../features/doctor/pages/DoctorTransactionsPage";
+
+import ActesMedicauxPage from "../features/secretaire/pages/ActesMedicauxPage";
+import FacturesPage from "../features/secretaire/pages/FacturesPage";
+import LignesFacturePage from "../features/secretaire/pages/LignesFacturePage";
+import PaiementsPage from "../features/secretaire/pages/PaiementsPage";
+import RemisesPage from "../features/secretaire/pages/RemisesPage";
+import TransactionsPage from "../features/secretaire/pages/TransactionsPage";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -82,6 +96,17 @@ export const router = createBrowserRouter([
               {
                 path: "historique",
                 element: <RendezVousHistoryPage />,
+              },
+              {
+                path: "facturation",
+                children: [
+                  { path: "actes", element: <DoctorActesMedicauxPage /> },
+                  { path: "factures", element: <DoctorFacturesPage /> },
+                  { path: "lignes-facture", element: <DoctorLignesFacturePage /> },
+                  { path: "paiements", element: <DoctorPaiementsPage /> },
+                  { path: "remises", element: <DoctorRemisesPage /> },
+                  { path: "transactions", element: <DoctorTransactionsPage /> }
+                ]
               }
             ],
           },
@@ -123,6 +148,17 @@ export const router = createBrowserRouter([
               {
                 path: "rendez-vous",
                 element: <RendezVousPage />,
+              },
+              {
+                path: "facturation",
+                children: [
+                  { path: "actes", element: <ActesMedicauxPage /> },
+                  { path: "factures", element: <FacturesPage /> },
+                  { path: "lignes-facture", element: <LignesFacturePage /> },
+                  { path: "paiements", element: <PaiementsPage /> },
+                  { path: "remises", element: <RemisesPage /> },
+                  { path: "transactions", element: <TransactionsPage /> }
+                ]
               }
             ],
           },

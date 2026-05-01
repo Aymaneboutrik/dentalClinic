@@ -67,4 +67,17 @@ export const doctorSidebarConfig = [
     icon: <Package size={18} />,
     childs: [],
   },
+  {
+    name: "Facturation & Paiement",
+    route: "/doctor/facturation",
+    icon: <FileText size={18} />,
+    childs: [
+      { name: "Factures", route: "/doctor/facturation/factures" },
+      { name: "Paiements", route: "/doctor/facturation/paiements" },
+      { name: "Actes Médicaux", route: "/doctor/facturation/actes" },
+      { name: "Remises", route: "/doctor/facturation/remises" },
+      { name: "Transactions", route: "/doctor/facturation/transactions" },
+      { name: "Lignes de Facture", route: "/doctor/facturation/lignes-facture" },
+    ],
+  },
 ];

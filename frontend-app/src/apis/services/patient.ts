@@ -9,6 +9,7 @@ export interface Patient {
   telephone?: string;
   dateNaissance?: string;
   sexe?: string;
+  profession?: string;
   archived?: boolean;
   dossierId?: number;
 }
