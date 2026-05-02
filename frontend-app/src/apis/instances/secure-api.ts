@@ -3,7 +3,9 @@ import Cookie from "js-cookie";
 import { TOKEN } from "@configs/vars";
 
 const secureApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost/api",
+  // Prefer relative baseURL so Vite proxy (dev) / reverse-proxy (prod) can route requests.
+  // Can be overridden via VITE_API_URL (e.g. "http://localhost:80/api" or "http://localhost:5003/api").
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   timeout: 10000,
 });
 

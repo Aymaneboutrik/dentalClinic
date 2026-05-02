@@ -156,20 +156,26 @@ export default function ProduitsPage() {
       cell: ({ row }) => {
         const isPerime = new Date(row.original.datePeremption) <= new Date();
         return (
-          <div className="flex flex-col">
-            <span className={`font-bold ${isPerime ? "text-rose-600 animate-pulse" : "text-gray-900"}`}>
-              {row.original.nom}
-            </span>
-            <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">{row.original.description}</span>
-          </div>
+          <span className={`font-bold ${isPerime ? "text-rose-600 animate-pulse" : "text-gray-900"}`}>
+            {row.original.nom}
+          </span>
         );
       },
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-xs truncate max-w-[240px] block">
+          {row.original.description}
+        </span>
+      ),
     },
     {
       accessorKey: "quantite",
       header: "Quantité",
       cell: ({ row }) => (
-        <span className={`font-black ${row.original.quantite <= row.original.seuilAlerte ? "text-rose-600 bg-rose-50 px-2 py-0.5 rounded" : "text-gray-700"}`}>
+        <span className={`font-semibold ${row.original.quantite <= row.original.seuilAlerte ? "text-rose-600" : "text-gray-700"}`}>
           {row.original.quantite}
         </span>
       ),
@@ -229,10 +235,10 @@ export default function ProduitsPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-primary text-sm font-semibold tracking-widest uppercase">Inventaire</p>
+          <p className="text-primary text-sm font-medium">Gestion Stock</p>
           <PageTitle title="Catalogue Produits" desc="Gestion centralisée du catalogue, des stocks et des dates de péremption." />
         </div>
         <Button
@@ -241,7 +247,7 @@ export default function ProduitsPage() {
             setEditing(null);
             form.reset();
           }}
-          className="shadow-xl"
+          className=""
         >
           {showForm ? "Fermer" : "Ajouter un Produit"}
         </Button>
@@ -274,16 +280,13 @@ export default function ProduitsPage() {
       </div>
 
       {showForm && (
-        <div className="border border-primary/10 rounded-2xl p-8 mb-6 bg-white shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">{editing ? "Mise à jour du Produit" : "Nouveau Produit"}</h2>
-              <p className="text-sm text-muted-foreground">{editing ? "Modifiez les caractéristiques techniques." : "Le produit sera créé en mode 'Inactif' par défaut."}</p>
-            </div>
-          </div>
+        <div className="border rounded-xl p-6 mb-6 bg-card">
+          <h2 className="text-xl font-bold mb-2">
+            {editing ? "Mise à jour du Produit" : "Nouveau Produit"}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            {editing ? "Modifiez les caractéristiques techniques." : "Le produit sera créé en mode 'Inactif' par défaut."}
+          </p>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -321,25 +324,22 @@ export default function ProduitsPage() {
         </div>
       )}
 
-      <div className="border rounded-2xl p-6 bg-white shadow-sm border-gray-100">
-        <div className="flex items-center justify-between mb-6">
+      <div className="border rounded-xl p-6 bg-card">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-lg text-gray-800">Catalogue</h3>
             <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{produits.length} items</span>
           </div>
           <div className="flex gap-3">
-             <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input
-                  className="border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all outline-none min-w-[250px]"
-                  placeholder="Chercher un produit..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-             </div>
-             <Button variant="outline" size="sm" onClick={fetchProduits} disabled={loading} className="rounded-xl border-gray-200">
-                {loading ? "..." : "Actualiser"}
-             </Button>
+            <input
+              className="border rounded px-3 py-1 text-sm bg-background"
+              placeholder="Chercher un produit..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <Button variant="outline" onClick={fetchProduits} disabled={loading}>
+              {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
+            </Button>
           </div>
         </div>
         <DataTable columns={columns} data={filtered} loading={loading} />

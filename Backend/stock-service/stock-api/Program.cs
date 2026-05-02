@@ -47,7 +47,45 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+
+    // Keep existing Docker volume schema compatible with the API model.
+    // The init.sql uses CREATE TABLE IF NOT EXISTS, so older volumes might miss newer columns.
+    db.Database.ExecuteSqlRaw("""
+        ALTER TABLE IF EXISTS produit
+        ADD COLUMN IF NOT EXISTS actif boolean NOT NULL DEFAULT FALSE;
+        """);
+
+    db.Database.ExecuteSqlRaw("""
+        ALTER TABLE IF EXISTS commande
+        ADD COLUMN IF NOT EXISTS fournisseur_id integer NOT NULL DEFAULT 0;
+        """);
+
+    db.Database.ExecuteSqlRaw("""
+        ALTER TABLE IF EXISTS ligne_commande
+        ADD COLUMN IF NOT EXISTS produit_id integer NOT NULL DEFAULT 0;
+        """);
+
+    db.Database.ExecuteSqlRaw("""
+        ALTER TABLE IF EXISTS ligne_commande
+        ALTER COLUMN nom SET DEFAULT '';
+        """);
+
+    // Older Docker volumes might miss nullable FK columns on mouvement_stock.
+    db.Database.ExecuteSqlRaw("""
+        ALTER TABLE IF EXISTS mouvement_stock
+        ADD COLUMN IF NOT EXISTS ligne_commande_id integer NULL;
+        """);
+
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (InvalidOperationException ex) when (ex.Message.Contains("PendingModelChangesWarning"))
+    {
+        // Do not crash the service if EF detects pending model changes.
+        // This keeps the API available against the existing database schema.
+        app.Logger.LogWarning(ex, "Skipping database migrations due to pending model changes.");
+    }
 }
 
 if (app.Environment.IsDevelopment())

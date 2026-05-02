@@ -130,17 +130,17 @@ export default function LignesCommandePage() {
     { 
       accessorKey: "produitId", 
       header: "ID Produit",
-      cell: ({ row }) => <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs border border-blue-100 font-mono">{row.original.produitId}</span>
+      cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.produitId}</span>
     },
     { 
       accessorKey: "commandeId", 
       header: "ID Commande",
-      cell: ({ row }) => <span className="bg-gray-50 text-gray-700 px-2 py-0.5 rounded text-xs border font-mono">{row.original.commandeId}</span>
+      cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.commandeId}</span>
     },
     { 
       accessorKey: "quantite", 
       header: "Quantité",
-      cell: ({ row }) => <span className="font-bold">{row.original.quantite}</span>
+      cell: ({ row }) => <span className="text-gray-800">{row.original.quantite}</span>
     },
     { 
       accessorKey: "prixUnitaire", 
@@ -169,10 +169,10 @@ export default function LignesCommandePage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-primary text-sm font-semibold tracking-widest uppercase">Détails Commandes</p>
+          <p className="text-primary text-sm font-medium">Gestion Stock</p>
           <PageTitle title="Lignes de Commande" desc="Associez des produits aux commandes créées pour préparer l'approvisionnement." />
         </div>
         <Button
@@ -181,23 +181,20 @@ export default function LignesCommandePage() {
             setEditing(null);
             form.reset();
           }}
-          className="shadow-lg transition-transform active:scale-95"
+          className=""
         >
           {showForm ? "Masquer le formulaire" : "Ajouter un Produit"}
         </Button>
       </div>
 
       {showForm && (
-        <div className="border border-primary/10 rounded-2xl p-8 mb-6 bg-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">{editing ? "Modifier la ligne" : "Nouvelle ligne de commande"}</h2>
-              <p className="text-sm text-muted-foreground">Spécifiez le produit, la quantité et le prix unitaire convenu.</p>
-            </div>
-          </div>
+        <div className="border rounded-xl p-6 mb-6 bg-card">
+          <h2 className="text-xl font-bold mb-2">
+            {editing ? "Modifier la ligne" : "Nouvelle ligne de commande"}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Spécifiez le produit, la quantité et le prix unitaire convenu.
+          </p>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -226,14 +223,14 @@ export default function LignesCommandePage() {
         </div>
       )}
 
-      <div className="border rounded-2xl p-6 bg-white shadow-sm border-gray-100">
-        <div className="flex items-center justify-between mb-6">
+      <div className="border rounded-xl p-6 bg-card">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-lg text-gray-800">Contenu des commandes</h3>
             <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{lignes.length} lignes</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={fetchLignes} disabled={loading} className="text-primary">
-            {loading ? "..." : "Actualiser"}
+          <Button variant="outline" onClick={fetchLignes} disabled={loading}>
+            {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
           </Button>
         </div>
         <DataTable columns={columns} data={lignes} loading={loading} />

@@ -7,9 +7,12 @@ import { DataTable } from "@components/data-table/data-table";
 import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextareaInput from "@components/inputs/textarea-input";
+import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
+import secureApi from "@apis/instances/secure-api";
 
-const BASE_URL = "/api/stock/CommandeDentiste";
+const BASE_URL = "/stock/CommandeDentiste";
+const COMMANDES_URL = "/stock/Commande";
 
 const statutLabels: Record<string, string> = {
   EnAttente: "En attente",
@@ -31,10 +34,25 @@ interface Commande {
   fournisseurId: number;
 }
 
+interface LigneCommande {
+  id: number;
+  produitId: number;
+  quantite: number;
+  prixUnitaire: number;
+  sousTotal: number;
+  commandeId: number;
+}
+
 const refusSchema = z.object({
   note: z.string().min(1, "La note est obligatoire"),
 });
 type RefusForm = z.infer<typeof refusSchema>;
+
+const editSchema = z.object({
+  nom: z.string().min(1, "Le nom est obligatoire"),
+  fournisseurId: z.coerce.number().min(1, "Le fournisseur est obligatoire"),
+});
+type EditForm = z.infer<typeof editSchema>;
 
 export default function CommandesDoctorPage() {
   const [commandes, setCommandes] = useState<Commande[]>([]);
@@ -42,26 +60,32 @@ export default function CommandesDoctorPage() {
   const [fetched, setFetched] = useState(false);
   const [showRefusForm, setShowRefusForm] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingCommande, setEditingCommande] = useState<Commande | null>(null);
 
   const refusForm = useForm<RefusForm>({
     resolver: zodResolver(refusSchema),
     defaultValues: { note: "" },
   });
 
+  const editForm = useForm<EditForm>({
+    resolver: zodResolver(editSchema),
+    defaultValues: { nom: "", fournisseurId: 0 },
+  });
+
   const fetchCommandes = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/Commande");
-      if (!res.ok) throw new Error();
-      const data = await res.json();
+      const res = await secureApi.get(COMMANDES_URL);
+      const data = res.data;
       const mappedData = data.map((c: any) => ({
         ...c,
         statut: c.statut === 0 ? "EnAttente" : c.statut === 1 ? "Validee" : "Refusee"
       }));
       setCommandes(mappedData);
       setFetched(true);
-    } catch {
-      console.error("Erreur lors du chargement des commandes");
+    } catch (e) {
+      console.error("Erreur lors du chargement des commandes", e);
     } finally {
       setLoading(false);
     }
@@ -75,15 +99,18 @@ export default function CommandesDoctorPage() {
     if (!confirm(`Valider la commande #${id} ? Cela mettra à jour le stock automatiquement.`)) return;
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/${id}/valider`, { method: "POST" });
-      if (res.ok) {
+      // Guard: if the order has no lines, the backend cannot create any stock entry movements.
+      const lignesRes = await secureApi.get<LigneCommande[]>("/stock/LigneCommande");
+      const lignes = (lignesRes.data ?? []).filter((l) => l.commandeId === id);
+      if (lignes.length === 0) {
+        alert("Impossible de valider: aucune ligne de commande associée. Ajoutez d'abord des lignes à cette commande.");
+        setLoading(false);
+        return;
+      }
+
+      await secureApi.post(`${BASE_URL}/${id}/valider`);
         alert("Commande validée avec succès.");
         await fetchCommandes();
-      } else {
-        const errorData = await res.json();
-        alert(`Erreur : ${errorData.message || 'Action impossible'}`);
-        setLoading(false);
-      }
     } catch {
       alert("Erreur réseau.");
       setLoading(false);
@@ -96,26 +123,62 @@ export default function CommandesDoctorPage() {
     setShowRefusForm(true);
   };
 
+  const openEditForm = (commande: Commande) => {
+    if (commande.statut !== "EnAttente") {
+      alert("Impossible de modifier une commande déjà traitée.");
+      return;
+    }
+    setEditingCommande(commande);
+    editForm.setValue("nom", commande.nom);
+    editForm.setValue("fournisseurId", commande.fournisseurId);
+    setShowEditForm(true);
+  };
+
+  const handleEdit = async (values: EditForm) => {
+    if (!editingCommande) return;
+    setLoading(true);
+    try {
+      await secureApi.put(`/stock/Commande/${editingCommande.id}`, {
+        id: editingCommande.id,
+        ...values,
+        statut: 0,
+      });
+      alert("Commande modifiée.");
+      setShowEditForm(false);
+      setEditingCommande(null);
+      editForm.reset();
+      await fetchCommandes();
+    } catch {
+      alert("Modification indisponible côté API (endpoint PUT manquant).");
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Supprimer cette commande ?")) return;
+    setLoading(true);
+    try {
+      await secureApi.delete(`/stock/Commande/${id}`);
+      alert("Commande supprimée.");
+      await fetchCommandes();
+    } catch {
+      alert("Erreur lors de la suppression.");
+      setLoading(false);
+    }
+  };
+
   const handleRefuser = async (values: RefusForm) => {
     if (!selectedId) return;
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/${selectedId}/refuser`, {
-        method: "POST",
+      await secureApi.post(`${BASE_URL}/${selectedId}/refuser`, values.note, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values.note),
       });
-      if (res.ok) {
         alert("Commande refusée.");
         setShowRefusForm(false);
         setSelectedId(null);
         refusForm.reset();
         await fetchCommandes();
-      } else {
-        const errorData = await res.json();
-        alert(`Erreur : ${errorData.message || 'Action impossible'}`);
-        setLoading(false);
-      }
     } catch {
       alert("Erreur réseau.");
       setLoading(false);
@@ -137,7 +200,7 @@ export default function CommandesDoctorPage() {
     { 
       accessorKey: "fournisseurId", 
       header: "ID Fournisseur",
-      cell: ({ row }) => <span className="text-xs bg-gray-100 px-2 py-0.5 rounded border">{row.original.fournisseurId}</span>
+      cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.fournisseurId}</span>
     },
     {
       accessorKey: "statut",
@@ -155,6 +218,24 @@ export default function CommandesDoctorPage() {
         <div className="flex gap-2">
           {row.original.statut === "EnAttente" && (
             <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                onClick={() => openEditForm(row.original)}
+                disabled={loading}
+              >
+                Modifier
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-rose-200 text-rose-600 hover:bg-rose-50"
+                onClick={() => handleDelete(row.original.id)}
+                disabled={loading}
+              >
+                Supprimer
+              </Button>
               <Button
                 size="sm"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
@@ -180,16 +261,49 @@ export default function CommandesDoctorPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-primary text-sm font-semibold uppercase tracking-wider">Interface Doctor</p>
+          <p className="text-primary text-sm font-medium">Gestion Stock</p>
           <PageTitle title="Approbation des Commandes" desc="Revoyez les commandes en attente et validez-les pour approvisionner le stock." />
         </div>
+        <Button variant="outline" onClick={fetchCommandes} disabled={loading}>
+          {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
+        </Button>
       </div>
 
+      {showEditForm && (
+        <div className="border rounded-xl p-6 mb-6 bg-card">
+          <h2 className="text-xl font-bold mb-2">Modifier la commande</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Modifiez le libellé et l’ID fournisseur (commande en attente uniquement).
+          </p>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TextInput label="Libellé" name="nom" form={editForm} placeholder="Ex: Achat Gants Latex" withAsterisk />
+                <TextInput label="ID Fournisseur" name="fournisseurId" form={editForm} placeholder="Ex: 5" withAsterisk />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setShowEditForm(false); setEditingCommande(null); editForm.reset(); }}
+                  disabled={loading}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" className="px-8" disabled={loading}>
+                  {loading ? "Traitement..." : "Enregistrer"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+      )}
+
       {showRefusForm && (
-        <div className="border border-rose-200 rounded-2xl p-8 bg-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="border border-rose-200 rounded-xl p-6 mb-6 bg-card shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
@@ -227,15 +341,12 @@ export default function CommandesDoctorPage() {
         </div>
       )}
 
-      <div className="border rounded-2xl p-6 bg-white shadow-sm border-gray-100">
-        <div className="flex items-center justify-between mb-6">
+      <div className="border rounded-xl p-6 bg-card">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-lg text-gray-800">Commandes à traiter</h3>
             <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{commandes.length} au total</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={fetchCommandes} disabled={loading} className="text-primary">
-            {loading ? "Chargement..." : "Actualiser"}
-          </Button>
         </div>
         <DataTable columns={columns} data={commandes} loading={loading} />
       </div>

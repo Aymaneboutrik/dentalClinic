@@ -5,13 +5,23 @@ import * as z from "zod";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@components/data-table/data-table";
 import { Button } from "@components/ui/button";
-import { Form } from "@components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormMessage } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 import Cookie from "js-cookie";
 import { TOKEN } from "@configs/vars";
+import SelectInput from "@components/inputs/select-input";
+import { Input } from "@components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@components/ui/dialog";
 
 const BASE_URL = "/api/stock/Commande";
+const FOURNISSEUR_URL = "/api/stock/Fournisseur";
 
 function withAuthHeaders(extra?: Record<string, string>) {
   const token = Cookie.get(TOKEN);
@@ -24,6 +34,8 @@ function withAuthHeaders(extra?: Record<string, string>) {
 const commandeSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
   fournisseurId: z.coerce.number().min(1, "Le fournisseur est obligatoire"),
+  // Optional: backend can set it automatically on create; edit can override it.
+  date: z.string().optional(),
 });
 
 type CommandeForm = z.infer<typeof commandeSchema>;
@@ -79,15 +91,34 @@ export default function CommandesPage() {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Commande | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [fetched, setFetched] = useState(false);
   const [bonCommande, setBonCommande] = useState<BonCommande | null>(null);
   const [showBon, setShowBon] = useState(false);
+  const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
+  const [loadingFournisseurs, setLoadingFournisseurs] = useState(false);
 
   const form = useForm<CommandeForm>({
     resolver: zodResolver(commandeSchema),
-    defaultValues: { nom: "", fournisseurId: 0 },
+    // Keep fournisseurId as string in the form state (Select expects string),
+    // zodResolver will coerce it to number on submit.
+    defaultValues: { nom: "", fournisseurId: "0" as unknown as number, date: "" },
   });
+
+  const toDateInputValue = (isoOrDate?: string) => {
+    if (!isoOrDate) return "";
+    const s = String(isoOrDate);
+    return s.includes("T") ? s.split("T")[0] : s;
+  };
+
+  const normalizeDateForApi = (yyyyMmDd?: string) => {
+    if (!yyyyMmDd) return undefined;
+    const s = String(yyyyMmDd);
+    if (s.includes("T")) return s;
+    // Keep backend-friendly ISO-ish format without timezone surprises.
+    return `${s}T00:00:00`;
+  };
 
   const fetchCommandes = async () => {
     setLoading(true);
@@ -97,7 +128,7 @@ export default function CommandesPage() {
       const data = await res.json();
       const mappedData = data.map((c: any) => ({
         ...c,
-        statut: c.statut === 0 ? "EnAttente" : c.statut === 1 ? "Validee" : "Refusee"
+        statut: c.statut === 0 ? "EnAttente" : c.statut === 1 ? "Validee" : "Refusee",
       }));
       setCommandes(mappedData);
       setFetched(true);
@@ -108,8 +139,24 @@ export default function CommandesPage() {
     }
   };
 
+  const fetchFournisseurs = async () => {
+    setLoadingFournisseurs(true);
+    try {
+      const res = await fetch(`${FOURNISSEUR_URL}`, { headers: withAuthHeaders() });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setFournisseurs(data);
+    } catch {
+      // Non bloquant: l'édition peut se faire avec l'ID déjà présent.
+      console.warn("Impossible de charger les fournisseurs.");
+    } finally {
+      setLoadingFournisseurs(false);
+    }
+  };
+
   useEffect(() => {
     fetchCommandes();
+    fetchFournisseurs();
   }, []);
 
   const handleSubmit = async (values: CommandeForm) => {
@@ -117,16 +164,23 @@ export default function CommandesPage() {
       let res;
       if (editing) {
         const statutInt = editing.statut === "EnAttente" ? 0 : editing.statut === "Validee" ? 1 : 2;
+        const normalizedDate = normalizeDateForApi(values.date) ?? normalizeDateForApi(editing.date);
         res = await fetch(`${BASE_URL}/${editing.id}`, {
           method: "PUT",
           headers: withAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ id: editing.id, ...values, statut: statutInt }),
+          body: JSON.stringify({
+            id: editing.id,
+            nom: values.nom,
+            fournisseurId: values.fournisseurId,
+            ...(normalizedDate ? { date: normalizedDate } : {}),
+            statut: statutInt,
+          }),
         });
       } else {
         res = await fetch(`${BASE_URL}`, {
           method: "POST",
           headers: withAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ id: 0, ...values, statut: 0 }),
+          body: JSON.stringify({ id: 0, nom: values.nom, fournisseurId: values.fournisseurId, statut: 0 }),
         });
       }
       
@@ -136,6 +190,7 @@ export default function CommandesPage() {
         form.reset();
         setShowForm(false);
         setEditing(null);
+        setEditOpen(false);
         fetchCommandes();
       } else {
         alert(`Erreur : ${data.message || 'Sauvegarde échouée'}`);
@@ -152,8 +207,9 @@ export default function CommandesPage() {
     }
     setEditing(c);
     form.setValue("nom", c.nom);
-    form.setValue("fournisseurId", c.fournisseurId);
-    setShowForm(true);
+    form.setValue("fournisseurId", String(c.fournisseurId) as unknown as number);
+    form.setValue("date", toDateInputValue(c.date));
+    setEditOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -203,7 +259,7 @@ export default function CommandesPage() {
     { 
       accessorKey: "fournisseurId", 
       header: "ID Fournisseur",
-      cell: ({ row }) => <span className="text-xs bg-gray-50 border px-2 py-0.5 rounded">{row.original.fournisseurId}</span>
+      cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.fournisseurId}</span>
     },
     {
       accessorKey: "statut",
@@ -238,10 +294,10 @@ export default function CommandesPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-primary text-sm font-semibold tracking-wide uppercase">Approvisionnement</p>
+          <p className="text-primary text-sm font-medium">Gestion Stock</p>
           <PageTitle title="Gestion des Commandes" desc="Créez et gérez les bons de commande pour vos fournisseurs." />
         </div>
         <Button
@@ -250,23 +306,88 @@ export default function CommandesPage() {
             setEditing(null);
             form.reset();
           }}
-          className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all"
+          className=""
         >
           {showForm ? "Fermer" : "Nouvelle Commande"}
         </Button>
       </div>
 
+      <Dialog
+        open={editOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open);
+          if (!open) {
+            setEditing(null);
+            form.reset();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[720px] border-white/10 shadow-2xl rounded-[1.5rem]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">Modifier la commande</DialogTitle>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TextInput
+                  label="Nom de la commande"
+                  name="nom"
+                  form={form}
+                  placeholder="Ex: Achat Gants Latex"
+                  withAsterisk
+                />
+
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">Date</FormLabel>
+                      <Input type="date" className="bg-background" {...field} value={field.value || ""} />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <SelectInput
+                label="Fournisseur"
+                name="fournisseurId"
+                form={form}
+                withAsterisk
+                placeholder={loadingFournisseurs ? "Chargement..." : "Sélectionner un fournisseur"}
+                isLoading={loadingFournisseurs}
+                data={fournisseurs.map((f) => ({ label: `${f.nom} (ID: ${f.id})`, value: String(f.id) }))}
+                className="bg-background"
+              />
+
+              <DialogFooter className="mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditOpen(false)}
+                  disabled={loading}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" className="px-10 shadow-md" disabled={loading}>
+                  Enregistrer
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
       {showForm && (
-        <div className="border border-primary/10 rounded-2xl p-8 mb-6 bg-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">{editing ? "Modifier la Commande" : "Nouvelle Commande"}</h2>
-              <p className="text-sm text-muted-foreground">La date de création sera définie automatiquement sur aujourd'hui.</p>
-            </div>
-          </div>
+        <div className="border rounded-xl p-6 mb-6 bg-card">
+          <h2 className="text-xl font-bold mb-2">
+            {editing ? "Modifier la commande" : "Nouvelle commande"}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            La date de création sera définie automatiquement sur aujourd'hui.
+          </p>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -290,7 +411,7 @@ export default function CommandesPage() {
       )}
 
       {showBon && bonCommande && (
-        <div className="border border-primary/20 rounded-2xl p-8 mb-6 bg-white shadow-2xl relative overflow-hidden">
+        <div className="border rounded-xl p-6 mb-6 bg-card relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4">
              <Button variant="ghost" size="icon" onClick={() => setShowBon(false)} className="rounded-full">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -368,34 +489,36 @@ export default function CommandesPage() {
           </div>
 
           <div className="flex justify-end pt-4">
-            <div className="bg-gray-900 text-white px-10 py-6 rounded-2xl shadow-xl flex items-center gap-8 min-w-[300px]">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={() => setShowBon(false)}>
+                Fermer
+              </Button>
+              <div className="bg-gray-900 text-white px-10 py-6 rounded-2xl shadow-xl flex items-center gap-8 min-w-[300px]">
               <div>
                 <p className="text-gray-400 text-xs uppercase font-black tracking-widest mb-1">Montant Total</p>
                 <p className="text-3xl font-black">{bonCommande.lignes.reduce((acc, l) => acc + l.sousTotal, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} <span className="text-sm font-normal text-gray-400">MAD</span></p>
               </div>
-            </div>
+              </div>
+            </div>  
           </div>
         </div>
       )}
 
-      <div className="border rounded-2xl p-6 bg-white shadow-sm border-gray-100">
-        <div className="flex items-center justify-between mb-6">
+      <div className="border rounded-xl p-6 bg-card">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-lg text-gray-800">Historique des Commandes</h3>
             <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{commandes.length}</span>
           </div>
           <div className="flex gap-3">
-            <div className="relative">
-               <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-               <input
-                 className="border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all outline-none min-w-[250px]"
-                 placeholder="Rechercher par nom ou statut..."
-                 value={search}
-                 onChange={(e) => setSearch(e.target.value)}
-               />
-            </div>
-            <Button variant="outline" onClick={fetchCommandes} disabled={loading} className="rounded-xl border-gray-200 hover:bg-gray-50">
-              {loading ? "..." : "Actualiser"}
+            <input
+              className="border rounded px-3 py-1 text-sm bg-background"
+              placeholder="Rechercher par nom ou statut..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <Button variant="outline" onClick={fetchCommandes} disabled={loading}>
+              {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
             </Button>
           </div>
         </div>

@@ -131,6 +131,10 @@ export const router = createBrowserRouter([
             element: <CommandesDoctorPage />,
           },
           {
+            path: "doctor/stock/mouvements",
+            element: <MouvementsStockPage />,
+          },
+          {
             path: "secretaire",
             element: <RoleGuard allowedRoles={["Secretaire"]} />,
             children: [

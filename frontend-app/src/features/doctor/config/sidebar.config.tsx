@@ -68,6 +68,12 @@ export const doctorSidebarConfig = [
     childs: [],
   },
   {
+    name: "Mouvements Stock",
+    route: "/doctor/stock/mouvements",
+    icon: <Package size={18} />,
+    childs: [],
+  },
+  {
     name: "Facturation & Paiement",
     route: "/doctor/facturation",
     icon: <FileText size={18} />,

@@ -36,6 +36,7 @@ export default function LignesFacturePage() {
   const [editing, setEditing] = useState<LigneFacture | null>(null);
   const [search, setSearch] = useState("");
   const [fetched, setFetched] = useState(false);
+  const [factureIdFilter, setFactureIdFilter] = useState<string>("");
 
   const form = useForm<LigneFactureForm>({
     resolver: zodResolver(ligneFactureSchema),
@@ -45,7 +46,15 @@ export default function LignesFacturePage() {
   const fetchLignes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
+      const factureId = Number(factureIdFilter);
+      if (!Number.isFinite(factureId) || factureId <= 0) {
+        setLignes([]);
+        setFetched(true);
+        return;
+      }
+
+      // Backend exposes GET /api/lignes-facture/facture/{factureId} (no global "GET /api/lignes-facture").
+      const res = await fetch(`${BASE_URL}/facture/${factureId}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       setLignes(data);
@@ -58,30 +67,33 @@ export default function LignesFacturePage() {
   };
 
   useEffect(() => {
-    fetchLignes();
+    // Do not auto-fetch without a factureId (backend doesn't support listing all).
   }, []);
 
   const handleSubmit = async (values: LigneFactureForm) => {
     try {
       if (editing) {
-        await fetch(`${BASE_URL}/${editing.id}`, {
+        const res = await fetch(`${BASE_URL}/${editing.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: editing.id, ...values }),
         });
+        if (!res.ok) throw res;
       } else {
-        await fetch(`${BASE_URL}`, {
+        const res = await fetch(`${BASE_URL}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(values),
         });
+        if (!res.ok) throw res;
       }
       form.reset();
       setShowForm(false);
       setEditing(null);
       fetchLignes();
-    } catch {
-      alert("Erreur lors de la sauvegarde");
+    } catch (error) {
+      const data = await (error as any).json?.().catch(() => null);
+      alert(data?.message || "Erreur lors de la sauvegarde (vérifiez que la facture est IMPAYÉE).");
     }
   };
 
@@ -187,6 +199,12 @@ export default function LignesFacturePage() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-lg">Liste des lignes</h3>
           <div className="flex gap-2">
+            <input
+              className="border rounded px-3 py-1 text-sm bg-background w-[160px]"
+              placeholder="ID Facture..."
+              value={factureIdFilter}
+              onChange={(e) => setFactureIdFilter(e.target.value)}
+            />
             <input
               className="border rounded px-3 py-1 text-sm bg-background"
               placeholder="Rechercher par libellé ou ID Facture..."

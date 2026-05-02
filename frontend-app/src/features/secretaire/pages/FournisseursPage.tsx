@@ -151,10 +151,10 @@ export default function FournisseursPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-primary text-sm font-semibold tracking-widest uppercase">Partenaires</p>
+          <p className="text-primary text-sm font-medium">Gestion Stock</p>
           <PageTitle title="Gestion des Fournisseurs" desc="Gérez vos contacts et sources d'approvisionnement." />
         </div>
         <Button
@@ -163,23 +163,20 @@ export default function FournisseursPage() {
             setEditing(null);
             form.reset();
           }}
-          className="shadow-lg transition-transform active:scale-95"
+          className=""
         >
           {showForm ? "Masquer" : "Nouveau Fournisseur"}
         </Button>
       </div>
 
       {showForm && (
-        <div className="border border-primary/10 rounded-2xl p-8 mb-6 bg-white shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">{editing ? "Modifier le profil" : "Nouveau Partenaire"}</h2>
-              <p className="text-sm text-muted-foreground">Renseignez les coordonnées pour faciliter les commandes futures.</p>
-            </div>
-          </div>
+        <div className="border rounded-xl p-6 mb-6 bg-card">
+          <h2 className="text-xl font-bold mb-2">
+            {editing ? "Modifier le fournisseur" : "Nouveau fournisseur"}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Renseignez les coordonnées pour faciliter les commandes futures.
+          </p>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -203,25 +200,22 @@ export default function FournisseursPage() {
         </div>
       )}
 
-      <div className="border rounded-2xl p-6 bg-white shadow-sm border-gray-100">
-        <div className="flex items-center justify-between mb-6">
+      <div className="border rounded-xl p-6 bg-card">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-lg text-gray-800">Liste des Partenaires</h3>
             <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{fournisseurs.length} enregistrés</span>
           </div>
           <div className="flex gap-3">
-             <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input
-                  className="border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all outline-none min-w-[250px]"
-                  placeholder="Rechercher par nom..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-             </div>
-             <Button variant="outline" size="sm" onClick={fetchFournisseurs} disabled={loading} className="rounded-xl border-gray-200">
-                {loading ? "..." : "Actualiser"}
-             </Button>
+            <input
+              className="border rounded px-3 py-1 text-sm bg-background"
+              placeholder="Rechercher par nom..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <Button variant="outline" onClick={fetchFournisseurs} disabled={loading}>
+              {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
+            </Button>
           </div>
         </div>
         <DataTable columns={columns} data={filtered} loading={loading} />

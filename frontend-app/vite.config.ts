@@ -1,6 +1,7 @@
 import path from "path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import fs from "fs";
 
 export default defineConfig({
   plugins: [react()],
@@ -27,7 +28,12 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://nginx",
+        // In Docker network, the nginx service is reachable as "nginx".
+        // In local dev on Windows/macOS/Linux, use the published nginx port on localhost.
+        // Can be overridden with VITE_API_PROXY_TARGET (e.g. "http://localhost:5003").
+        target: fs.existsSync("/.dockerenv")
+          ? "http://nginx"
+          : (process.env.VITE_API_PROXY_TARGET || "http://localhost:80"),
         changeOrigin: true,
         secure: false,
       },
