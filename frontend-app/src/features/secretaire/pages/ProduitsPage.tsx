@@ -8,8 +8,18 @@ import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
+import Cookie from "js-cookie";
+import { TOKEN } from "@configs/vars";
 
-const BASE_URL = "/api/Produit";
+const BASE_URL = "/api/stock/Produit";
+
+function withAuthHeaders(extra?: Record<string, string>) {
+  const token = Cookie.get(TOKEN);
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(extra ?? {}),
+  };
+}
 
 const produitSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
@@ -49,7 +59,7 @@ export default function ProduitsPage() {
   const fetchProduits = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
+      const res = await fetch(`${BASE_URL}`, { headers: withAuthHeaders() });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setProduits(data);
@@ -79,13 +89,13 @@ export default function ProduitsPage() {
       if (editing) {
         res = await fetch(`${BASE_URL}/${editing.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: withAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: editing.id, ...values }),
         });
       } else {
         res = await fetch(`${BASE_URL}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: withAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: 0, ...values, actif: false }),
         });
       }
@@ -121,7 +131,7 @@ export default function ProduitsPage() {
 
   const handleToggleActif = async (id: number) => {
     try {
-      const res = await fetch(`${BASE_URL}/${id}/toggle-actif`, { method: "PUT" });
+      const res = await fetch(`${BASE_URL}/${id}/toggle-actif`, { method: "PUT", headers: withAuthHeaders() });
       if (res.ok) {
         fetchProduits();
       } else {

@@ -8,8 +8,18 @@ import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
+import Cookie from "js-cookie";
+import { TOKEN } from "@configs/vars";
 
-const BASE_URL = "/api/Fournisseur";
+const BASE_URL = "/api/stock/Fournisseur";
+
+function withAuthHeaders(extra?: Record<string, string>) {
+  const token = Cookie.get(TOKEN);
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(extra ?? {}),
+  };
+}
 
 const fournisseurSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
@@ -42,7 +52,7 @@ export default function FournisseursPage() {
   const fetchFournisseurs = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
+      const res = await fetch(`${BASE_URL}`, { headers: withAuthHeaders() });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setFournisseurs(data);
@@ -63,13 +73,13 @@ export default function FournisseursPage() {
       if (editing) {
         await fetch(`${BASE_URL}/${editing.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: withAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: editing.id, ...values }),
         });
       } else {
         await fetch(`${BASE_URL}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: withAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: 0, ...values }),
         });
       }
@@ -93,7 +103,7 @@ export default function FournisseursPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer ce fournisseur ?")) return;
     try {
-      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE", headers: withAuthHeaders() });
       if (res.ok) {
         fetchFournisseurs();
       } else {

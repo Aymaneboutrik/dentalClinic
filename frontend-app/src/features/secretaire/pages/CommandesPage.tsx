@@ -8,8 +8,18 @@ import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
+import Cookie from "js-cookie";
+import { TOKEN } from "@configs/vars";
 
-const BASE_URL = "/api/Commande";
+const BASE_URL = "/api/stock/Commande";
+
+function withAuthHeaders(extra?: Record<string, string>) {
+  const token = Cookie.get(TOKEN);
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(extra ?? {}),
+  };
+}
 
 const commandeSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
@@ -82,7 +92,7 @@ export default function CommandesPage() {
   const fetchCommandes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
+      const res = await fetch(`${BASE_URL}`, { headers: withAuthHeaders() });
       if (!res.ok) throw new Error();
       const data = await res.json();
       const mappedData = data.map((c: any) => ({
@@ -109,13 +119,13 @@ export default function CommandesPage() {
         const statutInt = editing.statut === "EnAttente" ? 0 : editing.statut === "Validee" ? 1 : 2;
         res = await fetch(`${BASE_URL}/${editing.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: withAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: editing.id, ...values, statut: statutInt }),
         });
       } else {
         res = await fetch(`${BASE_URL}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: withAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: 0, ...values, statut: 0 }),
         });
       }
@@ -149,7 +159,7 @@ export default function CommandesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette commande ?")) return;
     try {
-      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE", headers: withAuthHeaders() });
       if (res.ok) {
         fetchCommandes();
       } else {
@@ -162,7 +172,7 @@ export default function CommandesPage() {
 
   const handleGenererBon = async (id: number) => {
     try {
-      const res = await fetch(`${BASE_URL}/${id}/bon`);
+      const res = await fetch(`${BASE_URL}/${id}/bon`, { headers: withAuthHeaders() });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setBonCommande(data);

@@ -8,8 +8,18 @@ import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
+import Cookie from "js-cookie";
+import { TOKEN } from "@configs/vars";
 
-const BASE_URL = "/api/LigneCommande";
+const BASE_URL = "/api/stock/LigneCommande";
+
+function withAuthHeaders(extra?: Record<string, string>) {
+  const token = Cookie.get(TOKEN);
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(extra ?? {}),
+  };
+}
 
 const ligneSchema = z.object({
   produitId: z.coerce.number().min(1, "L'ID produit est obligatoire"),
@@ -44,7 +54,7 @@ export default function LignesCommandePage() {
   const fetchLignes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
+      const res = await fetch(`${BASE_URL}`, { headers: withAuthHeaders() });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setLignes(data);
@@ -66,13 +76,13 @@ export default function LignesCommandePage() {
       if (editing) {
         res = await fetch(`${BASE_URL}/${editing.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: withAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: editing.id, ...values, sousTotal: values.quantite * values.prixUnitaire }),
         });
       } else {
         res = await fetch(`${BASE_URL}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: withAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: 0, ...values, sousTotal: values.quantite * values.prixUnitaire }),
         });
       }
@@ -104,7 +114,7 @@ export default function LignesCommandePage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette ligne de commande ?")) return;
     try {
-      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE", headers: withAuthHeaders() });
       if (res.ok) {
         fetchLignes();
       } else {
