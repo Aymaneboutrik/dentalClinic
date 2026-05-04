@@ -1,3 +1,4 @@
+import secureApi from "@apis/instances/secure-api";
 import type {
   Absence,
   CreateAbsenceRequest,
@@ -5,77 +6,40 @@ import type {
   ApiError,
 } from "../../../types/absence/absence";
 
-const API_BASE_URL = "/api/absence";
+const API_BASE_URL = "/absence";
 const CURRENT_DOCTOR_ID = 7;
 
-const buildApiError = async (response: Response): Promise<ApiError> => {
-  try {
-    const data = await response.json();
-
-    return {
-      message: data.message || "Une erreur est survenue.",
-      code: data.code,
-      errors: data.errors,
-    };
-  } catch {
-    return {
-      message: "Une erreur inattendue est survenue.",
-    };
-  }
-};
-
 export const getAbsences = async (): Promise<Absence[]> => {
-  const response = await fetch(API_BASE_URL, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw await buildApiError(response);
+  try {
+    const response = await secureApi.get(API_BASE_URL);
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error: any) {
+    throw error.response?.data || { message: "Une erreur inattendue est survenue." };
   }
-
-  const data = await response.json();
-  return Array.isArray(data) ? data : [];
 };
 
 export const createAbsence = async (
   payload: CreateAbsenceRequest
 ): Promise<AbsenceActionResponse> => {
-  const response = await fetch(API_BASE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw await buildApiError(response);
+  try {
+    const response = await secureApi.post(API_BASE_URL, payload);
+    return response.data;
+  } catch (error: any) {
+    throw error.response?.data || { message: "Une erreur inattendue est survenue." };
   }
-
-  return response.json();
 };
 
 export const deleteAbsence = async (
   idAbsence: number
 ): Promise<AbsenceActionResponse> => {
-  const response = await fetch(
-    `${API_BASE_URL}/${idAbsence}/${CURRENT_DOCTOR_ID}`,
-    {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw await buildApiError(response);
+  try {
+    const response = await secureApi.delete(
+      `${API_BASE_URL}/${idAbsence}/${CURRENT_DOCTOR_ID}`
+    );
+    return response.data;
+  } catch (error: any) {
+    throw error.response?.data || { message: "Une erreur inattendue est survenue." };
   }
-
-  return response.json();
 };
 
 export type { ApiError };

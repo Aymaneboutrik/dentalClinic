@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StockApi.DTOs;
 using StockApi.Exceptions;
@@ -11,6 +12,7 @@ namespace StockApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ProduitController : ControllerBase
     {
         private readonly IProduitRepository _produitRepository;
@@ -25,6 +27,7 @@ namespace StockApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
         public IActionResult GetAll()
         {
             var produits = _produitService.GetAllProduits();
@@ -33,6 +36,7 @@ namespace StockApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public IActionResult Create(ProduitDto dto)
         {
             if (dto.Quantite <= 0) throw new InvalidQuantityException("La quantité du produit doit être strictement positive.");
@@ -52,6 +56,7 @@ namespace StockApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public IActionResult Update(int id, ProduitDto dto)
         {
             var produit = _produitRepository.GetById(id);
@@ -80,6 +85,7 @@ namespace StockApi.Controllers
         }
 
         [HttpPut("{id}/toggle-actif")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public IActionResult ToggleActif(int id)
         {
             var produit = _produitRepository.GetById(id);
@@ -92,10 +98,5 @@ namespace StockApi.Controllers
 
             return Ok(ProduitMapper.ToDto(produit));
         }
-
-        // We completely replace the Delete operation as requested, by removing the Delete endpoint 
-        // since we use Activer/Desactiver now. Or keep Delete but the instructions say: 
-        // "remplacer le bouton supprimer a cote de modifier par un bouton toggle Activer".
-        // I will just remove the Delete method.
     }
 }

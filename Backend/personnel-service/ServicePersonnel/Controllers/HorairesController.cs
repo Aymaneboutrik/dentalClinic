@@ -1,4 +1,4 @@
-﻿using GestionRH.DTOs.Horaire;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service_Personnel.DTOS.Horaires;
 using Service_Personnel.Services.Horaires;
@@ -7,6 +7,7 @@ namespace Service_Personnel.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class HorairesController : ControllerBase
     {
         private readonly IHoraireService _horaireService;
@@ -18,6 +19,7 @@ namespace Service_Personnel.Controllers
 
         //  POST : api/horaires
         [HttpPost]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> Create(CreateHoraireRequestDto dto, CancellationToken ct)
         {
             var result = await _horaireService.CreateAsync(dto, ct);
@@ -27,6 +29,7 @@ namespace Service_Personnel.Controllers
 
         //Patch 
         [HttpPatch("{id}")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateHoraireRequestDto dto, CancellationToken ct)
         {
             object result = await _horaireService.UpdateAsync(id, dto, ct);
@@ -36,6 +39,7 @@ namespace Service_Personnel.Controllers
 
         //Get all   
         [HttpGet]
+        [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
             var result = await _horaireService.GetAllAsync(ct);
@@ -45,6 +49,7 @@ namespace Service_Personnel.Controllers
         //Delete horaire  
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             var result = await _horaireService.DeleteAsync(id, ct);

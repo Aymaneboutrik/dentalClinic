@@ -8,6 +8,7 @@ import com.dental.patient.service.ConsultationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,11 +23,13 @@ public class ConsultationController {
     private final PatientMapper patientMapper;
 
     @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE', 'ASSISTANTE')")
     public ResponseEntity<List<ConsultationDto>> getHistory(@PathVariable Long patientId) {
         return ResponseEntity.ok(patientMapper.toConsultationDtoList(consultationService.getPatientHistory(patientId)));
     }
 
     @PostMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'ASSISTANTE')")
     public ResponseEntity<ConsultationDto> addConsultation(
             @PathVariable Long patientId,
             @Valid @RequestBody CreateConsultationRequest request) {
@@ -35,6 +38,7 @@ public class ConsultationController {
     }
 
     @PostMapping("/{consultationId}/observations")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'ASSISTANTE')")
     public ResponseEntity<ConsultationDto> addObservation(
             @PathVariable Long consultationId,
             @Valid @RequestBody AddObservationRequest request) {

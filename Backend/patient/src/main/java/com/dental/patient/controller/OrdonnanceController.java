@@ -7,6 +7,7 @@ import com.dental.patient.service.OrdonnanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,16 +24,19 @@ public class OrdonnanceController {
     private final PatientMapper patientMapper;
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE', 'ASSISTANTE')")
     public ResponseEntity<OrdonnanceDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(patientMapper.toOrdonnanceDto(ordonnanceService.getOrdonnanceById(id)));
     }
 
     @GetMapping("/consultation/{consultationId}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE', 'ASSISTANTE')")
     public ResponseEntity<OrdonnanceDto> getByConsultation(@PathVariable Long consultationId) {
         return ResponseEntity.ok(patientMapper.toOrdonnanceDto(ordonnanceService.getOrdonnanceByConsultation(consultationId)));
     }
 
     @PostMapping("/consultation/{consultationId}")
+    @PreAuthorize("hasRole('DENTISTE')")
     public ResponseEntity<OrdonnanceDto> create(
             @PathVariable Long consultationId,
             @Valid @RequestBody List<LigneOrdonnanceDto> lignesDto) {
@@ -41,6 +45,7 @@ public class OrdonnanceController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('DENTISTE')")
     public ResponseEntity<OrdonnanceDto> update(
             @PathVariable Long id,
             @Valid @RequestBody List<LigneOrdonnanceDto> lignesDto) {
@@ -49,6 +54,7 @@ public class OrdonnanceController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('DENTISTE')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         ordonnanceService.deleteOrdonnance(id);
         return ResponseEntity.ok().build();

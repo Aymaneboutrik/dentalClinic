@@ -39,6 +39,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-postgres:5432/auth_db
       SPRING_DATASOURCE_USERNAME: auth_user
       SPRING_DATASOURCE_PASSWORD: ton_mot_de_passe
+      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=
     networks:
       - dental-network
 
@@ -77,6 +78,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       FILE_UPLOAD_DIR: /uploads
+      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=
     volumes:
       - patient_uploads:/uploads
     networks:
@@ -109,6 +111,7 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=personnel-db;Port=5432;Database=personnel_db;Username=personnel_user;Password=personnel_pass
+      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=
     networks:
       - dental-network
 
@@ -134,6 +137,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=stock-db;Database=stockdb;Username=admin;Password=admin123
+      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=
     ports:
       - "5003:8080"
     networks:
@@ -163,6 +167,7 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=rendezvous-db;Port=5432;Database=rendezvous_db;Username=rendezvous_user;Password=rendezvous_pass
+      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=
     networks:
       - dental-network
 
@@ -201,6 +206,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: admin123
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=
     ports:
       - "5005:8080"
     networks:
@@ -232,11 +238,8 @@ volumes:
   pgadmin_data:
   stock_data:
   servicepersonnel_personnel_db_data:
-    external: true
   patient-service_patient-db-data:
-    external: true
   patient_uploads:
   rendezvous_db_data:
-    external:
-      name: dentalclinic_rendezvous_db_data
   paiement-data:
+

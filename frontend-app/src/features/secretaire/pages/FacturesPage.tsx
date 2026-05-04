@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import secureApi from "@apis/instances/secure-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +10,7 @@ import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/factures";
+const BASE_URL = "/factures";
 
 const factureSchema = z.object({
   date: z.string().min(1, "La date est obligatoire"),
@@ -58,10 +59,8 @@ export default function FacturesPage() {
   const fetchFactures = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setFactures(data);
+      const res = await secureApi.get(`${BASE_URL}`);
+      setFactures(res.data);
       setFetched(true);
     } catch {
       alert("Erreur lors du chargement des factures");
@@ -77,27 +76,16 @@ export default function FacturesPage() {
   const handleSubmit = async (values: FactureForm) => {
     try {
       if (editing) {
-        const res = await fetch(`${BASE_URL}/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editing.id, ...values }),
-        });
-        if (!res.ok) throw res;
+        await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values });
       } else {
-        const res = await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
-        if (!res.ok) throw res;
+        await secureApi.post(`${BASE_URL}`, values);
       }
       form.reset();
       setShowForm(false);
       setEditing(null);
       fetchFactures();
-    } catch (error) {
-      const data = await (error as any).json?.().catch(() => null);
-      alert(data?.message || "Erreur lors de la sauvegarde");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Erreur lors de la sauvegarde");
     }
   };
 
@@ -110,7 +98,7 @@ export default function FacturesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette facture ?")) return;
     try {
-      await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+      await secureApi.delete(`${BASE_URL}/${id}`);
       fetchFactures();
     } catch {
       alert("Erreur lors de la suppression");
@@ -119,10 +107,8 @@ export default function FacturesPage() {
 
   const fetchFicheFacture = async (id: number) => {
     try {
-      const res = await fetch(`${BASE_URL}/${id}/fiche`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setFicheFacture(data);
+      const res = await secureApi.get(`${BASE_URL}/${id}/fiche`);
+      setFicheFacture(res.data);
     } catch {
       alert("Erreur lors du chargement de la fiche de facture");
     }

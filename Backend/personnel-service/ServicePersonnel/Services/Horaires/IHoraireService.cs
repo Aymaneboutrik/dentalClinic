@@ -1,4 +1,3 @@
-﻿using GestionRH.DTOs.Horaire;
 using Service_Personnel.DTOS.Horaires;
 
 namespace Service_Personnel.Services.Horaires

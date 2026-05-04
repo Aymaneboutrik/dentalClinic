@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import secureApi from "@apis/instances/secure-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +10,7 @@ import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/transactions";
+const BASE_URL = "/transactions";
 
 const transactionSchema = z.object({
   remiseId: z.coerce.number().min(1, "L'ID de la remise est obligatoire"),
@@ -52,10 +53,8 @@ export default function TransactionsPage() {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setTransactions(data);
+      const res = await secureApi.get(`${BASE_URL}`);
+      setTransactions(res.data);
       setFetched(true);
     } catch {
       alert("Erreur lors du chargement des transactions");
@@ -71,17 +70,9 @@ export default function TransactionsPage() {
   const handleSubmit = async (values: TransactionForm) => {
     try {
       if (editing) {
-        await fetch(`${BASE_URL}/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editing.id, ...values }),
-        });
+        await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values });
       } else {
-        await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
+        await secureApi.post(`${BASE_URL}`, values);
       }
       form.reset();
       setShowForm(false);
@@ -105,7 +96,7 @@ export default function TransactionsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette transaction d'audit ?")) return;
     try {
-      await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+      await secureApi.delete(`${BASE_URL}/${id}`);
       fetchTransactions();
     } catch {
       alert("Erreur lors de la suppression");

@@ -1,6 +1,6 @@
-﻿using Service_Personnel.Enums.Horaires;
+using Service_Personnel.Enums.Horaires;
 
-namespace GestionRH.DTOs.Horaire
+namespace Service_Personnel.DTOS.Horaires
 {
     public class UpdateHoraireRequestDto
     {

@@ -8,18 +8,11 @@ import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
-import Cookie from "js-cookie";
 import { TOKEN } from "@configs/vars";
+import secureApi from "@apis/instances/secure-api";
 
-const BASE_URL = "/api/stock/LigneCommande";
+const BASE_URL = "/stock/LigneCommande";
 
-function withAuthHeaders(extra?: Record<string, string>) {
-  const token = Cookie.get(TOKEN);
-  return {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(extra ?? {}),
-  };
-}
 
 const ligneSchema = z.object({
   produitId: z.coerce.number().min(1, "L'ID produit est obligatoire"),
@@ -54,10 +47,8 @@ export default function LignesCommandePage() {
   const fetchLignes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`, { headers: withAuthHeaders() });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setLignes(data);
+      const res = await secureApi.get(`${BASE_URL}`);
+      setLignes(res.data);
       setFetched(true);
     } catch {
       console.error("Erreur lors du chargement des lignes");
@@ -72,33 +63,18 @@ export default function LignesCommandePage() {
 
   const handleSubmit = async (values: LigneForm) => {
     try {
-      let res;
       if (editing) {
-        res = await fetch(`${BASE_URL}/${editing.id}`, {
-          method: "PUT",
-          headers: withAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ id: editing.id, ...values, sousTotal: values.quantite * values.prixUnitaire }),
-        });
+        await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values, sousTotal: values.quantite * values.prixUnitaire });
       } else {
-        res = await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: withAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ id: 0, ...values, sousTotal: values.quantite * values.prixUnitaire }),
-        });
+        await secureApi.post(`${BASE_URL}`, { id: 0, ...values, sousTotal: values.quantite * values.prixUnitaire });
       }
 
-      const data = await res.json();
-
-      if (res.ok) {
-        form.reset();
-        setShowForm(false);
-        setEditing(null);
-        fetchLignes();
-      } else {
-        alert(`Erreur : ${data.message || 'Validation échouée'}`);
-      }
+      form.reset();
+      setShowForm(false);
+      setEditing(null);
+      fetchLignes();
     } catch (err: any) {
-      alert("Erreur réseau lors de la sauvegarde.");
+      alert(`Erreur : ${err.response?.data?.message || 'Sauvegarde échouée'}`);
     }
   };
 
@@ -114,14 +90,10 @@ export default function LignesCommandePage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette ligne de commande ?")) return;
     try {
-      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE", headers: withAuthHeaders() });
-      if (res.ok) {
-        fetchLignes();
-      } else {
-        alert("Action impossible.");
-      }
+      await secureApi.delete(`${BASE_URL}/${id}`);
+      fetchLignes();
     } catch {
-      alert("Erreur réseau.");
+      alert("Action impossible.");
     }
   };
 

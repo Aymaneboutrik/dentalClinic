@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StockApi.Models;
 using StockApi.Services;
@@ -11,6 +12,7 @@ namespace StockApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class MouvementStockController : ControllerBase
     {
         private readonly IMouvementStockRepository _mouvementRepository;
@@ -34,6 +36,7 @@ namespace StockApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
         public IActionResult GetAll()
         {
             var mouvements = _mouvementRepository.GetAll();
@@ -42,6 +45,7 @@ namespace StockApi.Controllers
         }
 
         [HttpPost("sortie")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public IActionResult CreerSortie(MouvementStockDto dto)
         {
             if (!dto.ProduitId.HasValue) throw new ValidationException("L'ID du produit est requis.");
@@ -65,4 +69,4 @@ namespace StockApi.Controllers
             return Ok(new { message = "Sortie de stock enregistrée avec succès." });
         }
     }
-}
+}

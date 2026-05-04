@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StockApi.DTOs;
 using StockApi.Exceptions;
@@ -10,6 +11,7 @@ namespace StockApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Dentiste, Secretaire")]
     public class CommandeController : ControllerBase
     {
         private readonly ICommandeRepository _commandeRepository;

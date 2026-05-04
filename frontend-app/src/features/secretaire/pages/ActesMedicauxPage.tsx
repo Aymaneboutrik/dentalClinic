@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import secureApi from "@apis/instances/secure-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +10,7 @@ import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/actes-medicaux";
+const BASE_URL = "/actes-medicaux";
 
 const acteMedicalSchema = z.object({
   libelle: z.string().min(1, "Le libellé est obligatoire"),
@@ -42,10 +43,8 @@ export default function ActesMedicauxPage() {
   const fetchActes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setActes(data);
+      const res = await secureApi.get(`${BASE_URL}`);
+      setActes(res.data);
       setFetched(true);
     } catch {
       alert("Erreur lors du chargement des actes médicaux");
@@ -61,27 +60,16 @@ export default function ActesMedicauxPage() {
   const handleSubmit = async (values: ActeMedicalForm) => {
     try {
       if (editing) {
-        const res = await fetch(`${BASE_URL}/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editing.id, ...values }),
-        });
-        if (!res.ok) throw res;
+        await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values });
       } else {
-        const res = await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
-        if (!res.ok) throw res;
+        await secureApi.post(`${BASE_URL}`, values);
       }
       form.reset();
       setShowForm(false);
       setEditing(null);
       fetchActes();
-    } catch (error) {
-      const data = await (error as any).json?.().catch(() => null);
-      alert(data?.message || "Erreur lors de la sauvegarde");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Erreur lors de la sauvegarde");
     }
   };
 
@@ -96,7 +84,7 @@ export default function ActesMedicauxPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cet acte médical ?")) return;
     try {
-      await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+      await secureApi.delete(`${BASE_URL}/${id}`);
       fetchActes();
     } catch {
       alert("Erreur lors de la suppression");

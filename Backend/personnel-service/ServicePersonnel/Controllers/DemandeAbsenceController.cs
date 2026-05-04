@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Service_Personnel.DTOS;
 using Service_Personnel.Services.Interfaces.DemandeAbsence;
 
@@ -6,6 +7,7 @@ namespace Service_Personnel.Controllers
 {
     [Route("api/demande-absence")]
     [ApiController]
+    [Authorize]
     public class DemandeAbsenceController : ControllerBase
     {
         private readonly IDemandeAbsenceService _demandeAbsenceService;
@@ -28,6 +30,7 @@ namespace Service_Personnel.Controllers
 
 
         [HttpGet]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
             var result = await _demandeAbsenceService.GetAllAsync(ct);
@@ -35,6 +38,7 @@ namespace Service_Personnel.Controllers
         }
 
         [HttpGet("employe/{employeId}")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> GetByEmployeId(int employeId, CancellationToken ct)
         {
             var result = await _demandeAbsenceService.GetByEmployeIdAsync(employeId, ct);
@@ -44,6 +48,7 @@ namespace Service_Personnel.Controllers
         // Accepter une demande && Refuser une demande
 
         [HttpPut("{id}/accepter/{traiteParId}")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> Accepter(int id, int traiteParId, CancellationToken ct)
         {
             var result = await _demandeAbsenceService.AccepterAsync(id, traiteParId, ct);
@@ -51,6 +56,7 @@ namespace Service_Personnel.Controllers
         }
 
         [HttpPut("{id}/refuser/{traiteParId}")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> Refuser(int id, int traiteParId, CancellationToken ct)
         {
             var result = await _demandeAbsenceService.RefuserAsync(id, traiteParId, ct);
