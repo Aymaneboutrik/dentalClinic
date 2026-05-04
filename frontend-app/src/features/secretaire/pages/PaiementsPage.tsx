@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import secureApi from "@apis/instances/secure-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +10,7 @@ import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/paiements";
+const BASE_URL = "/paiements";
 
 const paiementSchema = z.object({
   factureId: z.coerce.number().min(1, "L'ID de la facture est obligatoire"),
@@ -47,10 +48,8 @@ export default function PaiementsPage() {
   const fetchPaiements = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setPaiements(data);
+      const res = await secureApi.get(`${BASE_URL}`);
+      setPaiements(res.data);
       setFetched(true);
     } catch {
       alert("Erreur lors du chargement des paiements");
@@ -66,27 +65,16 @@ export default function PaiementsPage() {
   const handleSubmit = async (values: PaiementForm) => {
     try {
       if (editing) {
-        const res = await fetch(`${BASE_URL}/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editing.id, ...values }),
-        });
-        if (!res.ok) throw res;
+        await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values });
       } else {
-        const res = await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
-        if (!res.ok) throw res;
+        await secureApi.post(`${BASE_URL}`, values);
       }
       form.reset();
       setShowForm(false);
       setEditing(null);
       fetchPaiements();
-    } catch (error) {
-      const data = await (error as any).json?.().catch(() => null);
-      alert(data?.message || "Erreur lors de la sauvegarde (Vérifiez que le montant ne dépasse pas le reste à payer).");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Erreur lors de la sauvegarde (Vérifiez que le montant ne dépasse pas le reste à payer).");
     }
   };
 
@@ -101,7 +89,7 @@ export default function PaiementsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer ce paiement ?")) return;
     try {
-      await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+      await secureApi.delete(`${BASE_URL}/${id}`);
       fetchPaiements();
     } catch {
       alert("Erreur lors de la suppression");

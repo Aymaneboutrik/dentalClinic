@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Service_Personnel.DTOS.Absence;
 using Service_Personnel.Services.Absences;
 
@@ -6,6 +7,7 @@ namespace Service_Personnel.Controllers
 {
     [Route("api/absence")]
     [ApiController]
+    [Authorize(Roles = "Dentiste, Secretaire")]
     public class AbsenceController : ControllerBase
     {
         private readonly IAbsenceService _absenceService;

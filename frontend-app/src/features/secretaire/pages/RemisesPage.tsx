@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import secureApi from "@apis/instances/secure-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +10,7 @@ import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/remises";
+const BASE_URL = "/remises";
 
 const remiseSchema = z.object({
   valeur: z.coerce.number().min(0, "La valeur est obligatoire"),
@@ -52,10 +53,8 @@ export default function RemisesPage() {
   const fetchRemises = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setRemises(data);
+      const res = await secureApi.get(`${BASE_URL}`);
+      setRemises(res.data);
       setFetched(true);
     } catch {
       alert("Erreur lors du chargement des remises");
@@ -71,27 +70,16 @@ export default function RemisesPage() {
   const handleSubmit = async (values: RemiseForm) => {
     try {
       if (editing) {
-        const res = await fetch(`${BASE_URL}/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editing.id, ...values, estAutorisee: editing.estAutorisee }),
-        });
-        if (!res.ok) throw res;
+        await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values, estAutorisee: editing.estAutorisee });
       } else {
-        const res = await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...values, estAutorisee: false }),
-        });
-        if (!res.ok) throw res;
+        await secureApi.post(`${BASE_URL}`, { ...values, estAutorisee: false });
       }
       form.reset();
       setShowForm(false);
       setEditing(null);
       fetchRemises();
-    } catch (error) {
-      const data = await (error as any).json?.().catch(() => null);
-      alert(data?.message || "Erreur lors de la sauvegarde. Vérifiez le statut de la facture (doit être IMPAYEE).");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Erreur lors de la sauvegarde. Vérifiez le statut de la facture (doit être IMPAYEE).");
     }
   };
 
@@ -107,35 +95,27 @@ export default function RemisesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette remise ?")) return;
     try {
-      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      await secureApi.delete(`${BASE_URL}/${id}`);
       fetchRemises();
-    } catch (error) {
-      const data = await (error as any).json?.().catch(() => null);
-      alert(data?.message || "Erreur lors de la suppression. La facture est peut-être déjà payée.");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Erreur lors de la suppression. La facture est peut-être déjà payée.");
     }
   };
 
   const handleAutoriser = async (r: Remise) => {
     if (!confirm("Autoriser cette remise à s'appliquer sur la facture ?")) return;
     try {
-      const res = await fetch(`${BASE_URL}/${r.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          valeur: r.valeur,
-          dateRemise: r.dateRemise,
-          description: r.description,
-          typeRemise: r.typeRemise,
-          factureId: r.factureId,
-          estAutorisee: true,
-        }),
+      await secureApi.put(`${BASE_URL}/${r.id}`, {
+        valeur: r.valeur,
+        dateRemise: r.dateRemise,
+        description: r.description,
+        typeRemise: r.typeRemise,
+        factureId: r.factureId,
+        estAutorisee: true,
       });
-      if (!res.ok) throw res;
       fetchRemises();
-    } catch (error) {
-      const data = await (error as any).json?.().catch(() => null);
-      alert(data?.message || "Erreur lors de l'autorisation.");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Erreur lors de l'autorisation.");
     }
   };
 

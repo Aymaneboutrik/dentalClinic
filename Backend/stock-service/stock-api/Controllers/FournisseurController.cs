@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StockApi.DTOs;
 using StockApi.Mappers;
@@ -7,6 +8,7 @@ namespace StockApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Dentiste, Secretaire")]
     public class FournisseurController : ControllerBase
     {
         private readonly IFournisseurRepository _fournisseurRepository;

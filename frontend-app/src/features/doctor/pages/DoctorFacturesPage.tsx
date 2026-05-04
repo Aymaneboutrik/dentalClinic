@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import secureApi from "@apis/instances/secure-api";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@components/data-table/data-table";
 import { Button } from "@components/ui/button";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/factures";
+const BASE_URL = "/factures";
 
 interface Facture {
   id: number;
@@ -40,10 +41,8 @@ export default function DoctorFacturesPage() {
   const fetchFactures = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setFactures(data);
+      const res = await secureApi.get(`${BASE_URL}`);
+      setFactures(res.data);
       setFetched(true);
     } catch {
       alert("Erreur lors du chargement des factures");
@@ -58,10 +57,8 @@ export default function DoctorFacturesPage() {
 
   const fetchFicheFacture = async (id: number) => {
     try {
-      const res = await fetch(`${BASE_URL}/${id}/fiche`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setFicheFacture(data);
+      const res = await secureApi.get(`${BASE_URL}/${id}/fiche`);
+      setFicheFacture(res.data);
     } catch {
       alert("Erreur lors du chargement de la fiche de facture");
     }

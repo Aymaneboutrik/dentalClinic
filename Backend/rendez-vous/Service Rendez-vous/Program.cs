@@ -5,8 +5,34 @@ using Service_Rendez_vous.Repositories;
 using Service_Rendez_vous.Services.Interfaces;
 using Service_Rendez_vous.Services;
 using Service_Rendez_vous.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configurer l'authentification JWT
+var jwtSecret = builder.Configuration["JWT_SECRET"] ?? "dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=";
+var key = Convert.FromBase64String(jwtSecret);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        RoleClaimType = System.Security.Claims.ClaimTypes.Role
+    };
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -40,7 +66,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        context.Database.Migrate();
+        context.Database.EnsureCreated();
     }
     catch (Exception ex)
     {
@@ -61,6 +87,7 @@ app.UseCors("AllowFrontend");
 
 app.UseMiddleware<ExceptionMiddleware>();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

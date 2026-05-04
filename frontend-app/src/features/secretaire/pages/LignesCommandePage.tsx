@@ -8,18 +8,11 @@ import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
-import Cookie from "js-cookie";
 import { TOKEN } from "@configs/vars";
+import secureApi from "@apis/instances/secure-api";
 
-const BASE_URL = "/api/stock/LigneCommande";
+const BASE_URL = "/stock/LigneCommande";
 
-function withAuthHeaders(extra?: Record<string, string>) {
-  const token = Cookie.get(TOKEN);
-  return {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(extra ?? {}),
-  };
-}
 
 const ligneSchema = z.object({
   produitId: z.coerce.number().min(1, "L'ID produit est obligatoire"),
@@ -44,6 +37,7 @@ export default function LignesCommandePage() {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [fetched, setFetched] = useState(false);
+  const [editing, setEditing] = useState<LigneCommande | null>(null);
 
   const form = useForm<LigneForm>({
     resolver: zodResolver(ligneSchema),
@@ -53,10 +47,8 @@ export default function LignesCommandePage() {
   const fetchLignes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`, { headers: withAuthHeaders() });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setLignes(data);
+      const res = await secureApi.get(`${BASE_URL}`);
+      setLignes(res.data);
       setFetched(true);
     } catch {
       console.error("Erreur lors du chargement des lignes");
@@ -71,26 +63,39 @@ export default function LignesCommandePage() {
 
   const handleSubmit = async (values: LigneForm) => {
     try {
-      let res = await fetch(`${BASE_URL}`, {
-        method: "POST",
-        headers: withAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ id: 0, ...values, sousTotal: values.quantite * values.prixUnitaire }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        form.reset();
-        setShowForm(false);
-        fetchLignes();
+      if (editing) {
+        await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values, sousTotal: values.quantite * values.prixUnitaire });
       } else {
-        alert(`Erreur : ${data.message || 'Validation échouée'}`);
+        await secureApi.post(`${BASE_URL}`, { id: 0, ...values, sousTotal: values.quantite * values.prixUnitaire });
       }
+
+      form.reset();
+      setShowForm(false);
+      setEditing(null);
+      fetchLignes();
     } catch (err: any) {
-      alert("Erreur réseau lors de la sauvegarde.");
+      alert(`Erreur : ${err.response?.data?.message || 'Sauvegarde échouée'}`);
     }
   };
 
+  const handleEdit = (l: LigneCommande) => {
+    setEditing(l);
+    form.setValue("produitId", l.produitId);
+    form.setValue("quantite", l.quantite);
+    form.setValue("prixUnitaire", l.prixUnitaire);
+    form.setValue("commandeId", l.commandeId);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Supprimer cette ligne de commande ?")) return;
+    try {
+      await secureApi.delete(`${BASE_URL}/${id}`);
+      fetchLignes();
+    } catch {
+      alert("Action impossible.");
+    }
+  };
 
   const columns: ColumnDef<LigneCommande>[] = [
     { accessorKey: "id", header: "ID" },
@@ -118,6 +123,20 @@ export default function LignesCommandePage() {
       accessorKey: "sousTotal", 
       header: "Sous-total (MAD)",
       cell: ({ row }) => <span className="font-black text-primary">{row.original.sousTotal.toFixed(2)}</span>
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)}>
+            Modifier
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => handleDelete(row.original.id)}>
+            Supprimer
+          </Button>
+        </div>
+      ),
     },
   ];
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Service_Personnel.DTOS.Employes;
 using Service_Personnel.Services.Employees;
 
@@ -6,6 +7,7 @@ namespace Service_Personnel.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Dentiste, Secretaire")]
     public class EmployeesController : ControllerBase
     {
         private readonly IEmployeeService _service;

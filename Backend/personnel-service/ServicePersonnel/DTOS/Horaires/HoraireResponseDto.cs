@@ -1,4 +1,4 @@
-﻿namespace GestionRH.DTOs.Horaire
+namespace Service_Personnel.DTOS.Horaires
 {
     public class HoraireResponseDto
     {

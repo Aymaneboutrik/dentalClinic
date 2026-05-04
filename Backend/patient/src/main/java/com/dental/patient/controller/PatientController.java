@@ -6,6 +6,7 @@ import com.dental.patient.service.PatientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -22,6 +23,7 @@ public class PatientController {
     private final PatientMapper patientMapper;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE', 'ASSISTANTE')")
     public List<PatientDto> getAllPatients(@RequestParam(required = false) String query) {
         if (query != null && !query.isBlank()) {
             return patientMapper.toPatientDtoList(patientService.searchPatients(query));
@@ -30,11 +32,13 @@ public class PatientController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE', 'ASSISTANTE')")
     public ResponseEntity<PatientDto> getPatientById(@PathVariable Long id) {
         return ResponseEntity.ok(patientMapper.toPatientDto(patientService.getPatientById(id)));
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE')")
     public ResponseEntity<PatientDto> addPatient(@Valid @RequestBody PatientDto patientDto) {
         var patient = patientMapper.toPatientEntity(patientDto);
         PatientDto created = patientMapper.toPatientDto(patientService.addPatient(patient));
@@ -46,18 +50,21 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE')")
     public ResponseEntity<PatientDto> updatePatient(@PathVariable Long id, @Valid @RequestBody PatientDto patientDto) {
         var patient = patientMapper.toPatientEntity(patientDto);
         return ResponseEntity.ok(patientMapper.toPatientDto(patientService.updatePatient(id, patient)));
     }
 
     @PatchMapping("/{id}/archive")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE')")
     public ResponseEntity<Void> archivePatient(@PathVariable Long id) {
         patientService.archivePatient(id);
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{id}/unarchive")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE')")
     public ResponseEntity<Void> unarchivePatient(@PathVariable Long id) {
         patientService.unarchivePatient(id);
         return ResponseEntity.ok().build();

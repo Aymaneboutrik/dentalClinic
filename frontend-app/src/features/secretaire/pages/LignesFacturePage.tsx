@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import secureApi from "@apis/instances/secure-api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +10,7 @@ import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/lignes-facture";
+const BASE_URL = "/lignes-facture";
 
 const ligneFactureSchema = z.object({
   factureId: z.coerce.number().min(1, "L'ID de la facture est obligatoire"),
@@ -35,6 +36,7 @@ export default function LignesFacturePage() {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [fetched, setFetched] = useState(false);
+  const [editing, setEditing] = useState<LigneFacture | null>(null);
   const [factureIdFilter, setFactureIdFilter] = useState<string>(() => {
     return localStorage.getItem("factureIdFilter") || "";
   });
@@ -58,11 +60,8 @@ export default function LignesFacturePage() {
         return;
       }
 
-      // Backend exposes GET /api/lignes-facture/facture/{factureId} (no global "GET /api/lignes-facture").
-      const res = await fetch(`${BASE_URL}/facture/${factureId}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setLignes(data);
+      const res = await secureApi.get(`${BASE_URL}/facture/${factureId}`);
+      setLignes(res.data);
       setFetched(true);
     } catch {
       alert("Erreur lors du chargement des lignes de facture");
@@ -79,30 +78,38 @@ export default function LignesFacturePage() {
 
   const handleSubmit = async (values: LigneFactureForm) => {
     try {
-      const res = await fetch(`${BASE_URL}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      if (!res.ok) throw res;
-      const newLigne = await res.json();
-      
+      if (editing) {
+        await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values });
+      } else {
+        await secureApi.post(`${BASE_URL}`, values);
+      }
       form.reset();
       setShowForm(false);
-      
-      if (factureIdFilter === values.factureId.toString()) {
-        setLignes((prev) => [...prev, newLigne]);
-      } else {
-        setFactureIdFilter(values.factureId.toString());
-        fetchLignes(values.factureId);
-      }
-    } catch (error) {
-      const data = await (error as any).json?.().catch(() => null);
-      alert(data?.message || "Erreur lors de la sauvegarde (vérifiez que la facture est IMPAYÉE).");
+      setEditing(null);
+      fetchLignes();
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Erreur lors de la sauvegarde (vérifiez que la facture est IMPAYÉE).");
     }
   };
 
+  const handleEdit = (l: LigneFacture) => {
+    setEditing(l);
+    form.setValue("factureId", l.factureId);
+    form.setValue("acteMedicalId", l.acteMedicalId);
+    form.setValue("quantite", l.quantite);
+    setShowForm(true);
+  };
 
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Supprimer cette ligne ?")) return;
+    try {
+      await secureApi.delete(`${BASE_URL}/${id}`);
+      fetchLignes();
+    } catch {
+      alert("Erreur lors de la suppression");
+    }
+  };
 
   const filtered = lignes.filter(
     (l) =>
@@ -123,6 +130,20 @@ export default function LignesFacturePage() {
     { accessorKey: "quantite", header: "Quantité" },
     { accessorKey: "prixUnitaire", header: "Prix Unitaire (MAD)" },
     { accessorKey: "sousTotal", header: "Sous-Total (MAD)" },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)}>
+            Modifier
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => handleDelete(row.original.id)}>
+            Supprimer
+          </Button>
+        </div>
+      ),
+    },
   ];
 
   return (

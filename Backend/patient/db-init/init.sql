@@ -24,23 +24,13 @@ CREATE TABLE IF NOT EXISTS dossiers_medicaux (
     patient_id INTEGER UNIQUE REFERENCES patients(id) ON DELETE CASCADE
 );
 
--- Table: Utilisateurs (Doctors, Assistants, etc.)
-CREATE TABLE IF NOT EXISTS utilisateurs (
-    id SERIAL PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL,
-    prenom VARCHAR(100) NOT NULL,
-    role VARCHAR(50) NOT NULL, -- DENTIST, ASSISTANT, SECRETARY
-    email VARCHAR(150) UNIQUE NOT NULL,
-    mot_de_passe VARCHAR(255) NOT NULL
-);
-
 -- Table: Consultations
 CREATE TABLE IF NOT EXISTS consultations (
     id SERIAL PRIMARY KEY,
     date_consultation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     motif TEXT,
     dossier_id INTEGER REFERENCES dossiers_medicaux(id) ON DELETE CASCADE,
-    utilisateur_id INTEGER REFERENCES utilisateurs(id) ON DELETE SET NULL
+    utilisateur_id INTEGER
 );
 
 -- Table: Actes (Dental procedures)
@@ -100,10 +90,6 @@ CREATE TABLE IF NOT EXISTS documents (
     consultation_id INTEGER REFERENCES consultations(id) ON DELETE CASCADE,
     dossier_id INTEGER REFERENCES dossiers_medicaux(id) ON DELETE CASCADE
 );
-
--- Insert some default data for testing
-INSERT INTO utilisateurs (nom, prenom, role, email, mot_de_passe) VALUES 
-('Dentist', 'Admin', 'DENTIST', 'dentist@clinic.com', 'hashed_password_here');
 
 INSERT INTO actes (description, prix) VALUES 
 ('Consultation simple', 200.00),

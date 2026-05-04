@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service_Rendez_vous.DTOs;
 using Service_Rendez_vous.Services.Interfaces;
@@ -6,6 +7,7 @@ namespace Service_Rendez_vous.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class RendezVousController : ControllerBase
     {
         private readonly IRendezVousService _rendezVousService;
@@ -16,6 +18,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
         public async Task<ActionResult<IEnumerable<RendezVousDto>>> GetAll()
         {
             var results = await _rendezVousService.GetAllAsync();
@@ -23,6 +26,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
         public async Task<ActionResult<RendezVousDto>> GetById(int id)
         {
             var result = await _rendezVousService.GetByIdAsync(id);
@@ -30,6 +34,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<ActionResult<RendezVousDto>> Create([FromBody] CreateRendezVousDto dto)
         {
             var result = await _rendezVousService.CreateAsync(dto);
@@ -37,6 +42,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<ActionResult<RendezVousDto>> Update(int id, [FromBody] UpdateRendezVousDto dto)
         {
             var result = await _rendezVousService.UpdateAsync(id, dto);
@@ -44,6 +50,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpPut("{id}/annuler")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> Cancel(int id, [FromQuery] string modifiePar)
         {
             await _rendezVousService.CancelAsync(id, modifiePar);
@@ -51,6 +58,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpPut("{id}/absent")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> MarkAsAbsent(int id, [FromQuery] int modifiePar)
         {
             await _rendezVousService.MarkAsAbsentAsync(id, modifiePar);
@@ -58,6 +66,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpPut("{id}/reporter")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> Reschedule(int id, [FromBody] RescheduleRendezVousDto dto)
         {
             await _rendezVousService.RescheduleAsync(id, dto);
@@ -65,6 +74,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpPut("{id}/confirmer")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> Confirm(int id, [FromQuery] int modifiePar)
         {
             await _rendezVousService.ConfirmAsync(id, modifiePar);
@@ -72,6 +82,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpPut("{id}/effectuer")]
+        [Authorize(Roles = "Dentiste, Secretaire")]
         public async Task<IActionResult> MarkAsCompleted(int id, [FromQuery] int modifiePar)
         {
             await _rendezVousService.MarkAsCompletedAsync(id, modifiePar);
@@ -79,6 +90,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpGet("{id}/historique")]
+        [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
         public async Task<ActionResult<IEnumerable<HistoriqueRDVDto>>> GetHistory(int id)
         {
             var results = await _rendezVousService.GetHistoryAsync(id);
@@ -86,6 +98,7 @@ namespace Service_Rendez_vous.Controllers
         }
 
         [HttpGet("historique")]
+        [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
         public async Task<ActionResult<IEnumerable<HistoriqueRDVDto>>> GetAllHistory()
         {
             var results = await _rendezVousService.GetAllHistoryAsync();

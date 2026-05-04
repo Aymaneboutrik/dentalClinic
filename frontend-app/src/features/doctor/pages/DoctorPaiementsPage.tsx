@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import secureApi from "@apis/instances/secure-api";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@components/data-table/data-table";
 import { Button } from "@components/ui/button";
 import PageTitle from "@components/commons/page-title";
 
-const BASE_URL = "/api/paiements";
+const BASE_URL = "/paiements";
 
 interface Paiement {
   id: number;
@@ -23,10 +24,8 @@ export default function DoctorPaiementsPage() {
   const fetchPaiements = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setPaiements(data);
+      const res = await secureApi.get(`${BASE_URL}`);
+      setPaiements(res.data);
       setFetched(true);
     } catch {
       alert("Erreur lors du chargement des paiements");

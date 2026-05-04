@@ -1,3 +1,4 @@
+import secureApi from "@apis/instances/secure-api";
 import type { Planning } from "../../../types/planning/planning";
 
 export interface CreatePlanningRequest {
@@ -41,27 +42,6 @@ export interface ApiError {
   errors?: Record<string, string[]>;
 }
 
-const buildApiError = async (response: Response): Promise<ApiError> => {
-  let result: any = null;
-
-  try {
-    result = await response.json();
-  } catch {
-    result = null;
-  }
-
-  return {
-    message:
-      result?.message ||
-      result?.Message ||
-      result?.title ||
-      "Une erreur est survenue lors de la communication avec le serveur.",
-    status: response.status,
-    code: result?.code || result?.Code,
-    errors: result?.errors || result?.Errors,
-  };
-};
-
 const normalizePlanning = (item: any): Planning => {
   return {
     idHoraire: Number(item?.idHoraire ?? item?.IdHoraire ?? 0),
@@ -75,103 +55,52 @@ const normalizePlanning = (item: any): Planning => {
   };
 };
 
+const API_PREFIX = "/personnel/api/horaires";
+
 export const getPlannings = async (): Promise<Planning[]> => {
-  let response: Response;
-
   try {
-    response = await fetch("/api/personnel/api/horaires");
-  } catch {
-    throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
-    } as ApiError;
+    const response = await secureApi.get(API_PREFIX);
+    const result = response.data;
+
+    if (!Array.isArray(result)) {
+      return [];
+    }
+
+    return result.map((item: any) => normalizePlanning(item));
+  } catch (error: any) {
+    throw error.response?.data || { message: "Impossible de contacter le serveur.", status: 0 };
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-
-  const result = await response.json();
-
-  if (!Array.isArray(result)) {
-    return [];
-  }
-
-  return result.map((item) => normalizePlanning(item));
 };
 
 export const createPlanning = async (
   planningData: CreatePlanningRequest
 ): Promise<Planning> => {
-  let response: Response;
-
   try {
-    response = await fetch("/api/personnel/api/horaires", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(planningData),
-    });
-  } catch {
-    throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
-    } as ApiError;
+    const response = await secureApi.post(API_PREFIX, planningData);
+    const result = response.data as PlanningApiResponse;
+    return normalizePlanning(result);
+  } catch (error: any) {
+    throw error.response?.data || { message: "Impossible de contacter le serveur.", status: 0 };
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-
-  const result = (await response.json()) as PlanningApiResponse;
-  return normalizePlanning(result);
 };
 
 export const updatePlanning = async (
   id: number,
   planningData: UpdatePlanningRequest
 ): Promise<Planning> => {
-  let response: Response;
-
   try {
-    response = await fetch(`/api/personnel/api/horaires/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(planningData),
-    });
-  } catch {
-    throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
-    } as ApiError;
+    const response = await secureApi.patch(`${API_PREFIX}/${id}`, planningData);
+    const result = response.data as PlanningApiResponse;
+    return normalizePlanning(result);
+  } catch (error: any) {
+    throw error.response?.data || { message: "Impossible de contacter le serveur.", status: 0 };
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-
-  const result = (await response.json()) as PlanningApiResponse;
-  return normalizePlanning(result);
 };
 
 export const deletePlanning = async (id: number): Promise<void> => {
-  let response: Response;
-
   try {
-    response = await fetch(`/api/personnel/api/horaires/${id}`, {
-      method: "DELETE",
-    });
-  } catch {
-    throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
-    } as ApiError;
+    await secureApi.delete(`${API_PREFIX}/${id}`);
+  } catch (error: any) {
+    throw error.response?.data || { message: "Impossible de contacter le serveur.", status: 0 };
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-};
+};

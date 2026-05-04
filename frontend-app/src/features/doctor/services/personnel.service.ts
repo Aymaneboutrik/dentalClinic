@@ -1,3 +1,4 @@
+import secureApi from "@apis/instances/secure-api";
 import type { Employee } from "../../../types/employee/employee";
 
 export interface CreateEmployeeRequest {
@@ -33,135 +34,54 @@ export interface ApiError {
   errors?: Record<string, string[]>;
 }
 
-const buildApiError = async (response: Response): Promise<ApiError> => {
-  let result: any = null;
-
-  try {
-    result = await response.json();
-  } catch {
-    result = null;
-  }
-
-  return {
-    message:
-      result?.message ||
-      result?.title ||
-      "Une erreur est survenue lors de la communication avec le serveur.",
-    status: response.status,
-    code: result?.code,
-    errors: result?.errors,
-  };
-};
+const API_PREFIX = "/personnel/api/Employees";
 
 export const getEmployees = async (): Promise<Employee[]> => {
-  let response: Response;
-
   try {
-    response = await fetch("/api/personnel/api/Employees");
-  } catch {
-    throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
-    } as ApiError;
+    const response = await secureApi.get(API_PREFIX);
+    return response.data;
+  } catch (error: any) {
+    throw error.response?.data || { message: "Impossible de contacter le serveur.", status: 0 };
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-
-  return await response.json();
 };
 
 export const getEmployeeById = async (id: number): Promise<EmployeeDetails> => {
-  let response: Response;
-
   try {
-    response = await fetch(`/api/personnel/api/Employees/${id}`);
-  } catch {
-    throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
-    } as ApiError;
+    const response = await secureApi.get(`${API_PREFIX}/${id}`);
+    return response.data;
+  } catch (error: any) {
+    throw error.response?.data || { message: "Impossible de contacter le serveur.", status: 0 };
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-
-  return await response.json();
 };
 
 export const createEmployee = async (
   employeeData: CreateEmployeeRequest
 ): Promise<Employee> => {
-  let response: Response;
-
   try {
-    response = await fetch("/api/personnel/api/Employees", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(employeeData),
-    });
-  } catch {
-    throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
-    } as ApiError;
+    const response = await secureApi.post(API_PREFIX, employeeData);
+    const result = response.data as CreateEmployeeApiResponse;
+    return result.data;
+  } catch (error: any) {
+    throw error.response?.data || { message: "Impossible de contacter le serveur.", status: 0 };
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-
-  const result = (await response.json()) as CreateEmployeeApiResponse;
-  return result.data;
 };
 
 export const updateEmployee = async (
   id: number,
   employeeData: UpdateEmployeeRequest
 ): Promise<EmployeeDetails> => {
-  let response: Response;
-
   try {
-    response = await fetch(`/api/personnel/api/Employees/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(employeeData),
-    });
-  } catch {
-    throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
-    } as ApiError;
+    const response = await secureApi.patch(`${API_PREFIX}/${id}`, employeeData);
+    return response.data;
+  } catch (error: any) {
+    throw error.response?.data || { message: "Impossible de contacter le serveur.", status: 0 };
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-
-  return await response.json();
 };
 
 export const deleteEmployee = async (id: number): Promise<void> => {
-  let response: Response;
-
   try {
-    response = await fetch(`/api/personnel/api/Employees/${id}`, {
-      method: "DELETE",
-    });
-  } catch {
-    throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
-    } as ApiError;
+    await secureApi.delete(`${API_PREFIX}/${id}`);
+  } catch (error: any) {
+    throw error.response?.data || { message: "Impossible de contacter le serveur.", status: 0 };
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-};
+};

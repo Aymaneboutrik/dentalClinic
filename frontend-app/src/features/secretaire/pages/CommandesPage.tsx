@@ -11,6 +11,7 @@ import PageTitle from "@components/commons/page-title";
 import Cookie from "js-cookie";
 import { TOKEN } from "@configs/vars";
 import SelectInput from "@components/inputs/select-input";
+import secureApi from "@apis/instances/secure-api";
 import { Input } from "@components/ui/input";
 import {
   Dialog,
@@ -20,16 +21,9 @@ import {
   DialogTitle,
 } from "@components/ui/dialog";
 
-const BASE_URL = "/api/stock/Commande";
-const FOURNISSEUR_URL = "/api/stock/Fournisseur";
+const BASE_URL = "/stock/Commande";
+const FOURNISSEUR_URL = "/stock/Fournisseur";
 
-function withAuthHeaders(extra?: Record<string, string>) {
-  const token = Cookie.get(TOKEN);
-  return {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(extra ?? {}),
-  };
-}
 
 const commandeSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
@@ -130,10 +124,8 @@ export default function CommandesPage() {
   const fetchCommandes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}`, { headers: withAuthHeaders() });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      const mappedData = data.map((c: any) => ({
+      const res = await secureApi.get(`${BASE_URL}`);
+      const mappedData = res.data.map((c: any) => ({
         ...c,
         statut: (!c.statut || c.statut === 0 || c.statut === "EnAttente") ? "EnAttente" : (c.statut === 1 || c.statut === "Validee") ? "Validee" : "Refusee",
       }));
@@ -149,12 +141,9 @@ export default function CommandesPage() {
   const fetchFournisseurs = async () => {
     setLoadingFournisseurs(true);
     try {
-      const res = await fetch(`${FOURNISSEUR_URL}`, { headers: withAuthHeaders() });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setFournisseurs(data);
+      const res = await secureApi.get(`${FOURNISSEUR_URL}`);
+      setFournisseurs(res.data);
     } catch {
-      // Non bloquant: l'édition peut se faire avec l'ID déjà présent.
       console.warn("Impossible de charger les fournisseurs.");
     } finally {
       setLoadingFournisseurs(false);
@@ -168,42 +157,27 @@ export default function CommandesPage() {
 
   const handleSubmit = async (values: CommandeForm) => {
     try {
-      let res;
       if (editing) {
         const statutInt = editing.statut === "EnAttente" ? 0 : editing.statut === "Validee" ? 1 : 2;
         const normalizedDate = normalizeDateForApi(values.date) ?? normalizeDateForApi(editing.date);
-        res = await fetch(`${BASE_URL}/${editing.id}`, {
-          method: "PUT",
-          headers: withAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({
-            id: editing.id,
-            nom: values.nom,
-            fournisseurId: values.fournisseurId,
-            ...(normalizedDate ? { date: normalizedDate } : {}),
-            statut: statutInt,
-          }),
+        await secureApi.put(`${BASE_URL}/${editing.id}`, {
+          id: editing.id,
+          nom: values.nom,
+          fournisseurId: values.fournisseurId,
+          ...(normalizedDate ? { date: normalizedDate } : {}),
+          statut: statutInt,
         });
       } else {
-        res = await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: withAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ id: 0, nom: values.nom, fournisseurId: values.fournisseurId, statut: 0 }),
-        });
+        await secureApi.post(`${BASE_URL}`, { id: 0, nom: values.nom, fournisseurId: values.fournisseurId, statut: 0 });
       }
       
-      const data = await res.json();
-
-      if (res.ok) {
-        form.reset();
-        setShowForm(false);
-        setEditing(null);
-        setEditOpen(false);
-        fetchCommandes();
-      } else {
-        alert(`Erreur : ${data.message || 'Sauvegarde échouée'}`);
-      }
-    } catch {
-      alert("Erreur réseau lors de la sauvegarde.");
+      form.reset();
+      setShowForm(false);
+      setEditing(null);
+      setEditOpen(false);
+      fetchCommandes();
+    } catch (error: any) {
+      alert(`Erreur : ${error.response?.data?.message || 'Sauvegarde échouée'}`);
     }
   };
 
@@ -222,23 +196,17 @@ export default function CommandesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette commande ?")) return;
     try {
-      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE", headers: withAuthHeaders() });
-      if (res.ok) {
-        fetchCommandes();
-      } else {
-        alert("Action impossible.");
-      }
+      await secureApi.delete(`${BASE_URL}/${id}`);
+      fetchCommandes();
     } catch {
-      alert("Erreur réseau.");
+      alert("Action impossible.");
     }
   };
 
   const handleGenererBon = async (id: number) => {
     try {
-      const res = await fetch(`${BASE_URL}/${id}/bon`, { headers: withAuthHeaders() });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setBonCommande(data);
+      const res = await secureApi.get(`${BASE_URL}/${id}/bon`);
+      setBonCommande(res.data);
       setShowBon(true);
     } catch {
       alert("Erreur lors de la génération du bon de commande.");

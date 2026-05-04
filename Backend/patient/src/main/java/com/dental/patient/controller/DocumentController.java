@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +25,7 @@ public class DocumentController {
     private final PatientMapper patientMapper;
 
     @PostMapping("/dossier/{dossierId}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'ASSISTANTE')")
     public ResponseEntity<DocumentMedicalDto> uploadMedicalDocument(
             @PathVariable Long dossierId,
             @RequestParam("file") MultipartFile file,
@@ -34,6 +36,7 @@ public class DocumentController {
     }
 
     @PostMapping("/consultation/{consultationId}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'ASSISTANTE')")
     public ResponseEntity<DocumentMedicalDto> uploadToConsultation(
             @PathVariable Long consultationId,
             @RequestParam("file") MultipartFile file,
@@ -44,18 +47,21 @@ public class DocumentController {
     }
 
     @GetMapping("/dossier/{dossierId}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE', 'ASSISTANTE')")
     public ResponseEntity<List<DocumentMedicalDto>> listDocuments(@PathVariable Long dossierId) {
         List<DocumentMedical> docs = documentService.getDocumentsByDossier(dossierId);
         return ResponseEntity.ok(docs.stream().map(patientMapper::toDocumentDto).toList());
     }
 
     @GetMapping("/consultation/{consultationId}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE', 'ASSISTANTE')")
     public ResponseEntity<List<DocumentMedicalDto>> listConsultationDocuments(@PathVariable Long consultationId) {
         List<DocumentMedical> docs = documentService.getDocumentsByConsultation(consultationId);
         return ResponseEntity.ok(docs.stream().map(patientMapper::toDocumentDto).toList());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'SECRETAIRE', 'ASSISTANTE')")
     public ResponseEntity<byte[]> downloadDocument(@PathVariable Long id) throws IOException {
         var download = documentService.loadDocumentForDownload(id);
         return ResponseEntity.ok()
@@ -65,12 +71,14 @@ public class DocumentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'ASSISTANTE')")
     public ResponseEntity<Void> deleteDocument(@PathVariable Long id) throws IOException {
         documentService.deleteDocument(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/name")
+    @PreAuthorize("hasAnyRole('DENTISTE', 'ASSISTANTE')")
     public ResponseEntity<DocumentMedicalDto> updateDocumentName(
             @PathVariable Long id,
             @RequestParam String nom) {
