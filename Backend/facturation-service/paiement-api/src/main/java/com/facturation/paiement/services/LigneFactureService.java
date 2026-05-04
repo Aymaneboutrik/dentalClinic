@@ -43,10 +43,14 @@ public class LigneFactureService {
         // Figer le prix automatique depuis le catalogue (STRICT)
         ligne.setPrixUnitaire(acte.getPrix());
         
-        // Calculer le sous-total
         ligne.calculateSousTotal();
 
         LigneFacture saved = ligneFactureRepository.save(ligne);
+        
+        // Mettre à jour la collection en mémoire de la facture avant le recalcul
+        if (facture.getLignesFacture() != null) {
+            facture.getLignesFacture().add(saved);
+        }
         
         // Déclencher le recalcul de la facture
         factureService.recalculateFinancialsAndStatus(facture.getId());
@@ -59,6 +63,12 @@ public class LigneFactureService {
         LigneFacture lf = ligneFactureRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ligne de facture introuvable avec l'ID : " + id));
         return ligneFactureMapper.toDto(lf);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LigneFactureResponseDTO> findAll() {
+        return ligneFactureRepository.findAll().stream()
+                .map(ligneFactureMapper::toDto).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -108,7 +118,14 @@ public class LigneFactureService {
             throw new IllegalInvoiceStateException("Impossible de supprimer une ligne : la facture n'est plus en état IMPAYÉE.");
         }
 
-        Long factureId = lf.getFacture().getId();
+        Facture facture = lf.getFacture();
+        Long factureId = facture.getId();
+        
+        // Retirer la ligne de la collection en mémoire pour éviter sa réinsertion et fausser le recalcul
+        if (facture.getLignesFacture() != null) {
+            facture.getLignesFacture().removeIf(l -> l.getId().equals(id));
+        }
+        
         ligneFactureRepository.deleteById(id);
         factureService.recalculateFinancialsAndStatus(factureId);
     }

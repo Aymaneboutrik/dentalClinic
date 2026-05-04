@@ -9,7 +9,6 @@ import java.time.LocalDate;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class PaiementRequestDTO {
-    @NotNull(message = "La date de paiement est obligatoire")
     private LocalDate datePaiement;
 
     @NotNull(message = "Le montant est obligatoire")

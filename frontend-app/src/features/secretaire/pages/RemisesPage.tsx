@@ -13,7 +13,6 @@ const BASE_URL = "/api/remises";
 
 const remiseSchema = z.object({
   valeur: z.coerce.number().min(0, "La valeur est obligatoire"),
-  dateRemise: z.string().min(1, "La date est obligatoire"),
   description: z.string().min(1, "La description est obligatoire"),
   typeRemise: z.enum(["FIXE", "VARIABLE"]),
   factureId: z.coerce.number().min(1, "L'ID de la facture est obligatoire"),
@@ -44,7 +43,6 @@ export default function RemisesPage() {
     resolver: zodResolver(remiseSchema),
     defaultValues: {
       valeur: 0,
-      dateRemise: new Date().toISOString().split("T")[0],
       description: "",
       typeRemise: "FIXE",
       factureId: 0,
@@ -100,7 +98,6 @@ export default function RemisesPage() {
   const handleEdit = (r: Remise) => {
     setEditing(r);
     form.setValue("valeur", r.valeur);
-    form.setValue("dateRemise", r.dateRemise?.split("T")[0] ?? "");
     form.setValue("description", r.description);
     form.setValue("typeRemise", r.typeRemise as "FIXE" | "VARIABLE");
     form.setValue("factureId", r.factureId);
@@ -218,8 +215,10 @@ export default function RemisesPage() {
             setShowForm(true);
             setEditing(null);
             form.reset({
-              dateRemise: new Date().toISOString().split("T")[0],
+              valeur: 0,
+              description: "",
               typeRemise: "FIXE",
+              factureId: 0,
             });
           }}
         >
@@ -238,7 +237,7 @@ export default function RemisesPage() {
                 <TextInput label="ID Facture" name="factureId" form={form} placeholder="Ex: 1" withAsterisk />
                 <TextInput label="Description" name="description" form={form} placeholder="Motif de la remise" withAsterisk />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium">Type de remise <span className="text-destructive">*</span></label>
                   <select
@@ -250,14 +249,6 @@ export default function RemisesPage() {
                   </select>
                 </div>
                 <TextInput label="Valeur" name="valeur" form={form} placeholder="0" withAsterisk />
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium">Date <span className="text-destructive">*</span></label>
-                  <input
-                    type="date"
-                    className="border rounded px-3 py-2 bg-background text-sm"
-                    {...form.register("dateRemise")}
-                  />
-                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <Button

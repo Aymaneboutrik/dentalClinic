@@ -24,6 +24,14 @@ public class Facture {
     @Builder.Default
     private Double montantNet = 0.0;
 
+    @Column(name = "total_paye", nullable = false)
+    @Builder.Default
+    private Double totalPaye = 0.0;
+
+    @Column(name = "reste_a_payer", nullable = false)
+    @Builder.Default
+    private Double resteAPayer = 0.0;
+
     @Column(name = "date", nullable = false)
     private LocalDate date;
 

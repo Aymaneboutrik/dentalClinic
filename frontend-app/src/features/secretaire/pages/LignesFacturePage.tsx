@@ -33,20 +33,25 @@ export default function LignesFacturePage() {
   const [lignes, setLignes] = useState<LigneFacture[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<LigneFacture | null>(null);
   const [search, setSearch] = useState("");
   const [fetched, setFetched] = useState(false);
-  const [factureIdFilter, setFactureIdFilter] = useState<string>("");
+  const [factureIdFilter, setFactureIdFilter] = useState<string>(() => {
+    return localStorage.getItem("factureIdFilter") || "";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("factureIdFilter", factureIdFilter);
+  }, [factureIdFilter]);
 
   const form = useForm<LigneFactureForm>({
     resolver: zodResolver(ligneFactureSchema),
     defaultValues: { factureId: 0, acteMedicalId: 0, quantite: 1 },
   });
 
-  const fetchLignes = async () => {
+  const fetchLignes = async (overrideId?: number) => {
     setLoading(true);
     try {
-      const factureId = Number(factureIdFilter);
+      const factureId = overrideId !== undefined ? overrideId : Number(factureIdFilter);
       if (!Number.isFinite(factureId) || factureId <= 0) {
         setLignes([]);
         setFetched(true);
@@ -67,53 +72,37 @@ export default function LignesFacturePage() {
   };
 
   useEffect(() => {
-    // Do not auto-fetch without a factureId (backend doesn't support listing all).
+    if (factureIdFilter) {
+      fetchLignes();
+    }
   }, []);
 
   const handleSubmit = async (values: LigneFactureForm) => {
     try {
-      if (editing) {
-        const res = await fetch(`${BASE_URL}/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editing.id, ...values }),
-        });
-        if (!res.ok) throw res;
-      } else {
-        const res = await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
-        if (!res.ok) throw res;
-      }
+      const res = await fetch(`${BASE_URL}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) throw res;
+      const newLigne = await res.json();
+      
       form.reset();
       setShowForm(false);
-      setEditing(null);
-      fetchLignes();
+      
+      if (factureIdFilter === values.factureId.toString()) {
+        setLignes((prev) => [...prev, newLigne]);
+      } else {
+        setFactureIdFilter(values.factureId.toString());
+        fetchLignes(values.factureId);
+      }
     } catch (error) {
       const data = await (error as any).json?.().catch(() => null);
       alert(data?.message || "Erreur lors de la sauvegarde (vérifiez que la facture est IMPAYÉE).");
     }
   };
 
-  const handleEdit = (l: LigneFacture) => {
-    setEditing(l);
-    form.setValue("factureId", l.factureId);
-    form.setValue("acteMedicalId", l.acteMedicalId);
-    form.setValue("quantite", l.quantite);
-    setShowForm(true);
-  };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Supprimer cette ligne ?")) return;
-    try {
-      await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
-      fetchLignes();
-    } catch {
-      alert("Erreur lors de la suppression");
-    }
-  };
 
   const filtered = lignes.filter(
     (l) =>
@@ -134,20 +123,6 @@ export default function LignesFacturePage() {
     { accessorKey: "quantite", header: "Quantité" },
     { accessorKey: "prixUnitaire", header: "Prix Unitaire (MAD)" },
     { accessorKey: "sousTotal", header: "Sous-Total (MAD)" },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)}>
-            Modifier
-          </Button>
-          <Button size="sm" variant="destructive" onClick={() => handleDelete(row.original.id)}>
-            Supprimer
-          </Button>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -160,7 +135,6 @@ export default function LignesFacturePage() {
         <Button
           onClick={() => {
             setShowForm(true);
-            setEditing(null);
             form.reset({ factureId: 0, acteMedicalId: 0, quantite: 1 });
           }}
         >
@@ -171,7 +145,7 @@ export default function LignesFacturePage() {
       {showForm && (
         <div className="border rounded-xl p-6 mb-6 bg-card">
           <h2 className="text-xl font-bold mb-2">
-            {editing ? "Modifier la ligne" : "Ajouter une ligne à une facture"}
+            Ajouter une ligne à une facture
           </h2>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -184,7 +158,7 @@ export default function LignesFacturePage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => { setShowForm(false); setEditing(null); form.reset(); }}
+                  onClick={() => { setShowForm(false); form.reset(); }}
                 >
                   Annuler
                 </Button>
@@ -211,7 +185,7 @@ export default function LignesFacturePage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Button variant="outline" onClick={fetchLignes} disabled={loading}>
+            <Button variant="outline" onClick={() => fetchLignes()} disabled={loading}>
               {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
             </Button>
           </div>

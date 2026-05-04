@@ -44,8 +44,11 @@ public class FactureService {
     @Transactional
     public FactureResponseDTO create(FactureRequestDTO dto) {
         Facture facture = factureMapper.toEntity(dto);
+        facture.setDate(java.time.LocalDate.now());
         facture.setMontantBrut(0.0);
         facture.setMontantNet(0.0);
+        facture.setTotalPaye(0.0);
+        facture.setResteAPayer(0.0);
         facture.setStatut(StatutFacture.IMPAYE);
         Facture saved = factureRepository.save(facture);
         if (saved.getStatut() == StatutFacture.IMPAYE) {
@@ -116,7 +119,9 @@ public class FactureService {
 
         // Remises avec montantCalcule rempli
         List<RemiseResponseDTO> remises = facture.getRemises() != null
-                ? facture.getRemises().stream().map(r -> {
+                ? facture.getRemises().stream()
+                  .distinct()
+                  .map(r -> {
                         RemiseResponseDTO dto = remiseMapper.toDto(r);
                         dto.setMontantCalcule(r.calculerMontant(facture.getMontantBrut()));
                         return dto;
@@ -134,13 +139,18 @@ public class FactureService {
         Double montantBrut = facture.getMontantBrut() != null ? facture.getMontantBrut() : 0.0;
         Double montantNet  = facture.getMontantNet()  != null ? facture.getMontantNet()  : 0.0;
 
-        Double totalRemisesAutorisees = facture.getRemises() != null
-                ? facture.getRemises().stream()
-                        .filter(r -> Boolean.TRUE.equals(r.getEstAutorisee()))
-                        .mapToDouble(r -> r.calculerMontant(montantBrut))
-                        .sum()
-                : 0.0;
-        totalRemisesAutorisees = Math.min(montantBrut, totalRemisesAutorisees); // plafond sécurité
+        Double currentMontantForRemise = montantBrut;
+        Double totalRemisesAutorisees = 0.0;
+        if (facture.getRemises() != null) {
+            for (Remise r : facture.getRemises()) {
+                if (Boolean.TRUE.equals(r.getEstAutorisee())) {
+                    Double amount = r.calculerMontant(currentMontantForRemise);
+                    totalRemisesAutorisees += amount;
+                    currentMontantForRemise -= amount;
+                }
+            }
+        }
+        totalRemisesAutorisees = Math.min(montantBrut, totalRemisesAutorisees);
 
         Double totalPaye = paiements.stream()
                 .mapToDouble(p -> p.getMontant() != null ? p.getMontant() : 0.0)
@@ -181,11 +191,19 @@ public class FactureService {
         Double totalPaye = paiementRepository.findByFactureId(facture.getId()).stream()
                 .map(p -> p.getMontant() != null ? p.getMontant() : 0.0)
                 .reduce(0.0, Double::sum);
-        Double totalRemises = remiseRepository.findByFactureId(facture.getId()).stream()
-                .filter(Remise::getEstAutorisee)
-                .map(r -> computeRemiseAmount(r, totalVente))
-                .reduce(0.0, Double::sum);
-        return totalVente - totalRemises - totalPaye;
+        Double montantNetTemp = totalVente;
+        Double totalRemises = 0.0;
+        List<Remise> remisesList = remiseRepository.findByFactureId(facture.getId());
+        if (remisesList != null) {
+            for (Remise r : remisesList) {
+                if (Boolean.TRUE.equals(r.getEstAutorisee())) {
+                    Double amount = computeRemiseAmount(r, montantNetTemp);
+                    totalRemises += amount;
+                    montantNetTemp -= amount;
+                }
+            }
+        }
+        return montantNetTemp - totalPaye;
     }
 
     private void recalculateFinancialsAndStatus(Facture facture) {
@@ -199,16 +217,26 @@ public class FactureService {
         Double totalPaye = paiementRepository.findByFactureId(facture.getId()).stream()
                 .map(p -> p.getMontant() != null ? p.getMontant() : 0.0)
                 .reduce(0.0, Double::sum);
+        facture.setTotalPaye(totalPaye);
 
-        Double totalRemises = remiseRepository.findByFactureId(facture.getId()).stream()
-                .filter(Remise::getEstAutorisee)
-                .map(r -> computeRemiseAmount(r, totalVente))
-                .reduce(0.0, Double::sum);
+        Double montantNet = totalVente;
+        Double totalRemises = 0.0;
+        List<Remise> remisesList = remiseRepository.findByFactureId(facture.getId());
+        if (remisesList != null) {
+            for (Remise r : remisesList) {
+                if (Boolean.TRUE.equals(r.getEstAutorisee())) {
+                    Double amount = computeRemiseAmount(r, montantNet);
+                    totalRemises += amount;
+                    montantNet -= amount;
+                }
+            }
+        }
 
-        Double montantNet = Math.max(0.0, totalVente - totalRemises);
+        montantNet = Math.max(0.0, montantNet);
         facture.setMontantNet(montantNet);
 
         Double resteAPayer = montantNet - totalPaye;
+        facture.setResteAPayer(resteAPayer);
         if (resteAPayer <= 0.0) {
             facture.setStatut(StatutFacture.PAYEE);
         } else if (totalPaye > 0.0) {

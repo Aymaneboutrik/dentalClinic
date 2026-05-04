@@ -25,6 +25,7 @@ interface Facture {
   statut: string;
   totalRemises: number;
   resteAPayer: number;
+  totalPaye?: number;
 }
 
 interface FicheFacture {
@@ -83,21 +84,13 @@ export default function FacturesPage() {
           body: JSON.stringify({ id: editing.id, ...values }),
         });
         if (!res.ok) throw res;
-      } else {
-        const res = await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
-        if (!res.ok) throw res;
       }
       form.reset();
       setShowForm(false);
       setEditing(null);
       fetchFactures();
     } catch (error) {
-      const data = await (error as any).json?.().catch(() => null);
-      alert(data?.message || "Erreur lors de la sauvegarde");
+      alert("Erreur lors de la sauvegarde");
     }
   };
 
@@ -145,6 +138,11 @@ export default function FacturesPage() {
     { accessorKey: "montantBrut", header: "Montant Brut (MAD)" },
     { accessorKey: "totalRemises", header: "Total Remises (MAD)" },
     { accessorKey: "montantNet", header: "Montant Net (MAD)" },
+    { 
+      accessorKey: "totalPaye", 
+      header: "Total Payé (MAD)",
+      cell: ({ row }) => <span>{row.original.totalPaye !== undefined ? row.original.totalPaye : "-"}</span>
+    },
     { accessorKey: "resteAPayer", header: "Reste à Payer (MAD)" },
     {
       accessorKey: "statut",
@@ -171,12 +169,16 @@ export default function FacturesPage() {
           <Button size="sm" variant="outline" onClick={() => fetchFicheFacture(row.original.id)}>
             Fiche
           </Button>
-          <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)}>
-            Modifier
-          </Button>
-          <Button size="sm" variant="destructive" onClick={() => handleDelete(row.original.id)}>
-            Supprimer
-          </Button>
+          {row.original.statut !== "PAYEE" && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)}>
+                Modifier
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => handleDelete(row.original.id)}>
+                Supprimer
+              </Button>
+            </>
+          )}
         </div>
       ),
     },
@@ -190,20 +192,29 @@ export default function FacturesPage() {
           <PageTitle title="Factures" desc="Gérez les factures des patients" />
         </div>
         <Button
-          onClick={() => {
-            setShowForm(true);
-            setEditing(null);
-            form.reset({ date: new Date().toISOString().split("T")[0] });
+          onClick={async () => {
+            try {
+              const res = await fetch(BASE_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ date: new Date().toISOString().split("T")[0] }),
+              });
+              if (!res.ok) throw res;
+              fetchFactures();
+            } catch {
+              alert("Erreur lors de la création de la facture");
+            }
           }}
+          disabled={loading}
         >
-          Ajouter une facture
+          Créer une facture
         </Button>
       </div>
 
-      {showForm && (
+      {showForm && editing && (
         <div className="border rounded-xl p-6 mb-6 bg-card">
           <h2 className="text-xl font-bold mb-2">
-            {editing ? "Modifier la facture" : "Ajouter une facture"}
+            Modifier la date de la facture
           </h2>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -286,8 +297,8 @@ export default function FacturesPage() {
               </thead>
               <tbody>
                 {ficheFacture.lignesFacture.length > 0 ? (
-                  ficheFacture.lignesFacture.map((l, i) => (
-                    <tr key={i} className="border-b">
+                  ficheFacture.lignesFacture.map((l) => (
+                    <tr key={l.id || l.acteMedicalId} className="border-b">
                       <td className="p-2 border">{l.libelleActe} (ID: {l.acteMedicalId})</td>
                       <td className="p-2 border">{l.quantite}</td>
                       <td className="p-2 border">{l.prixUnitaire} MAD</td>
@@ -313,8 +324,8 @@ export default function FacturesPage() {
               </thead>
               <tbody>
                 {ficheFacture.remises.length > 0 ? (
-                  ficheFacture.remises.map((r, i) => (
-                    <tr key={i} className="border-b">
+                  ficheFacture.remises.map((r) => (
+                    <tr key={r.id || r.dateRemise} className="border-b">
                       <td className="p-2 border">{r.dateRemise}</td>
                       <td className="p-2 border">{r.typeRemise}</td>
                       <td className="p-2 border">{r.valeur} {r.typeRemise === 'POURCENTAGE' ? '%' : 'MAD'}</td>
@@ -339,8 +350,8 @@ export default function FacturesPage() {
               </thead>
               <tbody>
                 {ficheFacture.paiements.length > 0 ? (
-                  ficheFacture.paiements.map((p, i) => (
-                    <tr key={i} className="border-b">
+                  ficheFacture.paiements.map((p) => (
+                    <tr key={p.id || p.datePaiement} className="border-b">
                       <td className="p-2 border">{p.datePaiement}</td>
                       <td className="p-2 border">{p.modePaiement}</td>
                       <td className="p-2 border font-medium text-green-600">+{p.montant} MAD</td>

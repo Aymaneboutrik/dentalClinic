@@ -43,7 +43,6 @@ export default function LignesCommandePage() {
   const [lignes, setLignes] = useState<LigneCommande[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<LigneCommande | null>(null);
   const [fetched, setFetched] = useState(false);
 
   const form = useForm<LigneForm>({
@@ -72,27 +71,17 @@ export default function LignesCommandePage() {
 
   const handleSubmit = async (values: LigneForm) => {
     try {
-      let res;
-      if (editing) {
-        res = await fetch(`${BASE_URL}/${editing.id}`, {
-          method: "PUT",
-          headers: withAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ id: editing.id, ...values, sousTotal: values.quantite * values.prixUnitaire }),
-        });
-      } else {
-        res = await fetch(`${BASE_URL}`, {
-          method: "POST",
-          headers: withAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ id: 0, ...values, sousTotal: values.quantite * values.prixUnitaire }),
-        });
-      }
+      let res = await fetch(`${BASE_URL}`, {
+        method: "POST",
+        headers: withAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ id: 0, ...values, sousTotal: values.quantite * values.prixUnitaire }),
+      });
 
       const data = await res.json();
 
       if (res.ok) {
         form.reset();
         setShowForm(false);
-        setEditing(null);
         fetchLignes();
       } else {
         alert(`Erreur : ${data.message || 'Validation échouée'}`);
@@ -102,28 +91,6 @@ export default function LignesCommandePage() {
     }
   };
 
-  const handleEdit = (l: LigneCommande) => {
-    setEditing(l);
-    form.setValue("produitId", l.produitId);
-    form.setValue("quantite", l.quantite);
-    form.setValue("prixUnitaire", l.prixUnitaire);
-    form.setValue("commandeId", l.commandeId);
-    setShowForm(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm("Supprimer cette ligne de commande ?")) return;
-    try {
-      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE", headers: withAuthHeaders() });
-      if (res.ok) {
-        fetchLignes();
-      } else {
-        alert("Action impossible.");
-      }
-    } catch {
-      alert("Erreur réseau.");
-    }
-  };
 
   const columns: ColumnDef<LigneCommande>[] = [
     { accessorKey: "id", header: "ID" },
@@ -152,20 +119,6 @@ export default function LignesCommandePage() {
       header: "Sous-total (MAD)",
       cell: ({ row }) => <span className="font-black text-primary">{row.original.sousTotal.toFixed(2)}</span>
     },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex gap-2">
-          <Button size="sm" variant="ghost" onClick={() => handleEdit(row.original)} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50" disabled={loading}>
-            Modifier
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => handleDelete(row.original.id)} className="text-rose-600 hover:text-rose-700 hover:bg-rose-50" disabled={loading}>
-            Supprimer
-          </Button>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -178,7 +131,6 @@ export default function LignesCommandePage() {
         <Button
           onClick={() => {
             setShowForm(!showForm);
-            setEditing(null);
             form.reset();
           }}
           className=""
@@ -190,7 +142,7 @@ export default function LignesCommandePage() {
       {showForm && (
         <div className="border rounded-xl p-6 mb-6 bg-card">
           <h2 className="text-xl font-bold mb-2">
-            {editing ? "Modifier la ligne" : "Nouvelle ligne de commande"}
+            Nouvelle ligne de commande
           </h2>
           <p className="text-sm text-muted-foreground mb-4">
             Spécifiez le produit, la quantité et le prix unitaire convenu.
@@ -210,12 +162,12 @@ export default function LignesCommandePage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => { setShowForm(false); setEditing(null); form.reset(); }}
+                  onClick={() => { setShowForm(false); form.reset(); }}
                 >
                   Annuler
                 </Button>
                 <Button type="submit" className="px-8 shadow-md" disabled={loading}>
-                   {editing ? "Sauvegarder" : "Ajouter à la commande"}
+                   Ajouter à la commande
                 </Button>
               </div>
             </form>

@@ -14,7 +14,6 @@ const BASE_URL = "/api/paiements";
 const paiementSchema = z.object({
   factureId: z.coerce.number().min(1, "L'ID de la facture est obligatoire"),
   montant: z.coerce.number().min(0.01, "Le montant doit être supérieur à 0"),
-  datePaiement: z.string().min(1, "La date de paiement est obligatoire"),
   modePaiement: z.enum(["ESPECES", "CARTE_BANCAIRE", "CHEQUE", "VIREMENT"]),
 });
 
@@ -41,7 +40,6 @@ export default function PaiementsPage() {
     defaultValues: {
       factureId: 0,
       montant: 0,
-      datePaiement: new Date().toISOString().split("T")[0],
       modePaiement: "ESPECES",
     },
   });
@@ -96,7 +94,6 @@ export default function PaiementsPage() {
     setEditing(p);
     form.setValue("factureId", p.factureId);
     form.setValue("montant", p.montant);
-    form.setValue("datePaiement", p.datePaiement?.split("T")[0] ?? "");
     form.setValue("modePaiement", p.modePaiement as "ESPECES" | "CARTE_BANCAIRE" | "CHEQUE" | "VIREMENT");
     setShowForm(true);
   };
@@ -157,7 +154,6 @@ export default function PaiementsPage() {
             form.reset({
               factureId: 0,
               montant: 0,
-              datePaiement: new Date().toISOString().split("T")[0],
               modePaiement: "ESPECES",
             });
           }}
@@ -178,14 +174,6 @@ export default function PaiementsPage() {
                 <TextInput label="Montant (MAD)" name="montant" form={form} placeholder="0.00" withAsterisk />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium">Date de paiement <span className="text-destructive">*</span></label>
-                  <input
-                    type="date"
-                    className="border rounded px-3 py-2 bg-background text-sm"
-                    {...form.register("datePaiement")}
-                  />
-                </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium">Mode de paiement <span className="text-destructive">*</span></label>
                   <select

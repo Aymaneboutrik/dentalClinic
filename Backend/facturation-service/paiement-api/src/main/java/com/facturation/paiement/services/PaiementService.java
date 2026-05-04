@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -26,11 +28,16 @@ public class PaiementService {
     private final PaiementMapper paiementMapper;
 
 
+    private static final Logger log = LoggerFactory.getLogger(PaiementService.class);
+
     @Transactional
     public PaiementResponseDTO create(PaiementRequestDTO dto) {
         Facture facture = factureService.getEntityById(dto.getFactureId());
 
+        log.info("[PAIEMENT] Création demandée pour la facture ID : {}. Statut actuel : {}", facture.getId(), facture.getStatut());
+
         if (facture.getStatut() == StatutFacture.PAYEE) {
+            log.error("[PAIEMENT] Rejeté: La facture ID {} est déjà PAYEE", facture.getId());
             throw new IllegalInvoiceStateException("Impossible d'ajouter un paiement : la facture est déjà PAYÉE.");
         }
 
@@ -40,6 +47,7 @@ public class PaiementService {
         }
 
         Paiement paiement = paiementMapper.toEntity(dto);
+        paiement.setDatePaiement(java.time.LocalDate.now());
         paiement.setFacture(facture);
         Paiement saved = paiementRepository.save(paiement);
         factureService.recalculateFinancialsAndStatus(facture.getId());

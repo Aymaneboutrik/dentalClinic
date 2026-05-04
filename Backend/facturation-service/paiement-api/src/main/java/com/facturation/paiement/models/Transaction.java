@@ -28,4 +28,7 @@ public class Transaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "remise_id")
     private Remise remise;
+
+    @Column(name = "facture_id")
+    private Long factureId;
 }

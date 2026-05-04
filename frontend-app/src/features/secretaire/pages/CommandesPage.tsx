@@ -60,6 +60,13 @@ const statutColors: Record<string, string> = {
   Refusee: "bg-rose-100 text-rose-800 border-rose-200",
 };
 
+const getStatutKey = (s: any): string => {
+  if (s === 0 || s === "EnAttente" || s === "0") return "EnAttente";
+  if (s === 1 || s === "Validee" || s === "1") return "Validee";
+  if (s === 2 || s === "Refusee" || s === "2") return "Refusee";
+  return "EnAttente";
+};
+
 interface Fournisseur {
   id: number;
   nom: string;
@@ -128,7 +135,7 @@ export default function CommandesPage() {
       const data = await res.json();
       const mappedData = data.map((c: any) => ({
         ...c,
-        statut: c.statut === 0 ? "EnAttente" : c.statut === 1 ? "Validee" : "Refusee",
+        statut: (!c.statut || c.statut === 0 || c.statut === "EnAttente") ? "EnAttente" : (c.statut === 1 || c.statut === "Validee") ? "Validee" : "Refusee",
       }));
       setCommandes(mappedData);
       setFetched(true);
@@ -412,41 +419,43 @@ export default function CommandesPage() {
 
       {showBon && bonCommande && (
         <div className="border rounded-xl p-6 mb-6 bg-card relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4">
-             <Button variant="ghost" size="icon" onClick={() => setShowBon(false)} className="rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <div className="absolute top-6 right-6">
+             <Button variant="outline" onClick={() => setShowBon(false)} className="shadow-sm">
+                Fermer
              </Button>
           </div>
 
-          <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-6 border-b pb-6">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-3 items-center mb-8 gap-6 border-b pb-6 mt-2">
+            <div className="text-left">
               <h2 className="text-3xl font-black text-primary tracking-tighter mb-1">BON DE COMMANDE</h2>
               <p className="text-muted-foreground font-mono">REF: CMD-{bonCommande.id.toString().padStart(5, '0')}</p>
             </div>
-            <div className="text-right">
+            <div className="text-center">
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Date de Commande</p>
               <p className="text-lg font-bold">{new Date(bonCommande.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            </div>
+            <div className="text-right hidden md:block">
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-10">
             <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Détails Commande</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Détails Commande</h3>
               <div className="space-y-2">
-                <p className="text-2xl font-bold text-gray-900">{bonCommande.nom}</p>
+                <p className="text-2xl font-bold text-foreground">{bonCommande.nom}</p>
                 <div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statutColors[bonCommande.statut === 0 ? "EnAttente" : bonCommande.statut === 1 ? "Validee" : "Refusee"]}`}>
-                    {statutLabels[bonCommande.statut === 0 ? "EnAttente" : bonCommande.statut === 1 ? "Validee" : "Refusee"]}
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statutColors[getStatutKey(bonCommande.statut)]}`}>
+                    {statutLabels[getStatutKey(bonCommande.statut)]}
                   </span>
                 </div>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Fournisseur</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Fournisseur</h3>
               {bonCommande.fournisseur ? (
                 <div className="space-y-1">
-                  <p className="text-xl font-bold text-gray-900">{bonCommande.fournisseur.nom}</p>
+                  <p className="text-xl font-bold text-foreground">{bonCommande.fournisseur.nom}</p>
                   <p className="text-sm text-muted-foreground flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                     {bonCommande.fournisseur.telephone || "N/A"}
@@ -462,9 +471,9 @@ export default function CommandesPage() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-gray-100 shadow-sm mb-8">
+          <div className="overflow-hidden rounded-xl border shadow-sm mb-8">
             <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50 text-gray-500 uppercase text-[10px] font-black tracking-widest">
+              <thead className="bg-muted text-muted-foreground uppercase text-[10px] font-black tracking-widest">
                 <tr>
                   <th className="px-6 py-4">ID Produit</th>
                   <th className="px-6 py-4 text-center">Quantité</th>
@@ -472,13 +481,13 @@ export default function CommandesPage() {
                   <th className="px-6 py-4 text-right">Total (MAD)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {bonCommande.lignes.map((l) => (
-                  <tr key={l.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 font-mono text-xs">{l.produitId}</td>
-                    <td className="px-6 py-4 text-center font-bold text-gray-700">{l.quantite}</td>
+                  <tr key={l.id} className="hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{l.produitId}</td>
+                    <td className="px-6 py-4 text-center font-bold text-foreground">{l.quantite}</td>
                     <td className="px-6 py-4 text-right text-muted-foreground">{l.prixUnitaire.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-right font-black text-gray-900">{l.sousTotal.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-right font-black text-foreground">{l.sousTotal.toFixed(2)}</td>
                   </tr>
                 ))}
                 {bonCommande.lignes.length === 0 && (
@@ -490,13 +499,10 @@ export default function CommandesPage() {
 
           <div className="flex justify-end pt-4">
             <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={() => setShowBon(false)}>
-                Fermer
-              </Button>
-              <div className="bg-gray-900 text-white px-10 py-6 rounded-2xl shadow-xl flex items-center gap-8 min-w-[300px]">
+              <div className="bg-primary/10 text-primary border border-primary/20 px-10 py-6 rounded-2xl shadow-xl flex items-center gap-8 min-w-[300px]">
               <div>
-                <p className="text-gray-400 text-xs uppercase font-black tracking-widest mb-1">Montant Total</p>
-                <p className="text-3xl font-black">{bonCommande.lignes.reduce((acc, l) => acc + l.sousTotal, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} <span className="text-sm font-normal text-gray-400">MAD</span></p>
+                <p className="text-primary/80 text-xs uppercase font-black tracking-widest mb-1">Montant Total</p>
+                <p className="text-3xl font-black">{bonCommande.lignes.reduce((acc, l) => acc + l.sousTotal, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} <span className="text-sm font-normal text-primary/60">MAD</span></p>
               </div>
               </div>
             </div>  

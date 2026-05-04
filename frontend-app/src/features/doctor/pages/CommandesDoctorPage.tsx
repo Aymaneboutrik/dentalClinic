@@ -80,7 +80,7 @@ export default function CommandesDoctorPage() {
       const data = res.data;
       const mappedData = data.map((c: any) => ({
         ...c,
-        statut: c.statut === 0 ? "EnAttente" : c.statut === 1 ? "Validee" : "Refusee"
+        statut: (!c.statut || c.statut === 0 || c.statut === "EnAttente") ? "EnAttente" : (c.statut === 1 || c.statut === "Validee") ? "Validee" : "Refusee"
       }));
       setCommandes(mappedData);
       setFetched(true);
@@ -123,49 +123,7 @@ export default function CommandesDoctorPage() {
     setShowRefusForm(true);
   };
 
-  const openEditForm = (commande: Commande) => {
-    if (commande.statut !== "EnAttente") {
-      alert("Impossible de modifier une commande déjà traitée.");
-      return;
-    }
-    setEditingCommande(commande);
-    editForm.setValue("nom", commande.nom);
-    editForm.setValue("fournisseurId", commande.fournisseurId);
-    setShowEditForm(true);
-  };
 
-  const handleEdit = async (values: EditForm) => {
-    if (!editingCommande) return;
-    setLoading(true);
-    try {
-      await secureApi.put(`/stock/Commande/${editingCommande.id}`, {
-        id: editingCommande.id,
-        ...values,
-        statut: 0,
-      });
-      alert("Commande modifiée.");
-      setShowEditForm(false);
-      setEditingCommande(null);
-      editForm.reset();
-      await fetchCommandes();
-    } catch {
-      alert("Modification indisponible côté API (endpoint PUT manquant).");
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm("Supprimer cette commande ?")) return;
-    setLoading(true);
-    try {
-      await secureApi.delete(`/stock/Commande/${id}`);
-      alert("Commande supprimée.");
-      await fetchCommandes();
-    } catch {
-      alert("Erreur lors de la suppression.");
-      setLoading(false);
-    }
-  };
 
   const handleRefuser = async (values: RefusForm) => {
     if (!selectedId) return;
@@ -218,24 +176,7 @@ export default function CommandesDoctorPage() {
         <div className="flex gap-2">
           {row.original.statut === "EnAttente" && (
             <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                onClick={() => openEditForm(row.original)}
-                disabled={loading}
-              >
-                Modifier
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-rose-200 text-rose-600 hover:bg-rose-50"
-                onClick={() => handleDelete(row.original.id)}
-                disabled={loading}
-              >
-                Supprimer
-              </Button>
+
               <Button
                 size="sm"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
@@ -272,35 +213,7 @@ export default function CommandesDoctorPage() {
         </Button>
       </div>
 
-      {showEditForm && (
-        <div className="border rounded-xl p-6 mb-6 bg-card">
-          <h2 className="text-xl font-bold mb-2">Modifier la commande</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Modifiez le libellé et l’ID fournisseur (commande en attente uniquement).
-          </p>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextInput label="Libellé" name="nom" form={editForm} placeholder="Ex: Achat Gants Latex" withAsterisk />
-                <TextInput label="ID Fournisseur" name="fournisseurId" form={editForm} placeholder="Ex: 5" withAsterisk />
-              </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setShowEditForm(false); setEditingCommande(null); editForm.reset(); }}
-                  disabled={loading}
-                >
-                  Annuler
-                </Button>
-                <Button type="submit" className="px-8" disabled={loading}>
-                  {loading ? "Traitement..." : "Enregistrer"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
-      )}
+
 
       {showRefusForm && (
         <div className="border border-rose-200 rounded-xl p-6 mb-6 bg-card shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">

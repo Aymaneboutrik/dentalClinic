@@ -2,10 +2,8 @@ package com.facturation.paiement.services;
 
 import com.facturation.paiement.dto.RemiseRequestDTO;
 import com.facturation.paiement.dto.RemiseResponseDTO;
-import com.facturation.paiement.dto.RemiseResponseDTO;
 import com.facturation.paiement.enums.StatutFacture;
 import com.facturation.paiement.exceptions.IllegalInvoiceStateException;
-import com.facturation.paiement.exceptions.RemiseException;
 import com.facturation.paiement.exceptions.ResourceNotFoundException;
 import com.facturation.paiement.mappers.RemiseMapper;
 import com.facturation.paiement.models.Facture;
@@ -14,8 +12,11 @@ import com.facturation.paiement.models.Transaction;
 import com.facturation.paiement.repository.interfaces.RemiseRepositoryInterface;
 import com.facturation.paiement.repository.interfaces.TransactionRepositoryInterface;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,44 +30,29 @@ public class RemiseService {
     private final FactureService factureService;
     private final RemiseMapper remiseMapper;
 
+    private static final Logger log = LoggerFactory.getLogger(RemiseService.class);
+
     @Transactional
     public RemiseResponseDTO create(RemiseRequestDTO dto) {
         Facture facture = factureService.getEntityById(dto.getFactureId());
 
+        log.info("[REMISE] Création demandée pour la facture ID : {}. Statut actuel : {}", facture.getId(), facture.getStatut());
+
         if (facture.getStatut() != StatutFacture.IMPAYE) {
+            log.error("[REMISE] Rejeté: La facture ID {} n'est pas IMPAYEE (Statut={})", facture.getId(), facture.getStatut());
             throw new IllegalInvoiceStateException("Impossible d'ajouter une remise : la facture n'est plus en état IMPAYÉE.");
         }
 
         Remise remise = remiseMapper.toEntity(dto);
+        remise.setDateRemise(java.time.LocalDate.now());
         remise.setFacture(facture);
         Remise saved = remiseRepository.save(remise);
 
-        // Tracer la transaction de création de remise
-        Double totalBrut = facture.getMontantBrut();
-        Double montantRemise = saved.calculerMontant(totalBrut);
-
-        if (montantRemise <= 0) {
-            throw new RemiseException("Le montant calculé de la remise doit être supérieur à 0.");
-        }
-
-        // Si autorisée, le net change, sinon on reste sur le brut actuel (potentiel)
-        Double totalNet = Math.max(0.0, totalBrut - (saved.getEstAutorisee() ? montantRemise : 0.0));
-        Double impactReel = totalBrut - totalNet;
-
-        Transaction transaction = Transaction.builder()
-                .date(LocalDateTime.now())
-                .montantAvant(totalBrut)
-                .montantApres(totalNet)
-                .montantRemise(impactReel)
-                .remise(saved)
-                .build();
-        transactionRepository.save(transaction);
-
-        // Recalculer le solde de la facture (prendra en compte estAutorisee)
+        // Recalculer le solde de la facture
         factureService.recalculateFinancialsAndStatus(facture.getId());
 
         RemiseResponseDTO responseDTO = remiseMapper.toDto(saved);
-        responseDTO.setMontantCalcule(montantRemise);
+        responseDTO.setMontantCalcule(saved.calculerMontant(facture.getMontantNet()));
         return responseDTO;
     }
 
@@ -81,20 +67,24 @@ public class RemiseService {
 
     @Transactional(readOnly = true)
     public List<RemiseResponseDTO> findAll() {
-        return remiseRepository.findAll().stream().map(r -> {
-            RemiseResponseDTO dto = remiseMapper.toDto(r);
-            dto.setMontantCalcule(r.calculerMontant(r.getFacture().getMontantBrut()));
-            return dto;
-        }).collect(Collectors.toList());
+        return remiseRepository.findAll().stream()
+                .distinct()
+                .map(r -> {
+                    RemiseResponseDTO dto = remiseMapper.toDto(r);
+                    dto.setMontantCalcule(r.calculerMontant(r.getFacture().getMontantBrut()));
+                    return dto;
+                }).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<RemiseResponseDTO> findByFactureId(Long factureId) {
-        return remiseRepository.findByFactureId(factureId).stream().map(r -> {
-            RemiseResponseDTO dto = remiseMapper.toDto(r);
-            dto.setMontantCalcule(r.calculerMontant(r.getFacture().getMontantBrut()));
-            return dto;
-        }).collect(Collectors.toList());
+        return remiseRepository.findByFactureId(factureId).stream()
+                .distinct()
+                .map(r -> {
+                    RemiseResponseDTO dto = remiseMapper.toDto(r);
+                    dto.setMontantCalcule(r.calculerMontant(r.getFacture().getMontantBrut()));
+                    return dto;
+                }).collect(Collectors.toList());
     }
 
     @Transactional
@@ -117,36 +107,33 @@ public class RemiseService {
             throw new IllegalInvoiceStateException("Impossible de modifier une remise : la facture n'est plus en état IMPAYÉE.");
         }
 
+        boolean etaitAutorisee = Boolean.TRUE.equals(remise.getEstAutorisee());
+        Double montantAvant = factureService.getEntityById(newFactureId).getMontantNet();
+
         remiseMapper.updateFromDto(dto, remise);
         Remise updated = remiseRepository.save(remise);
-
-        // Tracer la transaction de mise à jour
-        Double totalBrut = updated.getFacture().getMontantBrut();
-        Double montantRemise = updated.calculerMontant(totalBrut);
-
-        if (montantRemise <= 0) {
-            throw new RemiseException("Le montant calculé de la remise doit être supérieur à 0.");
-        }
-
-        Double totalNet = Math.max(0.0, totalBrut - (updated.getEstAutorisee() ? montantRemise : 0.0));
-        Double impactReel = totalBrut - totalNet;
-
-        Transaction transaction = Transaction.builder()
-                .date(LocalDateTime.now())
-                .montantAvant(totalBrut)
-                .montantApres(totalNet)
-                .montantRemise(impactReel)
-                .remise(updated)
-                .build();
-        transactionRepository.save(transaction);
 
         factureService.recalculateFinancialsAndStatus(newFactureId);
         if (!oldFactureId.equals(newFactureId)) {
             factureService.recalculateFinancialsAndStatus(oldFactureId);
         }
 
+        Double montantApres = factureService.getEntityById(newFactureId).getMontantNet();
+
+        if (Boolean.TRUE.equals(updated.getEstAutorisee()) && !etaitAutorisee) {
+            Transaction transaction = Transaction.builder()
+                    .date(LocalDateTime.now())
+                    .montantAvant(montantAvant)
+                    .montantApres(montantApres)
+                    .montantRemise(montantAvant - montantApres)
+                    .remise(updated)
+                    .factureId(newFactureId)
+                    .build();
+            transactionRepository.save(transaction);
+        }
+
         RemiseResponseDTO responseDTO = remiseMapper.toDto(updated);
-        responseDTO.setMontantCalcule(montantRemise);
+        responseDTO.setMontantCalcule(montantAvant - montantApres);
         return responseDTO;
     }
 

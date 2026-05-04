@@ -73,6 +73,31 @@ namespace StockApi.Controllers
             return Ok(bonDto);
         }
 
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, [FromBody] CommandeDto dto)
+        {
+            var commande = _commandeRepository.GetById(id);
+            if (commande == null) return NotFound();
+
+            if (commande.Statut != Enums.OrderStatus.EnAttente)
+                throw new StockApi.Exceptions.InvalidOperationException("Seules les commandes en attente peuvent être modifiées.");
+
+            var fournisseur = _fournisseurRepository.GetById(dto.FournisseurId);
+            if (fournisseur == null) throw new FournisseurNotFoundException("Fournisseur introuvable.");
+
+            commande.Nom = dto.Nom;
+            commande.FournisseurId = dto.FournisseurId;
+            if (dto.Date != default)
+            {
+                commande.Date = dto.Date;
+            }
+
+            _commandeRepository.Update(commande);
+            _commandeRepository.Save();
+
+            return Ok(CommandeMapper.ToDto(commande));
+        }
+
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {

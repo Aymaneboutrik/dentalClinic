@@ -27,6 +27,11 @@ public class LigneFactureController {
         return ResponseEntity.ok(ligneFactureService.findById(id));
     }
 
+    @GetMapping
+    public ResponseEntity<List<LigneFactureResponseDTO>> findAll() {
+        return ResponseEntity.ok(ligneFactureService.findAll());
+    }
+
     @GetMapping("/facture/{factureId}")
     public ResponseEntity<List<LigneFactureResponseDTO>> findByFactureId(@PathVariable Long factureId) {
         return ResponseEntity.ok(ligneFactureService.findByFactureId(factureId));

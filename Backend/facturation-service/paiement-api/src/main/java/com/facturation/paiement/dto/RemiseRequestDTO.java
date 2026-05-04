@@ -12,7 +12,6 @@ public class RemiseRequestDTO {
     @Positive(message = "La valeur doit être positive")
     private Double valeur;
 
-    @NotNull(message = "La date est obligatoire")
     private LocalDate dateRemise;
 
     private String description;

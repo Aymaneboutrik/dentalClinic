@@ -11,4 +11,5 @@ public class TransactionResponseDTO {
     private Double montantApres;
     private Double montantRemise;
     private Long remiseId;
+    private Long factureId;
 }
