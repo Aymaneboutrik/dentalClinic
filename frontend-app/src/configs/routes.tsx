@@ -107,32 +107,32 @@ export const router = createBrowserRouter([
                   { path: "remises", element: <DoctorRemisesPage /> },
                   { path: "transactions", element: <DoctorTransactionsPage /> }
                 ]
-              }
+              },
+              {
+                path: "personnel",
+                element: <PersonnelPage />,
+              },
+              {
+                path: "planning",
+                element: <PlanningPage />,
+              },
+              {
+                path: "demandes-absence",
+                element: <DemandesAbsencePage />,
+              },
+              {
+                path: "absences",
+                element: <AbsencePage />,
+              },
+              {
+                path: "stock/commandes",
+                element: <CommandesDoctorPage />,
+              },
+              {
+                path: "stock/mouvements",
+                element: <MouvementsStockPage />,
+              },
             ],
-          },
-          {
-            path: "doctor/personnel",
-            element: <PersonnelPage />,
-          },
-          {
-            path: "doctor/planning",
-            element: <PlanningPage />,
-          },
-          {
-            path: "doctor/demandes-absence",
-            element: <DemandesAbsencePage />,
-          },
-           {
-            path: "doctor/absences",
-            element: <AbsencePage />,
-          },
-          {
-            path: "doctor/stock/commandes",
-            element: <CommandesDoctorPage />,
-          },
-          {
-            path: "doctor/stock/mouvements",
-            element: <MouvementsStockPage />,
           },
           {
             path: "secretaire",
@@ -163,36 +163,36 @@ export const router = createBrowserRouter([
                   { path: "remises", element: <RemisesPage /> },
                   { path: "transactions", element: <TransactionsPage /> }
                 ]
-              }
+              },
+              {
+                path: "demandes-absence",
+                element: <SecretaireDemandeAbsencePage />,
+              },
+              {
+                path: "absences",
+                element: <SecretaireAbsencePage />,
+              },
+              {
+                path: "planning",
+                element: <SecretairePlanningPage />,
+              },
+              {
+                path: "stock/produits",
+                element: <ProduitsPage />,
+              },
+              {
+                path: "stock/commandes",
+                element: <CommandesPage />,
+              },
+              {
+                path: "stock/fournisseurs",
+                element: <FournisseursPage />,
+              },
+              {
+                path: "stock/lignes-commande",
+                element: <LignesCommandePage />,
+              },
             ],
-          },
-          {
-            path: "secretaire/demandes-absence",
-            element: <SecretaireDemandeAbsencePage />,
-          },
-          {
-            path: "secretaire/absences",
-            element: <SecretaireAbsencePage />,
-          },
-          {
-            path: "secretaire/planning",
-            element: <SecretairePlanningPage />,
-          },
-          {
-            path: "secretaire/stock/produits",
-            element: <ProduitsPage />,
-          },
-          {
-            path: "secretaire/stock/commandes",
-            element: <CommandesPage />,
-          },
-          {
-            path: "secretaire/stock/fournisseurs",
-            element: <FournisseursPage />,
-          },
-          {
-            path: "secretaire/stock/lignes-commande",
-            element: <LignesCommandePage />,
           },
           {
             path: "assistant",
@@ -208,25 +208,25 @@ export const router = createBrowserRouter([
                    { index: true, element: <PatientListPage /> },
                    { path: "history", element: <PatientHistoryPage /> }
                 ]
-              }
+              },
+              {
+                path: "demandes-absence",
+                element: <AssistantDemandeAbsencePage />,
+              },
+              {
+                path: "planning",
+                element: <AssistantPlanningPage />,
+              },
+              {
+                path: "absences",
+                element: <AssistantAbsencePage />,
+              },
+              {
+                path: "stock/mouvements",
+                element: <MouvementsStockPage />,
+              },
             ],
           },
-          {
-              path: "assistant/demandes-absence",
-              element: <AssistantDemandeAbsencePage />,
-            },
-            {
-              path: "assistant/planning",
-              element: <AssistantPlanningPage />,
-            },
-            {
-              path: "assistant/absences",
-              element: <AssistantAbsencePage />,
-            },
-            {
-              path: "assistant/stock/mouvements",
-              element: <MouvementsStockPage />,
-            },
           {
             path: "404",
             element: <Error404 />,
