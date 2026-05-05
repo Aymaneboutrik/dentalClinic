@@ -12,6 +12,7 @@ import { Input } from "@components/ui/input";
 import { Upload, File } from "lucide-react";
 import { patientService } from "@apis/services/patient";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface DocumentUploadModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export function DocumentUploadModal({
   targetType,
   defaultDocType = "MEDICAL"
 }: DocumentUploadModalProps) {
+  const { t } = useTranslation();
   const [nom, setNom] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +51,7 @@ export function DocumentUploadModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      toast.error("Veuillez sélectionner un fichier");
+      toast.error(t("documents.selectFileError"));
       return;
     }
 
@@ -60,13 +62,13 @@ export function DocumentUploadModal({
       } else {
         await patientService.uploadConsultationDocument(targetId, file, nom, defaultDocType);
       }
-      toast.success("Document téléchargé avec succès");
+      toast.success(t("documents.uploadSuccess"));
       onSuccess();
       onClose();
       setNom("");
       setFile(null);
     } catch (error) {
-      toast.error("Erreur lors du téléchargement");
+      toast.error(t("documents.uploadError"));
       console.error(error);
     } finally {
       setLoading(false);
@@ -75,26 +77,26 @@ export function DocumentUploadModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => { if (!loading) onClose(); }}>
-      <DialogContent className="sm:max-w-[450px] glass border-white/10 shadow-2xl rounded-[1.5rem]">
+      <DialogContent className="sm:max-w-[450px] glass border-white/5 shadow-2xl organic-card bg-background/95 backdrop-blur-xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black">Ajouter un document</DialogTitle>
+          <DialogTitle className="text-2xl font-black">{t("documents.addTitle")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           <div className="space-y-2">
-            <Label htmlFor="nom" className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Nom du document</Label>
+            <Label htmlFor="nom" className="font-bold text-sm uppercase tracking-wider text-muted-foreground">{t("documents.nameLabel")}</Label>
             <Input
               id="nom"
               value={nom}
               onChange={(e) => setNom(e.target.value)}
-              placeholder="Ex: Radio Panoramique"
+              placeholder={t("documents.namePlaceholder")}
               className="bg-white/5 border-white/10 rounded-xl"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Fichier</Label>
+            <Label className="font-bold text-sm uppercase tracking-wider text-muted-foreground">{t("documents.fileLabel")}</Label>
             <input
               type="file"
               className="hidden"
@@ -103,7 +105,7 @@ export function DocumentUploadModal({
             />
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className={`p-8 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center space-y-3 cursor-pointer transition-all ${file ? 'border-primary/50 bg-primary/5' : 'border-white/10 hover:border-primary/30 hover:bg-white/5'}`}
+              className={`p-10 border-2 border-dashed organic-card flex flex-col items-center justify-center space-y-3 cursor-pointer transition-all ${file ? 'border-primary/50 bg-primary/5 shadow-lg shadow-primary/5' : 'border-white/10 hover:border-primary/30 hover:bg-white/5'}`}
             >
               {file ? (
                 <>
@@ -116,18 +118,18 @@ export function DocumentUploadModal({
               ) : (
                 <>
                   <Upload className="w-10 h-10 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground font-medium">Cliquez pour choisir un fichier</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("documents.clickToChoose")}</p>
                 </>
               )}
             </div>
           </div>
 
           <DialogFooter className="mt-8">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="rounded-xl">
-              Annuler
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="rounded-xl font-bold">
+              {t("common.cancel")}
             </Button>
-            <Button type="submit" loading={loading} disabled={!file} className="rounded-xl shadow-lg shadow-primary/20 bg-primary text-primary-foreground">
-              Télécharger
+            <Button type="submit" loading={loading} disabled={!file} className="organic-button px-8 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 bg-primary text-primary-foreground">
+              {t("common.upload")}
             </Button>
           </DialogFooter>
         </form>

@@ -11,6 +11,9 @@ import { patientService, type Patient } from "@apis/services/patient";
 import type { RendezVous } from "../../../types/rendezvous/rendezvous";
 import type { Employee } from "../../../types/employee/employee";
 import useAuthStore from "@stores/auth-store";
+import { DashboardHeader } from "@components/commons/dashboard/DashboardHeader";
+import { CalendarDays, Plus, Search, X, Edit3, Trash2, User, Stethoscope, Clock, AlertCircle, CheckCircle2, History, Info, Filter } from "lucide-react";
+import { toast } from "sonner";
 
 type FormDataType = {
   patientId: number;
@@ -53,17 +56,13 @@ const RendezVousPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
 
   const fetchAppointments = async () => {
     try {
       setLoading(true);
       const data = await getRendezVous();
-      console.log("Rendez-vous récupérés (Secrétaire):", data);
-      // RÈGLE MÉTIER : Ne pas afficher les rendez-vous annulés (statut 3)
       const validAppointments = data.filter((app: RendezVous) => app.statutId !== 3);
       setAppointments(validAppointments.sort((a: RendezVous, b: RendezVous) => {
         const dateA = new Date(`${a.date}T${a.heureDebut}`);
@@ -71,8 +70,7 @@ const RendezVousPage = () => {
         return dateA.getTime() - dateB.getTime();
       }));
     } catch (err) {
-      console.error("Erreur récupération rendez-vous:", err);
-      setError("Impossible de charger les rendez-vous.");
+      toast.error("Impossible de charger les rendez-vous.");
     } finally {
       setLoading(false);
     }
@@ -87,10 +85,7 @@ const RendezVousPage = () => {
 
       if (results[0].status === "fulfilled") {
         setPatients(results[0].value);
-      } else {
-        console.error("Erreur chargement patients:", results[0].reason);
       }
-
       if (results[1].status === "fulfilled") {
         const employees = results[1].value;
         setDentists(
@@ -100,8 +95,6 @@ const RendezVousPage = () => {
               e.nomRole?.toLowerCase() === "dentiste"
           )
         );
-      } else {
-        console.error("Erreur chargement personnel:", results[1].reason);
       }
     } catch (err) {
       console.error("Erreur lors du chargement des données auxiliaires", err);
@@ -113,19 +106,8 @@ const RendezVousPage = () => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    if (successMessage || error) {
-      const timer = setTimeout(() => {
-        setSuccessMessage(null);
-        setError(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage, error]);
-
   const resetFormState = () => {
     setFormData(initialFormData);
-    setFormError(null);
     setFieldErrors({});
     setIsEditMode(false);
     setEditingId(null);
@@ -179,7 +161,6 @@ const RendezVousPage = () => {
 
   const handleOpenAddForm = () => {
     resetFormState();
-    setSuccessMessage(null);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -206,27 +187,24 @@ const RendezVousPage = () => {
     try {
       setActionLoading(true);
       await cancelRendezVous(id, user?.nom || "Secrétaire");
-      setSuccessMessage("Rendez-vous annulé avec succès.");
+      toast.success("Rendez-vous annulé avec succès.");
       fetchAppointments();
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.message || "Erreur lors de l'annulation.");
+      toast.error(apiError.message || "Erreur lors de l'annulation.");
     } finally {
       setActionLoading(false);
     }
   };
 
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
     setFieldErrors({});
 
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
-      setFormError("Veuillez corriger les erreurs.");
+      toast.error("Veuillez corriger les erreurs dans le formulaire.");
       return;
     }
 
@@ -234,17 +212,17 @@ const RendezVousPage = () => {
       setActionLoading(true);
       if (isEditMode && editingId) {
         await updateRendezVous(editingId, formData);
-        setSuccessMessage("Rendez-vous mis à jour.");
+        toast.success("Rendez-vous mis à jour.");
       } else {
         await createRendezVous(formData);
-        setSuccessMessage("Rendez-vous créé.");
+        toast.success("Rendez-vous planifié avec succès.");
       }
       setShowForm(false);
       resetFormState();
       fetchAppointments();
     } catch (err) {
       const apiError = err as ApiError;
-      setFormError(apiError.message || "Erreur lors de l'enregistrement.");
+      toast.error(apiError.message || "Erreur lors de l'enregistrement.");
     } finally {
       setActionLoading(false);
     }
@@ -257,226 +235,286 @@ const RendezVousPage = () => {
 
   const getDentistName = (id: number) => {
     const d = dentists.find((d) => d.idEmploye === id);
-    return d ? `${d.nom} ${d.prenom}` : `Dentiste #${id}`;
+    return d ? `Dr. ${d.nom} ${d.prenom}` : `Dentiste #${id}`;
   };
 
   const getStatusLabel = (id: number) => {
     const statuses: Record<number, { label: string; color: string }> = {
-      1: { label: "Planifié", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-      3: { label: "Annulé", color: "bg-red-500/15 text-red-400 border-red-500/30" },
-      4: { label: "Effectué", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-      5: { label: "Absent", color: "bg-slate-500/15 text-slate-400 border-slate-500/30" },
-      6: { label: "Reporté", color: "bg-purple-500/15 text-purple-400 border-purple-500/30" },
+      1: { label: "Planifié", color: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+      3: { label: "Annulé", color: "bg-rose-500/10 text-rose-500 border-rose-500/20" },
+      4: { label: "Effectué", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+      5: { label: "Absent", color: "bg-slate-500/10 text-slate-400 border-slate-500/20" },
+      6: { label: "Reporté", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
     };
-    return statuses[id] || { label: "Inconnu", color: "bg-gray-500/15 text-gray-400 border-gray-500/30" };
+    return statuses[id] || { label: "Inconnu", color: "bg-white/5 text-muted-foreground border-white/5" };
   };
 
-  return (
-    <div className="w-full space-y-8">
-      <div className="p-6 border shadow-sm rounded-2xl bg-card">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-primary">Service Rendez-vous</p>
-            <h1 className="text-3xl font-bold tracking-tight">Gestion des Rendez-vous</h1>
-          </div>
+  const filteredAppointments = appointments.filter(app => 
+    getPatientName(app.patientId).toLowerCase().includes(search.toLowerCase()) ||
+    getDentistName(app.dentisteId).toLowerCase().includes(search.toLowerCase()) ||
+    app.motif.toLowerCase().includes(search.toLowerCase())
+  );
 
-          <button
+  return (
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <DashboardHeader
+          title="Agenda du Cabinet"
+          subtitle="Planifiez et suivez les rendez-vous des patients"
+        />
+        
+        <div className="flex items-center space-x-3 md:mb-10">
+          <button 
             onClick={handleOpenAddForm}
-            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
+            className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20"
           >
-            Nouveau Rendez-vous
+            <Plus className="w-4 h-4" />
+            <span>Nouveau Rendez-vous</span>
           </button>
         </div>
       </div>
 
-      {successMessage && (
-        <div className="px-4 py-3 text-sm border rounded-2xl border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-          {successMessage}
-        </div>
-      )}
-
       {showForm && (
-        <div className="rounded-2xl border border-white/10 bg-[#081028] p-6 shadow-lg">
-          <h2 className="text-xl font-semibold text-white mb-6">
-            {isEditMode ? "Modifier le rendez-vous" : "Créer un rendez-vous"}
-          </h2>
-
-          {formError && <p className="mb-4 text-sm text-red-500">{formError}</p>}
-
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Patient</label>
-              <select
-                name="patientId"
-                value={formData.patientId}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-              >
-                <option value={0} className="bg-[#0B1739]">Sélectionner un patient</option>
-                {patients.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-[#0B1739]">
-                    {p.nom} {p.prenom} ({p.cin})
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.patientId && <p className="text-xs text-red-500">{fieldErrors.patientId}</p>}
+        <div className="glass border-white/5 p-8 organic-card shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-inner">
+              <CalendarDays className="w-6 h-6" />
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Dentiste</label>
-              <select
-                name="dentisteId"
-                value={formData.dentisteId}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-              >
-                <option value={0} className="bg-[#0B1739]">Sélectionner un dentiste</option>
-                {dentists.map((d) => (
-                  <option key={d.idEmploye} value={d.idEmploye} className="bg-[#0B1739]">
-                    Dr. {d.nom} {d.prenom}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.dentisteId && <p className="text-xs text-red-500">{fieldErrors.dentisteId}</p>}
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                {isEditMode ? "Modification du Rendez-vous" : "Nouvelle Planification"}
+              </h2>
+              <p className="text-sm text-muted-foreground">Définissez le patient, le praticien et le créneau horaire</p>
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">Date</label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-              />
-              {fieldErrors.date && <p className="text-xs text-red-500">{fieldErrors.date}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">Heure Début</label>
-                <input
-                  type="time"
-                  name="heureDebut"
-                  value={formData.heureDebut}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-                />
-                {fieldErrors.heureDebut && <p className="text-xs text-red-500">{fieldErrors.heureDebut}</p>}
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Patient concerné</label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                  <select
+                    name="patientId"
+                    value={formData.patientId}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl h-14 pl-12 pr-6 text-sm outline-none focus:border-primary/50 transition-all text-foreground appearance-none"
+                  >
+                    <option value={0} className="bg-slate-900">Choisir un patient...</option>
+                    {patients.map((p) => (
+                      <option key={p.id} value={p.id} className="bg-slate-900">
+                        {p.nom} {p.prenom} ({p.cin})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {fieldErrors.patientId && <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-widest">{fieldErrors.patientId}</p>}
               </div>
+
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">Heure Fin Prévue</label>
-                <input
-                  type="time"
-                  name="heureFinPrevue"
-                  value={formData.heureFinPrevue}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
-                />
-                {fieldErrors.heureFinPrevue && <p className="text-xs text-red-500">{fieldErrors.heureFinPrevue}</p>}
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Praticien (Dentiste)</label>
+                <div className="relative">
+                  <Stethoscope className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                  <select
+                    name="dentisteId"
+                    value={formData.dentisteId}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl h-14 pl-12 pr-6 text-sm outline-none focus:border-primary/50 transition-all text-foreground appearance-none"
+                  >
+                    <option value={0} className="bg-slate-900">Choisir un dentiste...</option>
+                    {dentists.map((d) => (
+                      <option key={d.idEmploye} value={d.idEmploye} className="bg-slate-900">
+                        Dr. {d.nom} {d.prenom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {fieldErrors.dentisteId && <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-widest">{fieldErrors.dentisteId}</p>}
               </div>
             </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">Motif</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1 text-center block">Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  className="w-full bg-white/5 border border-white/5 rounded-2xl h-14 px-6 text-sm outline-none focus:border-primary/50 transition-all text-foreground"
+                />
+                {fieldErrors.date && <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-widest text-center">{fieldErrors.date}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1 text-center block">Heure Début</label>
+                <div className="relative">
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                  <input
+                    type="time"
+                    name="heureDebut"
+                    value={formData.heureDebut}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl h-14 pl-12 pr-6 text-sm outline-none focus:border-primary/50 transition-all text-foreground"
+                  />
+                </div>
+                {fieldErrors.heureDebut && <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-widest text-center">{fieldErrors.heureDebut}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1 text-center block">Heure Fin Estimée</label>
+                <div className="relative">
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40" />
+                  <input
+                    type="time"
+                    name="heureFinPrevue"
+                    value={formData.heureFinPrevue}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl h-14 pl-12 pr-6 text-sm outline-none focus:border-primary/50 transition-all text-foreground"
+                  />
+                </div>
+                {fieldErrors.heureFinPrevue && <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-widest text-center">{fieldErrors.heureFinPrevue}</p>}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Motif de la consultation</label>
               <textarea
                 name="motif"
                 value={formData.motif}
                 onChange={handleChange}
-                placeholder="Raison du rendez-vous..."
-                className="w-full rounded-xl border border-blue-500/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-blue-500 h-24"
+                placeholder="Décrivez brièvement le motif (ex: Détartrage, Urgence douleur...)"
+                className="w-full bg-white/5 border border-white/5 rounded-[32px] p-6 text-sm outline-none focus:border-primary/50 transition-all text-foreground h-32 resize-none"
               />
-              {fieldErrors.motif && <p className="text-xs text-red-500">{fieldErrors.motif}</p>}
+              {fieldErrors.motif && <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-widest">{fieldErrors.motif}</p>}
             </div>
 
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="estUrgent"
-                name="estUrgent"
-                checked={formData.estUrgent}
-                onChange={handleChange}
-                className="h-5 w-5 rounded border-blue-500/20 bg-white/5"
-              />
-              <label htmlFor="estUrgent" className="text-sm font-medium text-red-400">Marquer comme URGENCE</label>
-            </div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-6 border-t border-white/5">
+              <label className="flex items-center space-x-4 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    name="estUrgent"
+                    checked={formData.estUrgent}
+                    onChange={handleChange}
+                    className="sr-only"
+                  />
+                  <div className={`w-12 h-6 rounded-full transition-colors ${formData.estUrgent ? 'bg-rose-500' : 'bg-white/10 group-hover:bg-white/20'}`} />
+                  <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.estUrgent ? 'translate-x-6' : 'translate-x-0'}`} />
+                </div>
+                <span className={`text-xs font-black uppercase tracking-widest transition-colors ${formData.estUrgent ? 'text-rose-500' : 'text-muted-foreground'}`}>
+                  Marquer comme URGENCE
+                </span>
+              </label>
 
-            <div className="flex justify-end gap-3 pt-4 md:col-span-2">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                disabled={actionLoading}
-                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500 disabled:opacity-50"
-              >
-                {isEditMode ? "Mettre à jour" : "Créer le rendez-vous"}
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="px-8 py-3 rounded-xl border border-white/5 hover:bg-white/5 transition-all text-xs font-black uppercase tracking-widest"
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={actionLoading}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-4 organic-pill text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {actionLoading ? "Enregistrement..." : isEditMode ? "Mettre à jour" : "Confirmer le RDV"}
+                </button>
+              </div>
             </div>
           </form>
         </div>
       )}
 
-      <div className="border shadow-sm rounded-2xl bg-card">
-        <div className="px-6 py-5 border-b">
-          <h2 className="text-lg font-semibold">Liste des rendez-vous</h2>
+      <div className="glass border-white/5 shadow-2xl organic-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between px-8 py-6 border-b border-white/5 gap-4">
+          <div className="flex items-center gap-3">
+            <History className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-lg text-white">Registre des Rendez-vous</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/10">{appointments.length} RÉSERVATIONS</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <input
+                className="bg-white/5 border border-white/5 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-all w-64"
+                placeholder="Rechercher un RDV..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button className="p-2.5 rounded-xl border border-white/5 hover:bg-white/5 text-muted-foreground transition-all">
+               <Filter className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-
+        
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30">
-              <tr className="text-left border-b">
-                <th className="px-6 py-4 font-semibold">Patient</th>
-                <th className="px-6 py-4 font-semibold">Dentiste</th>
-                <th className="px-6 py-4 font-semibold">Date & Heure</th>
-                <th className="px-6 py-4 font-semibold">Motif</th>
-                <th className="px-6 py-4 font-semibold">Statut</th>
-                <th className="px-6 py-4 font-semibold text-center">Actions</th>
+          <table className="w-full text-left">
+            <thead className="bg-white/5 border-b border-white/5">
+              <tr>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Patient & Motif</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Praticien</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Date & Heure</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Statut</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {loading ? (
-                <tr><td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">Chargement...</td></tr>
-              ) : appointments.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">Aucun rendez-vous trouvé.</td></tr>
+                <tr><td colSpan={5} className="px-8 py-20 text-center text-muted-foreground font-medium animate-pulse">Chargement de l'agenda...</td></tr>
+              ) : filteredAppointments.length === 0 ? (
+                <tr><td colSpan={5} className="px-8 py-20 text-center text-muted-foreground text-sm italic">Aucun rendez-vous trouvé dans les registres.</td></tr>
               ) : (
-                appointments.map((app) => {
+                filteredAppointments.map((app) => {
                   const status = getStatusLabel(app.statutId);
                   return (
-                    <tr key={app.id} className="border-b border-white/10 hover:bg-white/5 transition">
-                      <td className="px-6 py-5 font-semibold text-white">
-                        {getPatientName(app.patientId)}
-                        {app.estUrgent && <span className="ml-2 text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded uppercase">Urgent</span>}
+                    <tr key={app.id} className="hover:bg-white/5 transition-all group">
+                      <td className="px-8 py-5">
+                        <div className="flex flex-col">
+                           <div className="flex items-center space-x-2">
+                             <span className="font-bold text-foreground">{getPatientName(app.patientId)}</span>
+                             {app.estUrgent && (
+                               <span className="bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest animate-pulse">Urgent</span>
+                             )}
+                           </div>
+                           <span className="text-xs text-muted-foreground italic truncate max-w-[200px]">"{app.motif}"</span>
+                        </div>
                       </td>
-                      <td className="px-6 py-5 text-slate-300">{getDentistName(app.dentisteId)}</td>
-                      <td className="px-6 py-5 text-slate-300">
-                        {app.date} à {app.heureDebut}
+                      <td className="px-8 py-5 text-sm font-medium text-primary/80">{getDentistName(app.dentisteId)}</td>
+                      <td className="px-8 py-5">
+                        <div className="flex flex-col">
+                           <span className="text-sm font-bold text-foreground">{app.date}</span>
+                           <div className="flex items-center space-x-2 text-[10px] text-muted-foreground font-black uppercase tracking-widest">
+                              <Clock className="w-3 h-3" />
+                              <span>{app.heureDebut} - {app.heureFinPrevue}</span>
+                           </div>
+                        </div>
                       </td>
-                      <td className="px-6 py-5 text-slate-300 italic">"{app.motif}"</td>
-                      <td className="px-6 py-5">
-                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${status.color}`}>
+                      <td className="px-8 py-5">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${status.color}`}>
                           {status.label}
                         </span>
                       </td>
-                      <td className="px-6 py-5">
+                      <td className="px-8 py-5">
                         <div className="flex items-center justify-center gap-2">
-
                           <button
                             onClick={() => handleEdit(app)}
-                            className="px-3 py-1.5 text-xs font-semibold text-blue-400 border border-blue-500/30 bg-blue-500/10 rounded-lg hover:bg-blue-500/20"
+                            className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                            title="Modifier"
                           >
-                            Modifier
+                            <Edit3 className="w-4 h-4" />
                           </button>
                           {app.statutId !== 3 && (
                             <button
                               onClick={() => handleCancel(app.id)}
-                              className="px-3 py-1.5 text-xs font-semibold text-red-400 border border-red-500/30 bg-red-500/10 rounded-lg hover:bg-red-500/20"
+                              className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors"
+                              title="Annuler"
                             >
-                              Annuler
+                              <X className="w-4 h-4" />
                             </button>
                           )}
                         </div>

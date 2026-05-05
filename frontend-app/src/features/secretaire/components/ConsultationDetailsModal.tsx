@@ -23,7 +23,7 @@ export function ConsultationDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[550px] glass border-white/10 shadow-2xl rounded-[1.5rem] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[550px] glass border-white/5 shadow-2xl organic-card-reverse max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black">Suivi Médical</DialogTitle>
           <p className="text-sm text-muted-foreground mt-1">Consultation du {consultation.dateConsultation}</p>
@@ -36,7 +36,7 @@ export function ConsultationDetailsModal({
               <Activity className="w-4 h-4 mr-2" />
               Motif & Diagnostic
             </h4>
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/5 font-medium">
+            <div className="p-6 organic-card bg-white/5 border border-white/5 font-medium shadow-inner">
               {consultation.motif}
             </div>
           </div>
@@ -51,15 +51,15 @@ export function ConsultationDetailsModal({
               <div className="space-y-2">
                 <div className="space-y-2">
                   {consultation.actes.map((acte: any, index: number) => (
-                    <div key={index} className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5 text-sm">
+                    <div key={index} className="flex justify-between items-center p-4 organic-pill bg-white/5 border border-white/5 text-sm shadow-sm">
                       <span className="font-medium">{acte.description}</span>
                       <span className="font-mono font-bold text-primary">{acte.prix?.toLocaleString()} DH</span>
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-between items-center p-4 rounded-xl bg-primary/10 border border-primary/20 mt-4">
-                  <span className="font-black text-sm uppercase">Total Honoraires</span>
-                  <span className="text-xl font-black text-primary">{totalActes.toLocaleString()} DH</span>
+                <div className="flex justify-between items-center p-6 organic-card bg-primary/10 border border-primary/20 mt-4 shadow-lg shadow-primary/5">
+                  <span className="font-black text-[10px] uppercase tracking-widest text-primary/60">Total Honoraires</span>
+                  <span className="text-2xl font-black text-primary">{totalActes.toLocaleString()} <span className="text-sm font-bold">DH</span></span>
                 </div>
               </div>
             ) : (
@@ -78,8 +78,8 @@ export function ConsultationDetailsModal({
             <div className="space-y-3">
               {consultation.observations && consultation.observations.length > 0 ? (
                 consultation.observations.map((obs: any, i: number) => (
-                  <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5 italic text-sm text-muted-foreground relative">
-                    <span className="absolute -top-2 left-4 px-2 bg-background text-[10px] font-bold text-primary border border-white/10 rounded-full">
+                  <div key={i} className="p-5 organic-card bg-white/5 border border-white/5 italic text-sm text-muted-foreground relative shadow-sm">
+                    <span className="absolute -top-2 left-6 px-3 py-0.5 bg-background text-[9px] font-black uppercase tracking-widest text-primary border border-primary/10 organic-pill shadow-sm">
                       Note {i + 1}
                     </span>
                     "{obs.contenu}"

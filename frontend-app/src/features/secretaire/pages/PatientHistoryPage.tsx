@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Edit,
   Pencil,
-  Trash2
+  Trash2,
+  Plus
 } from "lucide-react";
 import { toast } from "sonner";
 import { PatientActionModal } from "../components/PatientActionModal";
@@ -24,7 +25,6 @@ import { DocumentUploadModal } from "../components/DocumentUploadModal";
 import { ConsultationDocsModal } from "../components/ConsultationDocsModal";
 import { AddObservationModal } from "../components/AddObservationModal";
 import useAuthStore from "@stores/auth-store";
-import { Plus } from "lucide-react";
 
 import { useSearchStore } from "@stores/use-search-store";
 
@@ -158,7 +158,7 @@ export default function PatientHistoryPage() {
           
           {/* Left Column: Patient Profile */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="glass border-white/5 p-8 rounded-[2rem] shadow-xl sticky top-24">
+            <div className="glass border-white/5 p-8 organic-card shadow-xl sticky top-24">
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shadow-2xl shadow-primary/40 relative group">
                   <User className="w-12 h-12" />
@@ -207,7 +207,7 @@ export default function PatientHistoryPage() {
               {user?.role !== "Assistant" && user?.role !== "Assistante" && (
                 <button 
                   onClick={() => setIsDocModalOpen(true)}
-                  className="w-full mt-6 flex items-center justify-center space-x-2 bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-2xl font-bold transition-all"
+                  className="w-full mt-6 flex items-center justify-center space-x-2 bg-white/5 hover:bg-white/10 border border-white/10 p-4 organic-button font-bold transition-all"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Ajouter un document administratif</span>
@@ -220,7 +220,7 @@ export default function PatientHistoryPage() {
           <div className="lg:col-span-2 space-y-8">
             
             {/* History Section */}
-            <div className="glass border-white/5 p-8 rounded-[2rem] shadow-xl">
+            <div className="glass border-white/5 p-8 organic-card shadow-xl">
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-xl font-bold flex items-center space-x-2">
                   <Clock className="w-5 h-5 text-primary" />
@@ -228,7 +228,7 @@ export default function PatientHistoryPage() {
                 </h3>
                 {["Dentiste", "Doctor", "Medecin"].includes(user?.role || "") && (
                   <button 
-                    className="flex items-center space-x-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-xl font-bold transition-all active:scale-95"
+                    className="flex items-center space-x-2 bg-primary/10 hover:bg-primary/20 text-primary px-6 py-2 organic-pill font-black uppercase tracking-widest text-[10px] transition-all active:scale-95"
                     onClick={() => setIsConsultModalOpen(true)}
                   >
                     <Plus className="w-4 h-4" />
@@ -243,7 +243,7 @@ export default function PatientHistoryPage() {
                     <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 bg-background shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                       <Calendar className="w-4 h-4 text-primary" />
                     </div>
-                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-6 rounded-3xl glass border-white/5 shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-8 organic-card-reverse glass border-white/5 shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
                       <div className="flex items-center justify-between mb-2">
                         <time className="font-mono text-xs font-bold text-primary">{consult.dateConsultation || "Date inconnue"}</time>
                       </div>
@@ -415,7 +415,7 @@ export default function PatientHistoryPage() {
           </div>
         </div>
       ) : searched ? (
-        <div className="glass border-white/5 p-20 rounded-[2rem] shadow-xl text-center">
+        <div className="glass border-white/5 p-20 organic-card shadow-xl text-center">
           <div className="flex flex-col items-center justify-center space-y-6">
             <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 animate-bounce">
               <AlertCircle className="w-10 h-10" />
@@ -428,7 +428,7 @@ export default function PatientHistoryPage() {
           </div>
         </div>
       ) : (
-        <div className="glass border-white/5 p-20 rounded-[2rem] shadow-xl text-center">
+        <div className="glass border-white/5 p-20 organic-card shadow-xl text-center">
           <div className="flex flex-col items-center justify-center space-y-6">
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <Search className="w-10 h-10" />

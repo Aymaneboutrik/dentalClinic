@@ -20,7 +20,7 @@ export function DashboardHeader({
         {backPath && (
           <button 
             onClick={() => navigate(backPath)}
-            className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary/20 hover:border-primary/30 text-muted-foreground hover:text-primary transition-all active:scale-95 group shadow-lg"
+            className="w-12 h-12 organic-pill bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary/20 hover:border-primary/30 text-muted-foreground hover:text-primary transition-all active:scale-95 group shadow-xl"
             title="Retour"
           >
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />

@@ -9,43 +9,37 @@ import {
 
 export const assistantSidebarConfig = [
   {
-    name: "Dashboard",
+    name: "sidebar.dashboard",
     route: "/assistant",
     icon: <LayoutDashboard size={18} />,
     childs: [],
   },
   {
-    name: "Rendez-vous",
-    route: "/assistant/appointments",
-    icon: <CalendarDays size={18} />,
-    childs: [],
-  },
-  {
-    name: "Dossier Patient",
+    name: "sidebar.patientFiles",
     route: "/assistant/patients",
     icon: <Users size={18} />,
     childs: [],
   },
   {
-    name: "Planning",
+    name: "sidebar.planning",
     route: "/assistant/planning",
     icon: <CalendarDays size={18} />,
     childs: [],
   },
   {
-    name: "Demandes d’absence",
+    name: "sidebar.absenceRequests",
     route: "/assistant/demandes-absence",
     icon: <ClipboardList size={18} />,
     childs: [],
   },
   {
-    name: "Absences",
+    name: "sidebar.absences",
     route: "/assistant/absences",
     icon: <FileText size={18} />,
     childs: [],
   },
   {
-    name: "Mouvements Stock",
+    name: "sidebar.stockMovements",
     route: "/assistant/stock/mouvements",
     icon: <Package size={18} />,
     childs: [],

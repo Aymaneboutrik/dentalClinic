@@ -6,9 +6,9 @@ services:
     container_name: frontend-react
     ports:
       - "5173:5173"
-    #volumes:
-      # - ./frontend-app:/app
-      #- /app/node_modules
+    volumes:
+       - ./frontend-app:/app
+       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=false
       - VITE_USE_POLLING=false

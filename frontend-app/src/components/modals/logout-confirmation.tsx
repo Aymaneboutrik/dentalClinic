@@ -19,19 +19,19 @@ function LogoutConfirmation({ onConfirm }: Props) {
   };
 
   return (
-    <div className="w-[400px] rounded-lg overflow-hidden bg-background p-4">
-      <Text size="lg">
-        <b>Are you sure to exit?</b>
+    <div className="w-[400px] bg-background p-8 organic-card shadow-2xl border border-white/5">
+      <Text size="xl" className="font-black text-foreground mb-6 block text-center uppercase tracking-tighter">
+        Confirmer la déconnexion
       </Text>
 
-      <br />
-
-      <div className="flex gap-4 justify-end">
-        <Button onClick={handleCancel} variant="secondary">
-          Cancel
+      <div className="flex gap-4 justify-center mt-6">
+        <Button onClick={handleCancel} variant="outline" className="flex-1 rounded-xl font-bold">
+          Annuler
         </Button>
 
-        <Button onClick={handleLogout}>Yes</Button>
+        <Button onClick={handleLogout} className="flex-1 organic-button font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
+          Déconnexion
+        </Button>
       </div>
     </div>
   );

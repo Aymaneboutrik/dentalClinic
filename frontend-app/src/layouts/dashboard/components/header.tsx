@@ -72,7 +72,7 @@ export function Header() {
     <header
       className={clsx(
         "fixed top-0 right-0 z-10 flex gap-4 px-4 py-4 backdrop-blur-[10px] transition-all duration-300",
-        sidebarCollapsed ? "left-0 sm:left-[60px]" : "sm:left-[250px] left-0"
+        sidebarCollapsed ? "left-0 sm:left-[80px]" : "sm:left-[270px] left-0"
       )}
     >
       {/* ======== Mobile Drawer Navbar ======== */}
@@ -112,41 +112,49 @@ export function Header() {
       <div className="flex-1 flex gap-4 items-center justify-between">
         <SearchInput />
 
-        <LangDropdown />
+        <div className="flex items-center gap-3">
+          <LangDropdown />
 
-        <Button
-          onClick={handleToggleTheme}
-          variant="outline"
-          className="rounded-full h-9 w-9 flex items-center justify-center"
-          size="icon"
-        >
-          {theme === "light" ? (
-            <Sun className="h-4 w-4" />
-          ) : (
-            <Moon className="h-4 w-4" />
-          )}
-        </Button>
+          <Button
+            onClick={handleToggleTheme}
+            variant="outline"
+            className="rounded-full h-10 w-10 flex items-center justify-center glass shadow-glass border-white/10 hover:scale-110 hover:rotate-12 transition-all duration-300"
+            size="icon"
+          >
+            {theme === "light" ? (
+              <Sun className="h-[22px] w-[22px] text-orange-400 drop-shadow-[0_0_10px_rgba(251,146,60,0.5)] animate-in fade-in zoom-in duration-300" />
+            ) : (
+              <Moon className="h-[22px] w-[22px] text-cyan-300 drop-shadow-[0_0_10px_rgba(103,232,249,0.5)] animate-in fade-in zoom-in duration-300" />
+            )}
+          </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="overflow-hidden rounded-full font-bold bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-            >
-              <div>{initials}</div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={handleOpenProfile} className="cursor-pointer">
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleOpenModal} className="cursor-pointer text-red-500 focus:text-red-600 focus:bg-red-50">
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="overflow-hidden rounded-full font-bold bg-gradient-to-br from-primary to-cyan-500 text-white border-white/20 shadow-glass-dark hover:scale-110 transition-all duration-300 glow-blue"
+              >
+                <div className="text-sm">{initials}</div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 organic-card p-4 mt-2 border-white/5 shadow-2xl backdrop-blur-2xl">
+              <DropdownMenuItem
+                onClick={handleOpenProfile}
+                className="cursor-pointer"
+              >
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleOpenModal}
+                className="cursor-pointer text-red-500 focus:text-red-600 focus:bg-red-50"
+              >
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );

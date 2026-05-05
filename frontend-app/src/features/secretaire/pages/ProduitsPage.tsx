@@ -4,15 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@components/data-table/data-table";
-import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
-import PageTitle from "@components/commons/page-title";
-import { TOKEN } from "@configs/vars";
+import { DashboardHeader } from "@components/commons/dashboard/DashboardHeader";
 import secureApi from "@apis/instances/secure-api";
+import { Package, Plus, Search, X, Edit3, Trash2, AlertTriangle, ShieldAlert, Calendar, Info, Clock, Layers, Power } from "lucide-react";
+import { toast } from "sonner";
 
 const BASE_URL = "/stock/Produit";
-
 
 const produitSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
@@ -65,7 +64,7 @@ export default function ProduitsPage() {
       setProduitsEnPeremption(enPeremption);
 
     } catch {
-      console.error("Erreur lors du chargement des produits");
+      toast.error("Erreur lors du chargement des produits");
     } finally {
       setLoading(false);
     }
@@ -76,11 +75,14 @@ export default function ProduitsPage() {
   }, []);
 
   const handleSubmit = async (values: ProduitForm) => {
+    setLoading(true);
     try {
       if (editing) {
         await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values });
+        toast.success("Produit mis à jour");
       } else {
         await secureApi.post(`${BASE_URL}`, { id: 0, ...values, actif: false });
+        toast.success("Nouveau produit ajouté (Inactif par défaut)");
       }
 
       form.reset();
@@ -88,13 +90,15 @@ export default function ProduitsPage() {
       setEditing(null);
       fetchProduits();
     } catch (err: any) {
-      alert(`Erreur : ${err.response?.data?.message || 'Action impossible'}`);
+      toast.error(err.response?.data?.message || 'Action impossible');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleEdit = (p: Produit) => {
     if (!p.actif) {
-      alert("Impossible de modifier un produit inactif. Veuillez l'activer d'abord.");
+      toast.error("Veuillez activer le produit avant de le modifier.");
       return;
     }
     setEditing(p);
@@ -107,11 +111,14 @@ export default function ProduitsPage() {
   };
 
   const handleToggleActif = async (id: number) => {
+    setLoading(true);
     try {
       await secureApi.put(`${BASE_URL}/${id}/toggle-actif`);
+      toast.success("État du produit modifié");
       fetchProduits();
     } catch {
-      alert("Erreur réseau.");
+      toast.error("Erreur lors de la modification de l'état");
+      setLoading(false);
     }
   };
 
@@ -122,41 +129,35 @@ export default function ProduitsPage() {
   );
 
   const columns: ColumnDef<Produit>[] = [
-    { accessorKey: "id", header: "ID" },
     { 
       accessorKey: "nom", 
       header: "Produit",
       cell: ({ row }) => {
         const isPerime = new Date(row.original.datePeremption) <= new Date();
         return (
-          <span className={`font-bold ${isPerime ? "text-rose-600 animate-pulse" : "text-gray-900"}`}>
-            {row.original.nom}
-          </span>
+          <div className="flex flex-col">
+            <span className={`font-bold text-sm ${isPerime ? "text-rose-500" : "text-foreground"}`}>{row.original.nom}</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">ID: #{row.original.id}</span>
+          </div>
         );
       },
     },
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs truncate max-w-[240px] block">
-          {row.original.description}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">{row.original.description}</span>,
     },
     {
       accessorKey: "quantite",
-      header: "Quantité",
+      header: "Stock",
       cell: ({ row }) => (
-        <span className={`font-semibold ${row.original.quantite <= row.original.seuilAlerte ? "text-rose-600" : "text-gray-700"}`}>
-          {row.original.quantite}
-        </span>
+        <div className="flex flex-col">
+          <span className={`font-black text-sm ${row.original.quantite <= row.original.seuilAlerte ? "text-rose-500" : "text-foreground"}`}>
+            {row.original.quantite} Unités
+          </span>
+          <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">Seuil: {row.original.seuilAlerte}</span>
+        </div>
       ),
-    },
-    { 
-      accessorKey: "seuilAlerte", 
-      header: "Seuil",
-      cell: ({ row }) => <span className="text-gray-400 text-xs italic">Alerte à {row.original.seuilAlerte}</span>
     },
     {
       accessorKey: "datePeremption",
@@ -165,9 +166,10 @@ export default function ProduitsPage() {
         const date = new Date(row.original.datePeremption);
         const isPerime = date <= new Date();
         return (
-          <span className={`text-xs font-medium ${isPerime ? "text-rose-600" : "text-gray-600"}`}>
-            {date.toLocaleDateString()}
-          </span>
+          <div className="flex items-center space-x-2 text-xs font-medium">
+             <Calendar className={`w-3 h-3 ${isPerime ? "text-rose-500" : "text-muted-foreground"}`} />
+             <span className={isPerime ? "text-rose-500 font-bold" : "text-muted-foreground"}>{date.toLocaleDateString()}</span>
+          </div>
         );
       },
     },
@@ -175,7 +177,9 @@ export default function ProduitsPage() {
       accessorKey: "actif",
       header: "État",
       cell: ({ row }) => (
-        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${row.original.actif ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-gray-50 text-gray-400 border-gray-100"}`}>
+        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+          row.original.actif ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-white/5 text-muted-foreground border-white/5"
+        }`}>
           {row.original.actif ? "Actif" : "Inactif"}
         </span>
       ),
@@ -185,137 +189,185 @@ export default function ProduitsPage() {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button 
-            size="sm" 
-            variant="ghost" 
+          <button 
             onClick={() => handleEdit(row.original)} 
             disabled={!row.original.actif}
-            className="text-blue-600 disabled:opacity-30"
+            className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors disabled:opacity-20"
+            title="Modifier"
           >
-            Modifier
-          </Button>
-            <Button 
-            size="sm" 
-            className={`font-bold transition-all ${row.original.actif ? "bg-rose-50 text-rose-600 hover:bg-rose-100" : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md"}`}
+            <Edit3 className="w-4 h-4" />
+          </button>
+          <button 
             onClick={() => handleToggleActif(row.original.id)}
-            disabled={loading}
+            className={`p-2 rounded-lg transition-colors ${row.original.actif ? "hover:bg-rose-500/10 text-rose-500" : "hover:bg-emerald-500/10 text-emerald-500"}`}
+            title={row.original.actif ? "Désactiver" : "Activer"}
           >
-            {row.original.actif ? "Désactiver" : "Activer"}
-          </Button>
+            <Power className="w-4 h-4" />
+          </button>
         </div>
       ),
     },
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-primary text-sm font-medium">Gestion Stock</p>
-          <PageTitle title="Catalogue Produits" desc="Gestion centralisée du catalogue, des stocks et des dates de péremption." />
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <DashboardHeader
+          title="Gestion du Stock"
+          subtitle="Suivez vos produits, gérez les alertes et les péremptions"
+        />
+        
+        <div className="flex items-center space-x-3 md:mb-10">
+          <button 
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditing(null);
+              form.reset({ nom: "", description: "", quantite: 1, seuilAlerte: 1, datePeremption: "" });
+            }}
+            className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20"
+          >
+            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span>{showForm ? "Annuler" : "Ajouter un Produit"}</span>
+          </button>
         </div>
-        <Button
-          onClick={() => {
-            setShowForm(!showForm);
-            setEditing(null);
-            form.reset();
-          }}
-          className=""
-        >
-          {showForm ? "Fermer" : "Ajouter un Produit"}
-        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {produitsEnAlerte.length > 0 && (
-          <div className="border-l-4 border-rose-500 bg-rose-50/50 rounded-r-xl p-4 shadow-sm animate-in fade-in slide-in-from-left-4">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">⚠️</span>
-              <div>
-                <h3 className="text-rose-800 font-bold text-sm">Stock critique détecté !</h3>
-                <p className="text-rose-600 text-[11px] font-medium">{produitsEnAlerte.length} produit(s) nécessitent un réapprovisionnement immédiat.</p>
-              </div>
-            </div>
+          <div className="glass border-rose-500/20 bg-rose-500/5 p-6 rounded-[32px] flex items-center space-x-6 animate-in slide-in-from-left-4 duration-500">
+             <div className="w-14 h-14 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-500">
+                <AlertTriangle className="w-8 h-8" />
+             </div>
+             <div>
+                <h3 className="text-lg font-bold text-rose-500 uppercase tracking-tighter">Stock Critique</h3>
+                <p className="text-sm text-rose-500/70 font-medium">{produitsEnAlerte.length} produits sous le seuil d'alerte.</p>
+             </div>
           </div>
         )}
 
         {produitsEnPeremption.length > 0 && (
-          <div className="border-l-4 border-rose-600 bg-rose-100/50 rounded-r-xl p-4 shadow-sm animate-in fade-in slide-in-from-right-4">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🚨</span>
-              <div>
-                <h3 className="text-rose-900 font-bold text-sm">Alerte de Péremption !</h3>
-                <p className="text-rose-700 text-[11px] font-medium">{produitsEnPeremption.length} produit(s) ont atteint leur date limite.</p>
-              </div>
-            </div>
+          <div className="glass border-rose-600/30 bg-rose-600/10 p-6 rounded-[32px] flex items-center space-x-6 animate-in slide-in-from-right-4 duration-500">
+             <div className="w-14 h-14 rounded-2xl bg-rose-600/20 flex items-center justify-center text-rose-600">
+                <ShieldAlert className="w-8 h-8" />
+             </div>
+             <div>
+                <h3 className="text-lg font-bold text-rose-600 uppercase tracking-tighter">Dates Dépassées</h3>
+                <p className="text-sm text-rose-600/70 font-medium">{produitsEnPeremption.length} produits périmés à retirer du stock.</p>
+             </div>
           </div>
         )}
       </div>
 
       {showForm && (
-        <div className="border rounded-xl p-6 mb-6 bg-card">
-          <h2 className="text-xl font-bold mb-2">
-            {editing ? "Mise à jour du Produit" : "Nouveau Produit"}
-          </h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            {editing ? "Modifiez les caractéristiques techniques." : "Le produit sera créé en mode 'Inactif' par défaut."}
-          </p>
+        <div className="glass border-white/5 p-8 organic-card shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-inner">
+              <Package className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                {editing ? "Modifier le produit" : "Enregistrement Produit"}
+              </h2>
+              <p className="text-sm text-muted-foreground">Définissez les caractéristiques techniques et les seuils</p>
+            </div>
+          </div>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextInput label="Nom commercial" name="nom" form={form} placeholder="Ex: Composite A3" withAsterisk />
-                <TextInput label="Description technique" name="description" form={form} placeholder="Ex: Seringue 4g" withAsterisk />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <TextInput label="Stock initial" name="quantite" form={form} placeholder="Ex: 50" withAsterisk />
-                <TextInput label="Seuil d'alerte" name="seuilAlerte" form={form} placeholder="Ex: 5" withAsterisk />
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-400">Date de péremption <span className="text-rose-500">*</span></label>
-                  <input
-                    type="date"
-                    className="border border-gray-200 rounded-xl px-3 py-2 bg-gray-50/50 text-sm focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition-all"
-                    {...form.register("datePeremption")}
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Nom commercial</label>
+                  <TextInput
+                    name="nom"
+                    form={form}
+                    placeholder="Ex: Composite A3 Seringue"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
                   />
-                  {form.formState.errors.datePeremption && (
-                    <p className="text-rose-500 text-[10px] font-bold mt-1">{form.formState.errors.datePeremption.message}</p>
-                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Description technique</label>
+                  <TextInput
+                    name="description"
+                    form={form}
+                    placeholder="Détails, volume, marque..."
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
                 </div>
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setShowForm(false); setEditing(null); form.reset(); }}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Stock Initial</label>
+                  <TextInput
+                    name="quantite"
+                    form={form}
+                    placeholder="Quantité"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Seuil d'alerte</label>
+                  <TextInput
+                    name="seuilAlerte"
+                    form={form}
+                    placeholder="Seuil"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Péremption</label>
+                  <input
+                    type="date"
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl h-14 px-6 text-sm outline-none focus:border-primary/50 transition-all text-foreground"
+                    {...form.register("datePeremption")}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end pt-6 border-t border-white/5">
+                <button 
+                  type="submit" 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-4 organic-pill text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50" 
+                  disabled={loading}
                 >
-                  Annuler
-                </Button>
-                <Button type="submit" className="px-10 shadow-lg active:scale-95 transition-transform" disabled={loading}>{editing ? "Appliquer" : "Créer le produit"}</Button>
+                  {loading ? "Traitement..." : editing ? "Mettre à jour" : "Inscrire au catalogue"}
+                </button>
               </div>
             </form>
           </Form>
         </div>
       )}
 
-      <div className="border rounded-xl p-6 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-lg text-gray-800">Catalogue</h3>
-            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{produits.length} items</span>
+      <div className="glass border-white/5 shadow-2xl organic-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between px-8 py-6 border-b border-white/5 gap-4">
+          <div className="flex items-center gap-3">
+            <Layers className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-lg text-white">Inventaire Central</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/10">{produits.length} RÉFÉRENCES</span>
           </div>
-          <div className="flex gap-3">
-            <input
-              className="border rounded px-3 py-1 text-sm bg-background"
-              placeholder="Chercher un produit..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <Button variant="outline" onClick={fetchProduits} disabled={loading}>
-              {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
-            </Button>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <input
+                className="bg-white/5 border border-white/5 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-all w-64"
+                placeholder="Rechercher..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button 
+              onClick={fetchProduits} 
+              disabled={loading} 
+              className="p-2.5 rounded-xl border border-white/5 hover:bg-white/5 text-muted-foreground transition-all"
+              title="Actualiser"
+            >
+              <Clock className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
-        <DataTable columns={columns} data={filtered} loading={loading} />
+        
+        <div className="p-4">
+           <DataTable columns={columns} data={filtered} loading={loading} />
+        </div>
       </div>
     </div>
   );

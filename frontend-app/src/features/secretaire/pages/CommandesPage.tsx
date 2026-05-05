@@ -4,12 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@components/data-table/data-table";
-import { Button } from "@components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
-import PageTitle from "@components/commons/page-title";
-import Cookie from "js-cookie";
-import { TOKEN } from "@configs/vars";
+import { DashboardHeader } from "@components/commons/dashboard/DashboardHeader";
 import SelectInput from "@components/inputs/select-input";
 import secureApi from "@apis/instances/secure-api";
 import { Input } from "@components/ui/input";
@@ -20,15 +17,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@components/ui/dialog";
+import { ShoppingCart, Plus, Search, X, Edit3, Trash2, FileText, Calendar, Truck, Clock, Package, DollarSign, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 const BASE_URL = "/stock/Commande";
 const FOURNISSEUR_URL = "/stock/Fournisseur";
 
-
 const commandeSchema = z.object({
   nom: z.string().min(1, "Le nom est obligatoire"),
   fournisseurId: z.coerce.number().min(1, "Le fournisseur est obligatoire"),
-  // Optional: backend can set it automatically on create; edit can override it.
   date: z.string().optional(),
 });
 
@@ -49,9 +46,9 @@ const statutLabels: Record<string, string> = {
 };
 
 const statutColors: Record<string, string> = {
-  EnAttente: "bg-amber-100 text-amber-800 border-amber-200",
-  Validee: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  Refusee: "bg-rose-100 text-rose-800 border-rose-200",
+  EnAttente: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  Validee: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+  Refusee: "bg-rose-500/10 text-rose-500 border-rose-500/20",
 };
 
 const getStatutKey = (s: any): string => {
@@ -102,8 +99,6 @@ export default function CommandesPage() {
 
   const form = useForm<CommandeForm>({
     resolver: zodResolver(commandeSchema),
-    // Keep fournisseurId as string in the form state (Select expects string),
-    // zodResolver will coerce it to number on submit.
     defaultValues: { nom: "", fournisseurId: "0" as unknown as number, date: "" },
   });
 
@@ -117,7 +112,6 @@ export default function CommandesPage() {
     if (!yyyyMmDd) return undefined;
     const s = String(yyyyMmDd);
     if (s.includes("T")) return s;
-    // Keep backend-friendly ISO-ish format without timezone surprises.
     return `${s}T00:00:00`;
   };
 
@@ -132,7 +126,7 @@ export default function CommandesPage() {
       setCommandes(mappedData);
       setFetched(true);
     } catch {
-      console.error("Erreur lors du chargement des commandes");
+      toast.error("Erreur lors du chargement des commandes");
     } finally {
       setLoading(false);
     }
@@ -156,6 +150,7 @@ export default function CommandesPage() {
   }, []);
 
   const handleSubmit = async (values: CommandeForm) => {
+    setLoading(true);
     try {
       if (editing) {
         const statutInt = editing.statut === "EnAttente" ? 0 : editing.statut === "Validee" ? 1 : 2;
@@ -167,8 +162,10 @@ export default function CommandesPage() {
           ...(normalizedDate ? { date: normalizedDate } : {}),
           statut: statutInt,
         });
+        toast.success("Commande mise à jour");
       } else {
         await secureApi.post(`${BASE_URL}`, { id: 0, nom: values.nom, fournisseurId: values.fournisseurId, statut: 0 });
+        toast.success("Commande créée avec succès");
       }
       
       form.reset();
@@ -177,13 +174,15 @@ export default function CommandesPage() {
       setEditOpen(false);
       fetchCommandes();
     } catch (error: any) {
-      alert(`Erreur : ${error.response?.data?.message || 'Sauvegarde échouée'}`);
+      toast.error(error.response?.data?.message || 'Sauvegarde échouée');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleEdit = (c: Commande) => {
     if (c.statut !== "EnAttente") {
-      alert("Impossible de modifier une commande déjà traitée.");
+      toast.error("Impossible de modifier une commande déjà traitée.");
       return;
     }
     setEditing(c);
@@ -195,11 +194,14 @@ export default function CommandesPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette commande ?")) return;
+    setLoading(true);
     try {
       await secureApi.delete(`${BASE_URL}/${id}`);
+      toast.success("Commande supprimée");
       fetchCommandes();
     } catch {
-      alert("Action impossible.");
+      toast.error("Action impossible.");
+      setLoading(false);
     }
   };
 
@@ -209,7 +211,7 @@ export default function CommandesPage() {
       setBonCommande(res.data);
       setShowBon(true);
     } catch {
-      alert("Erreur lors de la génération du bon de commande.");
+      toast.error("Erreur lors de la génération du bon de commande.");
     }
   };
 
@@ -220,28 +222,37 @@ export default function CommandesPage() {
   );
 
   const columns: ColumnDef<Commande>[] = [
-    { accessorKey: "id", header: "ID" },
+    { 
+      accessorKey: "id", 
+      header: "Référence",
+      cell: ({ row }) => <span className="font-mono text-xs font-bold text-muted-foreground">#ORD-{row.original.id}</span>
+    },
     { 
       accessorKey: "nom", 
-      header: "Nom de la commande",
-      cell: ({ row }) => <span className="font-medium text-gray-900">{row.original.nom}</span>
+      header: "Désignation",
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span className="font-bold text-foreground text-sm">{row.original.nom}</span>
+          <span className="text-[10px] text-primary/60 font-black uppercase tracking-widest">FNS: #{row.original.fournisseurId}</span>
+        </div>
+      )
     },
     {
       accessorKey: "date",
-      header: "Date de création",
-      cell: ({ row }) => row.original.date ? new Date(row.original.date).toLocaleDateString() : "-",
-    },
-    { 
-      accessorKey: "fournisseurId", 
-      header: "ID Fournisseur",
-      cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.fournisseurId}</span>
+      header: "Créée le",
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2 text-xs font-medium text-muted-foreground">
+          <Calendar className="w-3 h-3" />
+          <span>{row.original.date ? new Date(row.original.date).toLocaleDateString() : "-"}</span>
+        </div>
+      ),
     },
     {
       accessorKey: "statut",
       header: "Statut",
       cell: ({ row }) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statutColors[row.original.statut] ?? "bg-gray-100 text-gray-700"}`}>
-          {statutLabels[row.original.statut] ?? row.original.statut}
+        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statutColors[row.original.statut]}`}>
+          {statutLabels[row.original.statut] || row.original.statut}
         </span>
       ),
     },
@@ -252,39 +263,43 @@ export default function CommandesPage() {
         <div className="flex gap-2">
           {row.original.statut === "EnAttente" && (
             <>
-              <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)} className="border-blue-200 text-blue-600 hover:bg-blue-50" disabled={loading}>
-                Modifier
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => handleDelete(row.original.id)} className="border-rose-200 text-rose-600 hover:bg-rose-50" disabled={loading}>
-                Supprimer
-              </Button>
+              <button onClick={() => handleEdit(row.original)} className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors">
+                <Edit3 className="w-4 h-4" />
+              </button>
+              <button onClick={() => handleDelete(row.original.id)} className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors">
+                <Trash2 className="w-4 h-4" />
+              </button>
             </>
           )}
-          <Button size="sm" variant="secondary" onClick={() => handleGenererBon(row.original.id)} className="bg-gray-100 text-gray-700 border shadow-sm" disabled={loading}>
-            Bon de commande
-          </Button>
+          <button onClick={() => handleGenererBon(row.original.id)} className="p-2 hover:bg-white/10 text-muted-foreground rounded-lg transition-colors" title="Bon de Commande">
+            <FileText className="w-4 h-4" />
+          </button>
         </div>
       ),
     },
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-primary text-sm font-medium">Gestion Stock</p>
-          <PageTitle title="Gestion des Commandes" desc="Créez et gérez les bons de commande pour vos fournisseurs." />
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <DashboardHeader
+          title="Commandes Fournisseurs"
+          subtitle="Suivez l'approvisionnement et les ordres d'achat du cabinet"
+        />
+        
+        <div className="flex items-center space-x-3 md:mb-10">
+          <button 
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditing(null);
+              form.reset({ nom: "", fournisseurId: 0 as any, date: "" });
+            }}
+            className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20"
+          >
+            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span>{showForm ? "Annuler" : "Nouvelle Commande"}</span>
+          </button>
         </div>
-        <Button
-          onClick={() => {
-            setShowForm(!showForm);
-            setEditing(null);
-            form.reset();
-          }}
-          className=""
-        >
-          {showForm ? "Fermer" : "Nouvelle Commande"}
-        </Button>
       </div>
 
       <Dialog
@@ -297,58 +312,65 @@ export default function CommandesPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[720px] border-white/10 shadow-2xl rounded-[1.5rem]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black">Modifier la commande</DialogTitle>
+        <DialogContent className="sm:max-w-[720px] glass border-white/5 shadow-2xl organic-card">
+          <DialogHeader className="mb-6">
+            <div className="flex items-center space-x-3">
+               <div className="p-2 bg-primary/20 rounded-xl text-primary">
+                  <Edit3 className="w-5 h-5" />
+               </div>
+               <DialogTitle className="text-2xl font-black uppercase tracking-tighter">Édition Commande</DialogTitle>
+            </div>
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextInput
-                  label="Nom de la commande"
-                  name="nom"
-                  form={form}
-                  placeholder="Ex: Achat Gants Latex"
-                  withAsterisk
-                />
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8 py-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Libellé</label>
+                  <TextInput
+                    name="nom"
+                    form={form}
+                    placeholder="Ex: Achat Gants Latex"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
                   name="date"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-1">Date</FormLabel>
-                      <Input type="date" className="bg-background" {...field} value={field.value || ""} />
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Date d'édition</FormLabel>
+                      <Input type="date" className="bg-white/5 border-white/5 rounded-2xl h-14 px-6" {...field} value={field.value || ""} />
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <SelectInput
-                label="Fournisseur"
-                name="fournisseurId"
-                form={form}
-                withAsterisk
-                placeholder={loadingFournisseurs ? "Chargement..." : "Sélectionner un fournisseur"}
-                isLoading={loadingFournisseurs}
-                data={fournisseurs.map((f) => ({ label: `${f.nom} (ID: ${f.id})`, value: String(f.id) }))}
-                className="bg-background"
-              />
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Fournisseur Partenaire</label>
+                <SelectInput
+                  name="fournisseurId"
+                  form={form}
+                  placeholder={loadingFournisseurs ? "Chargement..." : "Sélectionner un fournisseur"}
+                  isLoading={loadingFournisseurs}
+                  data={fournisseurs.map((f) => ({ label: `${f.nom} (ID: ${f.id})`, value: String(f.id) }))}
+                  className="bg-white/5 border-white/5 rounded-2xl h-14"
+                />
+              </div>
 
-              <DialogFooter className="mt-6">
-                <Button
+              <DialogFooter className="mt-8 border-t border-white/5 pt-6">
+                <button
                   type="button"
-                  variant="outline"
                   onClick={() => setEditOpen(false)}
-                  disabled={loading}
+                  className="px-8 py-3 rounded-xl border border-white/5 hover:bg-white/5 transition-all text-sm font-bold"
                 >
                   Annuler
-                </Button>
-                <Button type="submit" className="px-10 shadow-md" disabled={loading}>
-                  Enregistrer
-                </Button>
+                </button>
+                <button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-3 organic-pill text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95" disabled={loading}>
+                  {loading ? "Enregistrement..." : "Sauvegarder"}
+                </button>
               </DialogFooter>
             </form>
           </Form>
@@ -356,29 +378,47 @@ export default function CommandesPage() {
       </Dialog>
 
       {showForm && (
-        <div className="border rounded-xl p-6 mb-6 bg-card">
-          <h2 className="text-xl font-bold mb-2">
-            {editing ? "Modifier la commande" : "Nouvelle commande"}
-          </h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            La date de création sera définie automatiquement sur aujourd'hui.
-          </p>
+        <div className="glass border-white/5 p-8 organic-card shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-inner">
+              <Truck className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">Initialisation Commande</h2>
+              <p className="text-sm text-muted-foreground">La date sera définie automatiquement à la validation</p>
+            </div>
+          </div>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextInput label="Libellé de la commande" name="nom" form={form} placeholder="Ex: Achat Gants Latex" withAsterisk />
-                <TextInput label="ID du Fournisseur" name="fournisseurId" form={form} placeholder="Ex: 5" withAsterisk />
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Nom du projet d'achat</label>
+                  <TextInput
+                    name="nom"
+                    form={form}
+                    placeholder="Ex: Réapprovisionnement Juin"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">ID Fournisseur</label>
+                  <TextInput
+                    name="fournisseurId"
+                    form={form}
+                    placeholder="Saisissez l'ID"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setShowForm(false); setEditing(null); form.reset(); }}
+              <div className="flex justify-end pt-6 border-t border-white/5">
+                <button 
+                  type="submit" 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-4 organic-pill text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50" 
+                  disabled={loading}
                 >
-                  Annuler
-                </Button>
-                <Button type="submit" className="px-8" disabled={loading}>{editing ? "Enregistrer les modifications" : "Créer la commande"}</Button>
+                  {loading ? "Traitement..." : "Lancer la commande"}
+                </button>
               </div>
             </form>
           </Form>
@@ -386,117 +426,157 @@ export default function CommandesPage() {
       )}
 
       {showBon && bonCommande && (
-        <div className="border rounded-xl p-6 mb-6 bg-card relative overflow-hidden">
-          <div className="absolute top-6 right-6">
-             <Button variant="outline" onClick={() => setShowBon(false)} className="shadow-sm">
-                Fermer
-             </Button>
-          </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+           <div className="glass border-white/10 organic-card p-10 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] relative">
+              <button onClick={() => setShowBon(false)} className="absolute top-6 right-6 p-2 hover:bg-white/5 rounded-xl transition-colors">
+                 <X className="w-6 h-6 text-muted-foreground" />
+              </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 items-center mb-8 gap-6 border-b pb-6 mt-2">
-            <div className="text-left">
-              <h2 className="text-3xl font-black text-primary tracking-tighter mb-1">BON DE COMMANDE</h2>
-              <p className="text-muted-foreground font-mono">REF: CMD-{bonCommande.id.toString().padStart(5, '0')}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Date de Commande</p>
-              <p className="text-lg font-bold">{new Date(bonCommande.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            </div>
-            <div className="text-right hidden md:block">
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-10">
-            <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Détails Commande</h3>
-              <div className="space-y-2">
-                <p className="text-2xl font-bold text-foreground">{bonCommande.nom}</p>
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8">
                 <div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statutColors[getStatutKey(bonCommande.statut)]}`}>
-                    {statutLabels[getStatutKey(bonCommande.statut)]}
-                  </span>
+                  <div className="flex items-center space-x-3 mb-2">
+                     <Package className="w-10 h-10 text-primary" />
+                     <h2 className="text-4xl font-black tracking-tighter uppercase">Bon de Commande</h2>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                     <span className="font-mono text-sm text-muted-foreground">REF: #CMD-{bonCommande.id}</span>
+                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statutColors[getStatutKey(bonCommande.statut)]}`}>
+                        {statutLabels[getStatutKey(bonCommande.statut)]}
+                     </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Date d'émission</p>
+                   <p className="text-lg font-bold">{new Date(bonCommande.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Fournisseur</h3>
-              {bonCommande.fournisseur ? (
-                <div className="space-y-1">
-                  <p className="text-xl font-bold text-foreground">{bonCommande.fournisseur.nom}</p>
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    {bonCommande.fournisseur.telephone || "N/A"}
-                  </p>
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                    {bonCommande.fournisseur.adresse || "N/A"}
-                  </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-1 h-6 bg-primary rounded-full" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-primary/60">Informations Projet</h3>
+                  </div>
+                  <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
+                    <p className="text-2xl font-bold mb-1">{bonCommande.nom}</p>
+                    <p className="text-sm text-muted-foreground">Ordre d'achat interne</p>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-sm text-rose-500 font-medium bg-rose-50 p-2 rounded">Données fournisseur indisponibles</p>
-              )}
-            </div>
-          </div>
 
-          <div className="overflow-hidden rounded-xl border shadow-sm mb-8">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-muted text-muted-foreground uppercase text-[10px] font-black tracking-widest">
-                <tr>
-                  <th className="px-6 py-4">ID Produit</th>
-                  <th className="px-6 py-4 text-center">Quantité</th>
-                  <th className="px-6 py-4 text-right">P.U (MAD)</th>
-                  <th className="px-6 py-4 text-right">Total (MAD)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {bonCommande.lignes.map((l) => (
-                  <tr key={l.id} className="hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{l.produitId}</td>
-                    <td className="px-6 py-4 text-center font-bold text-foreground">{l.quantite}</td>
-                    <td className="px-6 py-4 text-right text-muted-foreground">{l.prixUnitaire.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-right font-black text-foreground">{l.sousTotal.toFixed(2)}</td>
-                  </tr>
-                ))}
-                {bonCommande.lignes.length === 0 && (
-                  <tr><td colSpan={4} className="px-6 py-10 text-center text-muted-foreground italic">Aucun produit associé à cette commande.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-1 h-6 bg-primary rounded-full" />
+                    <h3 className="text-xs font-black uppercase tracking-widest text-primary/60">Destinataire (Fournisseur)</h3>
+                  </div>
+                  {bonCommande.fournisseur ? (
+                    <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-3">
+                      <p className="text-2xl font-bold">{bonCommande.fournisseur.nom}</p>
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                           <Truck className="w-3 h-3" />
+                           <span>{bonCommande.fournisseur.adresse || "---"}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                           <Clock className="w-3 h-3" />
+                           <span>Tél: {bonCommande.fournisseur.telephone || "---"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-rose-500/10 p-6 rounded-3xl border border-rose-500/20 flex items-center space-x-3">
+                       <ShieldAlert className="w-5 h-5 text-rose-500" />
+                       <p className="text-sm font-bold text-rose-500">Données fournisseur absentes</p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-          <div className="flex justify-end pt-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 text-primary border border-primary/20 px-10 py-6 rounded-2xl shadow-xl flex items-center gap-8 min-w-[300px]">
-              <div>
-                <p className="text-primary/80 text-xs uppercase font-black tracking-widest mb-1">Montant Total</p>
-                <p className="text-3xl font-black">{bonCommande.lignes.reduce((acc, l) => acc + l.sousTotal, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} <span className="text-sm font-normal text-primary/60">MAD</span></p>
+              <div className="space-y-6 mb-12">
+                <div className="flex items-center space-x-3">
+                  <div className="w-1 h-6 bg-primary rounded-full" />
+                  <h3 className="text-xs font-black uppercase tracking-widest text-primary/60">Détails des articles</h3>
+                </div>
+                <div className="glass border-white/5 rounded-[32px] overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead className="bg-white/5 border-b border-white/5">
+                      <tr>
+                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Produit</th>
+                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Quantité</th>
+                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">P.U (MAD)</th>
+                        <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Total HT</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {bonCommande.lignes.map((l) => (
+                        <tr key={l.id} className="hover:bg-white/5 transition-colors">
+                          <td className="px-8 py-4">
+                            <span className="font-bold text-sm block">Article #{l.produitId}</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">ID STOCK: {l.produitId}</span>
+                          </td>
+                          <td className="px-8 py-4 text-center font-black text-sm">{l.quantite}</td>
+                          <td className="px-8 py-4 text-right text-sm font-medium">{l.prixUnitaire.toFixed(2)}</td>
+                          <td className="px-8 py-4 text-right font-black text-primary text-sm">{l.sousTotal.toFixed(2)} MAD</td>
+                        </tr>
+                      ))}
+                      {bonCommande.lignes.length === 0 && (
+                        <tr><td colSpan={4} className="px-8 py-12 text-center text-muted-foreground text-sm italic">Aucune ligne de commande enregistrée</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+
+              <div className="flex justify-end">
+                <div className="bg-primary/5 border border-primary/10 p-10 rounded-[40px] flex items-center space-x-12 min-w-[400px]">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-2">Total de la commande</p>
+                    <p className="text-4xl font-black text-foreground">
+                      {bonCommande.lignes.reduce((acc, l) => acc + l.sousTotal, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}
+                      <span className="text-lg font-normal text-muted-foreground ml-3 uppercase tracking-widest">MAD</span>
+                    </p>
+                  </div>
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                     <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                </div>
               </div>
-            </div>  
-          </div>
+           </div>
         </div>
       )}
 
-      <div className="border rounded-xl p-6 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-lg text-gray-800">Historique des Commandes</h3>
-            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{commandes.length}</span>
+      <div className="glass border-white/5 shadow-2xl organic-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between px-8 py-6 border-b border-white/5 gap-4">
+          <div className="flex items-center gap-3">
+            <ShoppingCart className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-lg text-white">Registre des Approvisionnements</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/10">{commandes.length} ORDRES</span>
           </div>
-          <div className="flex gap-3">
-            <input
-              className="border rounded px-3 py-1 text-sm bg-background"
-              placeholder="Rechercher par nom ou statut..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <Button variant="outline" onClick={fetchCommandes} disabled={loading}>
-              {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
-            </Button>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <input
+                className="bg-white/5 border border-white/5 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-all w-64"
+                placeholder="Nom ou Statut..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button 
+              onClick={fetchCommandes} 
+              disabled={loading} 
+              className="p-2.5 rounded-xl border border-white/5 hover:bg-white/5 text-muted-foreground transition-all"
+              title="Actualiser"
+            >
+              <Clock className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
-        <DataTable columns={columns} data={filtered} loading={loading} />
+        
+        <div className="p-4">
+           <DataTable columns={columns} data={filtered} loading={loading} />
+        </div>
       </div>
     </div>
   );

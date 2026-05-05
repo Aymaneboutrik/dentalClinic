@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { DashboardHeader } from "../../../components/commons/dashboard/DashboardHeader";
+import { Plus, Clock, FileText, Send, X, Calendar } from "lucide-react";
 import type {
   DemandeAbsence,
   CreateDemandeAbsenceRequest,
@@ -8,6 +10,7 @@ import {
   getDemandesAbsenceByEmployeId,
   type ApiError,
 } from "../services/demandeAbsence.service";
+import { toast } from "sonner";
 
 type FormDataType = {
   dateDebut: string;
@@ -25,29 +28,23 @@ type FormFieldErrors = {
 
 const formatDate = (dateValue?: string | null): string => {
   if (!dateValue) return "-";
-
   const date = new Date(dateValue);
-
   if (Number.isNaN(date.getTime())) return "-";
-
   return date.toLocaleDateString("fr-FR");
 };
 
 const getStatutBadgeClass = (statut?: string | null): string => {
   const normalizedStatut = String(statut || "").toLowerCase();
-
   if (
     normalizedStatut.includes("accept") ||
     normalizedStatut.includes("approuv")
   ) {
-    return "border-emerald-500/20 bg-emerald-500/10 text-emerald-400";
+    return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
   }
-
   if (normalizedStatut.includes("refus")) {
-    return "border-red-500/20 bg-red-500/10 text-red-400";
+    return "bg-red-500/10 text-red-500 border-red-500/20";
   }
-
-  return "border-amber-500/20 bg-amber-500/10 text-amber-400";
+  return "bg-amber-500/10 text-amber-500 border-amber-500/20";
 };
 
 const SecretaireDemandeAbsencePage = () => {
@@ -65,23 +62,18 @@ const SecretaireDemandeAbsencePage = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FormFieldErrors>({});
 
   const fetchDemandes = async () => {
     try {
       setLoading(true);
       setError(null);
-
       const data = await getDemandesAbsenceByEmployeId();
       setDemandes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error(error);
       const apiError = error as ApiError;
-      setError(
-        apiError.message || "Impossible de charger les demandes d’absence."
-      );
+      setError(apiError.message || "Impossible de charger les demandes d'absence.");
     } finally {
       setLoading(false);
     }
@@ -93,19 +85,12 @@ const SecretaireDemandeAbsencePage = () => {
 
   const resetFormState = () => {
     setFormData(initialFormData);
-    setFormError(null);
     setFieldErrors({});
   };
 
   const handleOpenAddForm = () => {
     resetFormState();
-    setSuccessMessage(null);
     setShowAddForm(true);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
   };
 
   const handleCancel = () => {
@@ -117,71 +102,30 @@ const SecretaireDemandeAbsencePage = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setFieldErrors((prev) => ({
-      ...prev,
-      [name]: undefined,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const validateForm = (): FormFieldErrors => {
     const errors: FormFieldErrors = {};
-
-    if (!formData.dateDebut.trim()) {
-      errors.dateDebut = "La date de début est obligatoire.";
-    }
-
-    if (!formData.dateFin.trim()) {
-      errors.dateFin = "La date de fin est obligatoire.";
-    }
-
-    if (
-      formData.dateDebut.trim() &&
-      formData.dateFin.trim() &&
-      formData.dateDebut > formData.dateFin
-    ) {
+    if (!formData.dateDebut.trim()) errors.dateDebut = "La date de début est obligatoire.";
+    if (!formData.dateFin.trim()) errors.dateFin = "La date de fin est obligatoire.";
+    if (formData.dateDebut && formData.dateFin && formData.dateDebut > formData.dateFin) {
       errors.dateFin = "La date de fin doit être supérieure ou égale à la date de début.";
     }
-
-    if (!formData.typeDemande.trim()) {
-      errors.typeDemande = "Le type de demande est obligatoire.";
-    }
-
+    if (!formData.typeDemande.trim()) errors.typeDemande = "Le type de demande est obligatoire.";
     return errors;
-  };
-
-  const mapBackendErrorsToFields = (
-    errors?: Record<string, string[]>
-  ): FormFieldErrors => {
-    if (!errors) return {};
-
-    return {
-      dateDebut: errors.DateDebut?.[0] || errors.dateDebut?.[0],
-      dateFin: errors.DateFin?.[0] || errors.dateFin?.[0],
-      typeDemande: errors.TypeDemande?.[0] || errors.typeDemande?.[0],
-      motif: errors.Motif?.[0] || errors.motif?.[0],
-    };
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     try {
       setActionLoading(true);
-      setFormError(null);
-      setSuccessMessage(null);
       setFieldErrors({});
-
       const frontendErrors = validateForm();
-
       if (Object.keys(frontendErrors).length > 0) {
         setFieldErrors(frontendErrors);
-        setFormError("Veuillez corriger les champs du formulaire.");
+        toast.error("Veuillez corriger les erreurs dans le formulaire.");
         return;
       }
 
@@ -192,286 +136,196 @@ const SecretaireDemandeAbsencePage = () => {
         motif: formData.motif.trim() || null,
       };
 
-      const result = await createDemandeAbsence(payload);
-
+      await createDemandeAbsence(payload);
       await fetchDemandes();
-
-      setSuccessMessage(
-        result.message || "Demande d’absence envoyée avec succès."
-      );
+      toast.success("Demande d'absence envoyée avec succès.");
       setShowAddForm(false);
       resetFormState();
     } catch (error) {
-      console.error(error);
-
       const apiError = error as ApiError;
-      const mappedErrors = mapBackendErrorsToFields(apiError.errors);
-
-      setFieldErrors(mappedErrors);
-
-      const hasFieldErrors = Object.values(mappedErrors).some(Boolean);
-
-      if (hasFieldErrors) {
-        setFormError("Veuillez corriger les champs du formulaire.");
-      } else {
-        setFormError(
-          apiError.message || "Impossible d'envoyer la demande d’absence."
-        );
-      }
+      toast.error(apiError.message || "Erreur lors de l'envoi de la demande.");
     } finally {
       setActionLoading(false);
     }
   };
 
   return (
-    <div className="w-full space-y-8">
-      <div className="p-6 border shadow-sm rounded-2xl bg-card">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-primary">
-              Gestion des demandes d’absence
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Mes demandes d’absence
-            </h1>
-          </div>
-
-          <button
-            type="button"
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <DashboardHeader
+          title="Mes Demandes d'Absence"
+          subtitle="Gérez et suivez vos demandes de congés et d'absences"
+        />
+        
+        <div className="flex items-center space-x-3 md:mb-10">
+          <button 
             onClick={handleOpenAddForm}
-            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
+            className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20"
           >
-            Faire une demande
+            <Plus className="w-4 h-4" />
+            <span>Nouvelle Demande</span>
           </button>
         </div>
       </div>
 
-      {successMessage && (
-        <div className="px-4 py-3 text-sm border rounded-2xl border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-          {successMessage}
-        </div>
-      )}
-
       {showAddForm && (
-        <div className="rounded-2xl border border-white/10 bg-[#081028] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-white">
-              Nouvelle demande d’absence
-            </h2>
-            <p className="mt-1 text-sm text-slate-400">
-              Remplissez les informations de votre demande.
-            </p>
+        <div className="glass border-white/5 p-8 organic-card shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-xl font-bold flex items-center space-x-2">
+                <FileText className="w-5 h-5 text-primary" />
+                <span>Nouvelle Demande d'Absence</span>
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">Remplissez les détails de votre demande ci-dessous</p>
+            </div>
+            <button onClick={handleCancel} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
           </div>
 
-          {formError && (
-            <p className="mb-4 text-sm text-red-500">{formError}</p>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Date début</label>
+                <div className="relative group">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <input
+                    type="date"
+                    name="dateDebut"
+                    value={formData.dateDebut}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border px-12 py-4 rounded-2xl outline-none transition-all focus:bg-white/10 ${fieldErrors.dateDebut ? 'border-red-500/50 focus:border-red-500' : 'border-white/5 focus:border-primary/50'}`}
+                  />
+                </div>
+                {fieldErrors.dateDebut && <p className="text-[10px] font-bold text-red-500 px-1">{fieldErrors.dateDebut}</p>}
+              </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 gap-5 md:grid-cols-2"
-          >
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">
-                Date début
-              </label>
-              <input
-                type="date"
-                name="dateDebut"
-                value={formData.dateDebut}
-                onChange={handleChange}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
-                  fieldErrors.dateDebut
-                    ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
-                    : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
-                }`}
-              />
-              {fieldErrors.dateDebut && (
-                <p className="text-sm text-red-500">{fieldErrors.dateDebut}</p>
-              )}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Date fin</label>
+                <div className="relative group">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <input
+                    type="date"
+                    name="dateFin"
+                    value={formData.dateFin}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border px-12 py-4 rounded-2xl outline-none transition-all focus:bg-white/10 ${fieldErrors.dateFin ? 'border-red-500/50 focus:border-red-500' : 'border-white/5 focus:border-primary/50'}`}
+                  />
+                </div>
+                {fieldErrors.dateFin && <p className="text-[10px] font-bold text-red-500 px-1">{fieldErrors.dateFin}</p>}
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Type de demande</label>
+                <input
+                  type="text"
+                  name="typeDemande"
+                  value={formData.typeDemande}
+                  onChange={handleChange}
+                  placeholder="Ex : Congé annuel, Maladie, etc."
+                  className={`w-full bg-white/5 border px-6 py-4 rounded-2xl outline-none transition-all focus:bg-white/10 ${fieldErrors.typeDemande ? 'border-red-500/50 focus:border-red-500' : 'border-white/5 focus:border-primary/50'}`}
+                />
+                {fieldErrors.typeDemande && <p className="text-[10px] font-bold text-red-500 px-1">{fieldErrors.typeDemande}</p>}
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Motif</label>
+                <textarea
+                  name="motif"
+                  value={formData.motif}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Précisez le motif de votre absence..."
+                  className="w-full bg-white/5 border border-white/5 px-6 py-4 rounded-2xl outline-none transition-all focus:bg-white/10 focus:border-primary/50 resize-none"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-200">
-                Date fin
-              </label>
-              <input
-                type="date"
-                name="dateFin"
-                value={formData.dateFin}
-                onChange={handleChange}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
-                  fieldErrors.dateFin
-                    ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
-                    : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
-                }`}
-              />
-              {fieldErrors.dateFin && (
-                <p className="text-sm text-red-500">{fieldErrors.dateFin}</p>
-              )}
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">
-                Type de demande
-              </label>
-              <input
-                type="text"
-                name="typeDemande"
-                value={formData.typeDemande}
-                onChange={handleChange}
-                placeholder="Ex : Congé annuel"
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
-                  fieldErrors.typeDemande
-                    ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
-                    : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
-                }`}
-              />
-              {fieldErrors.typeDemande && (
-                <p className="text-sm text-red-500">
-                  {fieldErrors.typeDemande}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-slate-200">
-                Motif
-              </label>
-              <textarea
-                name="motif"
-                value={formData.motif}
-                onChange={handleChange}
-                rows={4}
-                placeholder="Motif de la demande (optionnel)"
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
-                  fieldErrors.motif
-                    ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
-                    : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
-                }`}
-              />
-              {fieldErrors.motif && (
-                <p className="text-sm text-red-500">{fieldErrors.motif}</p>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2 md:col-span-2">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10"
-              >
-                Annuler
-              </button>
-
+            <div className="flex justify-end pt-4">
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20 disabled:opacity-50"
               >
-                Envoyer
+                {actionLoading ? (
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                <span>Envoyer la demande</span>
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {error && (
-        <div className="px-4 py-3 text-sm text-red-400 border rounded-2xl border-red-500/20 bg-red-500/10">
-          {error}
-        </div>
-      )}
-
-      <div className="border shadow-sm rounded-2xl bg-card">
-        <div className="flex items-center justify-between px-6 py-5 border-b">
-          <div>
-            <h2 className="text-lg font-semibold">Historique de mes demandes</h2>
-          </div>
+      <div className="glass border-white/5 shadow-2xl organic-card">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
+          <h3 className="text-lg font-bold flex items-center space-x-2">
+            <Clock className="w-5 h-5 text-primary" />
+            <span>Historique des Demandes</span>
+          </h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-sm">
-            <thead className="bg-muted/30">
-              <tr className="text-left border-b">
-                <th className="px-6 py-4 font-semibold">Type</th>
-                <th className="px-6 py-4 font-semibold">Date début</th>
-                <th className="px-6 py-4 font-semibold">Date fin</th>
-                <th className="px-6 py-4 font-semibold">Date création</th>
-                <th className="px-6 py-4 font-semibold">Date traitement</th>
-                <th className="px-6 py-4 font-semibold">Statut</th>
-                <th className="px-6 py-4 font-semibold">Motif</th>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-white/5 bg-white/5">
+                <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Type</th>
+                <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Période</th>
+                <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Créée le</th>
+                <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Statut</th>
+                <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Motif</th>
               </tr>
             </thead>
-
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {loading ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-12 text-sm text-center text-muted-foreground"
-                  >
-                    Chargement des demandes...
-                  </td>
-                </tr>
-              ) : error && demandes.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-12 text-sm text-center text-red-500"
-                  >
-                    {error}
-                  </td>
-                </tr>
-              ) : demandes.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-12 text-sm text-center text-muted-foreground"
-                  >
-                    Aucune demande d’absence à afficher pour le moment.
-                  </td>
-                </tr>
-              ) : (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td colSpan={5} className="px-8 py-8 bg-white/5" />
+                  </tr>
+                ))
+              ) : demandes.length > 0 ? (
                 demandes.map((demande) => (
-                  <tr
-                    key={demande.idDemande}
-                    className="transition duration-200 border-b border-white/10 hover:bg-white/5"
-                  >
-                    <td className="px-6 py-5 text-slate-300">
-                      {String(demande.typeDemande || "-")}
+                  <tr key={demande.idDemande} className="hover:bg-white/5 transition-colors group">
+                    <td className="px-8 py-5">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                          {demande.typeDemande?.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-bold text-foreground group-hover:text-primary transition-colors">{demande.typeDemande}</span>
+                      </div>
                     </td>
-
-                    <td className="px-6 py-5 text-slate-300">
-                      {formatDate(demande.dateDebut)}
+                    <td className="px-8 py-5">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">du {formatDate(demande.dateDebut)}</span>
+                        <span className="text-sm font-medium text-muted-foreground">au {formatDate(demande.dateFin)}</span>
+                      </div>
                     </td>
-
-                    <td className="px-6 py-5 text-slate-300">
-                      {formatDate(demande.dateFin)}
-                    </td>
-
-                    <td className="px-6 py-5 text-slate-300">
-                      {formatDate(demande.dateCreation)}
-                    </td>
-
-                    <td className="px-6 py-5 text-slate-300">
-                      {formatDate(demande.dateTraitement)}
-                    </td>
-
-                    <td className="px-6 py-5">
-                      <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${getStatutBadgeClass(
-                          demande.statut
-                        )}`}
-                      >
-                        {String(demande.statut || "-")}
+                    <td className="px-8 py-5 text-sm font-medium">{formatDate(demande.dateCreation)}</td>
+                    <td className="px-8 py-5">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatutBadgeClass(demande.statut)}`}>
+                        {demande.statut}
                       </span>
                     </td>
-
-                    <td className="px-6 py-5 text-slate-300">
-                      {String(demande.motif || "-")}
+                    <td className="px-8 py-5">
+                      <p className="text-sm text-muted-foreground line-clamp-1 max-w-[200px]" title={demande.motif || ""}>
+                        {demande.motif || "---"}
+                      </p>
                     </td>
                   </tr>
                 ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-8 py-20 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground/30">
+                        <FileText className="w-8 h-8" />
+                      </div>
+                      <p className="text-muted-foreground font-medium">Aucune demande trouvée</p>
+                    </div>
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

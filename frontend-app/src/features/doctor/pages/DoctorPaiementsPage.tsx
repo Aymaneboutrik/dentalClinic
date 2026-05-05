@@ -58,25 +58,28 @@ export default function DoctorPaiementsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-primary text-sm font-medium">Consultation</p>
-          <PageTitle title="Paiements" desc="Consultez les encaissements" />
+      <div className="p-8 border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5 mb-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-primary uppercase tracking-widest">Consultation</p>
+            <h1 className="text-3xl font-black tracking-tight">Paiements</h1>
+            <p className="text-slate-400 text-sm">Consultez les encaissements effectués par la clinique.</p>
+          </div>
         </div>
       </div>
 
-      <div className="border rounded-xl p-6 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-lg">Liste des paiements</h3>
-          <div className="flex gap-2">
+      <div className="border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5 p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+          <h3 className="font-black text-xl text-white tracking-tight">Liste des paiements</h3>
+          <div className="flex flex-col sm:flex-row gap-4">
             <input
-              className="border rounded px-3 py-1 text-sm bg-background"
+              className="organic-pill border border-white/10 px-6 py-2.5 text-sm bg-white/5 text-white outline-none focus:border-blue-500/50 transition-all min-w-[300px]"
               placeholder="Rechercher par mode, ID Facture..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Button variant="outline" onClick={fetchPaiements} disabled={loading}>
-              {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
+            <Button variant="outline" onClick={fetchPaiements} disabled={loading} className="organic-button px-8 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-lg">
+              {loading ? "..." : fetched ? "Actualiser" : "Charger"}
             </Button>
           </div>
         </div>

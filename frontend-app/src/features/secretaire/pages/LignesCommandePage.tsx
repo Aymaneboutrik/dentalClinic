@@ -4,15 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@components/data-table/data-table";
-import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
-import PageTitle from "@components/commons/page-title";
-import { TOKEN } from "@configs/vars";
+import { DashboardHeader } from "@components/commons/dashboard/DashboardHeader";
 import secureApi from "@apis/instances/secure-api";
+import { Package, Plus, Search, X, Edit3, Trash2, ShoppingCart, List, DollarSign, Clock } from "lucide-react";
+import { toast } from "sonner";
 
 const BASE_URL = "/stock/LigneCommande";
-
 
 const ligneSchema = z.object({
   produitId: z.coerce.number().min(1, "L'ID produit est obligatoire"),
@@ -38,6 +37,7 @@ export default function LignesCommandePage() {
   const [showForm, setShowForm] = useState(false);
   const [fetched, setFetched] = useState(false);
   const [editing, setEditing] = useState<LigneCommande | null>(null);
+  const [search, setSearch] = useState("");
 
   const form = useForm<LigneForm>({
     resolver: zodResolver(ligneSchema),
@@ -51,7 +51,7 @@ export default function LignesCommandePage() {
       setLignes(res.data);
       setFetched(true);
     } catch {
-      console.error("Erreur lors du chargement des lignes");
+      toast.error("Erreur lors du chargement des lignes de commande");
     } finally {
       setLoading(false);
     }
@@ -62,11 +62,15 @@ export default function LignesCommandePage() {
   }, []);
 
   const handleSubmit = async (values: LigneForm) => {
+    setLoading(true);
     try {
+      const payload = { ...values, id: editing?.id || 0, sousTotal: values.quantite * values.prixUnitaire };
       if (editing) {
-        await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values, sousTotal: values.quantite * values.prixUnitaire });
+        await secureApi.put(`${BASE_URL}/${editing.id}`, payload);
+        toast.success("Ligne de commande mise à jour");
       } else {
-        await secureApi.post(`${BASE_URL}`, { id: 0, ...values, sousTotal: values.quantite * values.prixUnitaire });
+        await secureApi.post(`${BASE_URL}`, payload);
+        toast.success("Produit ajouté à la commande");
       }
 
       form.reset();
@@ -74,7 +78,9 @@ export default function LignesCommandePage() {
       setEditing(null);
       fetchLignes();
     } catch (err: any) {
-      alert(`Erreur : ${err.response?.data?.message || 'Sauvegarde échouée'}`);
+      toast.error(err.response?.data?.message || 'Sauvegarde échouée');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -89,122 +95,199 @@ export default function LignesCommandePage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette ligne de commande ?")) return;
+    setLoading(true);
     try {
       await secureApi.delete(`${BASE_URL}/${id}`);
+      toast.success("Ligne supprimée");
       fetchLignes();
     } catch {
-      alert("Action impossible.");
+      toast.error("Action impossible.");
+      setLoading(false);
     }
   };
 
+  const filtered = lignes.filter(
+    (l) =>
+      l.produitId.toString().includes(search) ||
+      l.commandeId.toString().includes(search)
+  );
+
   const columns: ColumnDef<LigneCommande>[] = [
-    { accessorKey: "id", header: "ID" },
-    { 
-      accessorKey: "produitId", 
-      header: "ID Produit",
-      cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.produitId}</span>
-    },
     { 
       accessorKey: "commandeId", 
-      header: "ID Commande",
-      cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.commandeId}</span>
+      header: "Commande",
+      cell: ({ row }) => <span className="font-mono text-xs font-bold text-muted-foreground">#ORD-{row.original.commandeId}</span>
+    },
+    { 
+      accessorKey: "produitId", 
+      header: "Produit",
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2">
+          <Package className="w-3 h-3 text-primary/40" />
+          <span className="font-bold text-sm">ID: {row.original.produitId}</span>
+        </div>
+      )
     },
     { 
       accessorKey: "quantite", 
       header: "Quantité",
-      cell: ({ row }) => <span className="text-gray-800">{row.original.quantite}</span>
+      cell: ({ row }) => <span className="font-black text-sm">{row.original.quantite} u.</span>
     },
     { 
       accessorKey: "prixUnitaire", 
-      header: "P.U (MAD)",
-      cell: ({ row }) => <span>{row.original.prixUnitaire.toFixed(2)}</span>
+      header: "P.U",
+      cell: ({ row }) => <span className="font-bold text-sm text-emerald-500">{row.original.prixUnitaire.toFixed(2)} MAD</span>
     },
     { 
       accessorKey: "sousTotal", 
-      header: "Sous-total (MAD)",
-      cell: ({ row }) => <span className="font-black text-primary">{row.original.sousTotal.toFixed(2)}</span>
+      header: "Sous-total",
+      cell: ({ row }) => (
+        <div className="bg-primary/5 border border-primary/10 px-3 py-1 rounded-lg w-fit">
+          <span className="font-black text-sm text-primary">{row.original.sousTotal.toFixed(2)} MAD</span>
+        </div>
+      )
     },
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)}>
-            Modifier
-          </Button>
-          <Button size="sm" variant="destructive" onClick={() => handleDelete(row.original.id)}>
-            Supprimer
-          </Button>
+          <button onClick={() => handleEdit(row.original)} className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors">
+            <Edit3 className="w-4 h-4" />
+          </button>
+          <button onClick={() => handleDelete(row.original.id)} className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors">
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       ),
     },
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-primary text-sm font-medium">Gestion Stock</p>
-          <PageTitle title="Lignes de Commande" desc="Associez des produits aux commandes créées pour préparer l'approvisionnement." />
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <DashboardHeader
+          title="Lignes de Commande"
+          subtitle="Détail des produits associés aux ordres d'achat"
+        />
+        
+        <div className="flex items-center space-x-3 md:mb-10">
+          <button 
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditing(null);
+              form.reset();
+            }}
+            className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20"
+          >
+            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span>{showForm ? "Annuler" : "Ajouter un Produit"}</span>
+          </button>
         </div>
-        <Button
-          onClick={() => {
-            setShowForm(!showForm);
-            form.reset();
-          }}
-          className=""
-        >
-          {showForm ? "Masquer le formulaire" : "Ajouter un Produit"}
-        </Button>
       </div>
 
       {showForm && (
-        <div className="border rounded-xl p-6 mb-6 bg-card">
-          <h2 className="text-xl font-bold mb-2">
-            Nouvelle ligne de commande
-          </h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Spécifiez le produit, la quantité et le prix unitaire convenu.
-          </p>
+        <div className="glass border-white/5 p-8 organic-card shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-inner">
+              <ShoppingCart className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                {editing ? "Modifier la ligne" : "Associer un Produit"}
+              </h2>
+              <p className="text-sm text-muted-foreground">Définissez les détails de l'article pour la commande</p>
+            </div>
+          </div>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextInput label="ID du Produit" name="produitId" form={form} placeholder="ID" withAsterisk />
-                <TextInput label="ID de la Commande" name="commandeId" form={form} placeholder="ID" withAsterisk />
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">ID de la Commande</label>
+                  <TextInput
+                    name="commandeId"
+                    form={form}
+                    placeholder="Ex: 10"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">ID du Produit</label>
+                  <TextInput
+                    name="produitId"
+                    form={form}
+                    placeholder="Ex: 501"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextInput label="Quantité" name="quantite" form={form} placeholder="Nombre d'unités" withAsterisk />
-                <TextInput label="Prix Unitaire (MAD)" name="prixUnitaire" form={form} placeholder="Prix par unité" withAsterisk />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Quantité</label>
+                  <TextInput
+                    name="quantite"
+                    form={form}
+                    placeholder="Ex: 100"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Prix Unitaire (MAD)</label>
+                  <TextInput
+                    name="prixUnitaire"
+                    form={form}
+                    placeholder="0.00"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setShowForm(false); form.reset(); }}
+              <div className="flex justify-end pt-6 border-t border-white/5">
+                <button 
+                  type="submit" 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-4 organic-pill text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50" 
+                  disabled={loading}
                 >
-                  Annuler
-                </Button>
-                <Button type="submit" className="px-8 shadow-md" disabled={loading}>
-                   Ajouter à la commande
-                </Button>
+                  {loading ? "Traitement..." : editing ? "Mettre à jour" : "Ajouter à la commande"}
+                </button>
               </div>
             </form>
           </Form>
         </div>
       )}
 
-      <div className="border rounded-xl p-6 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-lg text-gray-800">Contenu des commandes</h3>
-            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{lignes.length} lignes</span>
+      <div className="glass border-white/5 shadow-2xl organic-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between px-8 py-6 border-b border-white/5 gap-4">
+          <div className="flex items-center gap-3">
+            <List className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-lg text-white">Contenu des Commandes</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/10">{lignes.length} RÉFÉRENCES</span>
           </div>
-          <Button variant="outline" onClick={fetchLignes} disabled={loading}>
-            {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
-          </Button>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <input
+                className="bg-white/5 border border-white/5 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-all w-64"
+                placeholder="Rechercher par ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button 
+              onClick={fetchLignes} 
+              disabled={loading} 
+              className="p-2.5 rounded-xl border border-white/5 hover:bg-white/5 text-muted-foreground transition-all"
+              title="Actualiser"
+            >
+              <Clock className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
-        <DataTable columns={columns} data={lignes} loading={loading} />
+        
+        <div className="p-4">
+           <DataTable columns={columns} data={filtered} loading={loading} />
+        </div>
       </div>
     </div>
   );

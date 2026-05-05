@@ -315,7 +315,7 @@ const PersonnelPage = () => {
 
   return (
     <div className="w-full space-y-8">
-      <div className="p-6 border shadow-sm rounded-2xl bg-card">
+      <div className="p-8 border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
             <p className="text-sm font-medium text-primary">
@@ -329,7 +329,7 @@ const PersonnelPage = () => {
           <button
             type="button"
             onClick={handleOpenAddForm}
-            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
+            className="organic-button bg-blue-600 px-8 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-blue-500 shadow-lg shadow-blue-500/20"
           >
             Ajouter un employé
           </button>
@@ -343,7 +343,7 @@ const PersonnelPage = () => {
       )}
 
       {showAddForm && (
-        <div className="rounded-2xl border border-white/10 bg-[#081028] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+        <div className="organic-card border border-white/10 bg-[#081028]/80 backdrop-blur-xl p-8 shadow-2xl">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-white">
               {isEditMode ? "Modifier un employé" : "Ajouter un employé"}
@@ -371,7 +371,7 @@ const PersonnelPage = () => {
                 value={formData.nom}
                 onChange={handleChange}
                 placeholder="Entrez le nom"
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
+                className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
                   fieldErrors.nom
                     ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                     : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -392,7 +392,7 @@ const PersonnelPage = () => {
                 value={formData.prenom}
                 onChange={handleChange}
                 placeholder="Entrez le prénom"
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
+                className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
                   fieldErrors.prenom
                     ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                     : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -411,7 +411,7 @@ const PersonnelPage = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Entrez l’email"
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
+                className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
                   fieldErrors.email
                     ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                     : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -432,7 +432,7 @@ const PersonnelPage = () => {
                 value={formData.telephone}
                 onChange={handleChange}
                 placeholder="Entrez le téléphone"
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
+                className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:bg-blue-500/5 ${
                   fieldErrors.telephone
                     ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                     : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -449,7 +449,7 @@ const PersonnelPage = () => {
                 name="idRole"
                 value={formData.idRole}
                 onChange={handleChange}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
+                className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
                   fieldErrors.idRole
                     ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                     : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -482,7 +482,7 @@ const PersonnelPage = () => {
                   name="statut"
                   value={formData.statut}
                   onChange={handleChange}
-                  className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
+                  className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
                     fieldErrors.statut
                       ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                       : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -509,7 +509,7 @@ const PersonnelPage = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+                className="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold text-slate-200 transition hover:bg-white/10"
               >
                 Annuler
               </button>
@@ -517,7 +517,7 @@ const PersonnelPage = () => {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
+                className="organic-button bg-blue-600 px-10 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70 shadow-lg shadow-blue-500/20"
               >
                 {isEditMode ? "Mettre à jour" : "Enregistrer"}
               </button>
@@ -526,7 +526,7 @@ const PersonnelPage = () => {
         </div>
       )}
 
-      <div className="border shadow-sm rounded-2xl bg-card">
+      <div className="border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="flex items-center justify-between px-6 py-5 border-b">
           <div>
             <h2 className="text-lg font-semibold">Liste des employés</h2>
@@ -596,12 +596,13 @@ const PersonnelPage = () => {
 
                     <td className="px-6 py-5">
                       <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+                        className={`inline-flex items-center organic-pill border px-4 py-1.5 text-[10px] font-black uppercase tracking-widest ${
                           employee.statut === "Actif"
                             ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-400"
                             : "border-red-500/30 bg-red-500/15 text-red-400"
                         }`}
                       >
+                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${employee.statut === "Actif" ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`}></span>
                         {employee.statut}
                       </span>
                     </td>
@@ -615,7 +616,7 @@ const PersonnelPage = () => {
                         <button
                           type="button"
                           onClick={() => handleEdit(employee.idEmploye)}
-                          className="px-4 py-2 text-xs font-semibold text-blue-400 transition border rounded-xl border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 hover:text-blue-300"
+                          className="px-4 py-2 text-xs font-semibold text-blue-400 transition border organic-pill h-9 px-6 uppercase tracking-widest text-[9px] font-black"
                         >
                           Modifier
                         </button>
@@ -623,7 +624,7 @@ const PersonnelPage = () => {
                         <button
                           type="button"
                           onClick={() => handleDelete(employee.idEmploye)}
-                          className="px-4 py-2 text-xs font-semibold text-red-400 transition border rounded-xl border-red-500/30 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300"
+                          className="px-4 py-2 text-xs font-semibold text-red-400 transition border organic-pill h-9 px-6 uppercase tracking-widest text-[9px] font-black"
                         >
                           Supprimer
                         </button>

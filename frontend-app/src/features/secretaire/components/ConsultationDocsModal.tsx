@@ -94,7 +94,7 @@ export function ConsultationDocsModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px] glass border-white/10 shadow-2xl rounded-[1.5rem] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] glass border-white/5 shadow-2xl organic-card-reverse max-h-[85vh] overflow-y-auto bg-background/95 backdrop-blur-xl">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
               <DialogTitle className="text-2xl font-black">Documents Consultation</DialogTitle>
@@ -103,7 +103,7 @@ export function ConsultationDocsModal({
             {user?.role !== "Assistant" && user?.role !== "Assistante" && (
               <Button 
                 size="sm" 
-                className="rounded-xl shadow-lg bg-primary text-primary-foreground"
+                className="organic-button px-6 font-black uppercase tracking-widest text-[10px] shadow-lg bg-primary text-primary-foreground"
                 onClick={() => setIsUploadModalOpen(true)}
               >
                 <Upload className="w-4 h-4 mr-2" />
@@ -122,7 +122,7 @@ export function ConsultationDocsModal({
                 {documents.map((doc) => (
                   <div 
                     key={doc.id}
-                    className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between hover:bg-white/10 transition-colors group"
+                    className="p-5 organic-card bg-white/5 border border-white/5 flex items-center justify-between hover:bg-white/10 transition-all group shadow-sm"
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center">
@@ -165,7 +165,7 @@ export function ConsultationDocsModal({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-[1.5rem]">
+              <div className="text-center py-12 border-2 border-dashed border-white/5 organic-card bg-white/5 shadow-inner">
                 <FileText className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
                 <p className="text-muted-foreground font-medium italic">Aucun document pour cette séance.</p>
               </div>

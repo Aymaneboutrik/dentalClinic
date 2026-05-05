@@ -5,10 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@components/data-table/data-table";
-import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
-import PageTitle from "@components/commons/page-title";
+import { DashboardHeader } from "@components/commons/dashboard/DashboardHeader";
+import { FileText, Plus, Search, X, Edit3, Trash2, Eye, Calendar, DollarSign, Clock, Receipt, CreditCard, Banknote, ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
 
 const BASE_URL = "/factures";
 
@@ -64,7 +65,7 @@ export default function FacturesPage() {
       setFactures(res.data);
       setFetched(true);
     } catch {
-      alert("Erreur lors du chargement des factures");
+      toast.error("Erreur lors du chargement des factures");
     } finally {
       setLoading(false);
     }
@@ -75,18 +76,23 @@ export default function FacturesPage() {
   }, []);
 
   const handleSubmit = async (values: FactureForm) => {
+    setLoading(true);
     try {
       if (editing) {
         await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values });
+        toast.success("Facture mise à jour");
       } else {
         await secureApi.post(`${BASE_URL}`, values);
+        toast.success("Facture créée");
       }
       form.reset();
       setShowForm(false);
       setEditing(null);
       fetchFactures();
     } catch (error: any) {
-      alert(error.response?.data?.message || "Erreur lors de la sauvegarde");
+      toast.error(error.response?.data?.message || "Erreur lors de la sauvegarde");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,11 +104,14 @@ export default function FacturesPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette facture ?")) return;
+    setLoading(true);
     try {
       await secureApi.delete(`${BASE_URL}/${id}`);
+      toast.success("Facture supprimée");
       fetchFactures();
     } catch {
-      alert("Erreur lors de la suppression");
+      toast.error("Erreur lors de la suppression");
+      setLoading(false);
     }
   };
 
@@ -111,7 +120,7 @@ export default function FacturesPage() {
       const res = await secureApi.get(`${BASE_URL}/${id}/fiche`);
       setFicheFacture(res.data);
     } catch {
-      alert("Erreur lors du chargement de la fiche de facture");
+      toast.error("Erreur lors du chargement de la fiche de facture");
     }
   };
 
@@ -122,35 +131,49 @@ export default function FacturesPage() {
       f.date.includes(search)
   );
 
+  const getStatutClass = (statut: string) => {
+    switch (statut) {
+      case "PAYEE": return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+      case "PARTIEL": return "bg-amber-500/10 text-amber-500 border-amber-500/20";
+      default: return "bg-rose-500/10 text-rose-500 border-rose-500/20";
+    }
+  };
+
   const columns: ColumnDef<Facture>[] = [
-    { accessorKey: "id", header: "ID" },
+    { 
+      accessorKey: "id", 
+      header: "N° Facture",
+      cell: ({ row }) => <span className="font-mono text-xs font-bold text-muted-foreground">#FAC-{row.original.id}</span>
+    },
     {
       accessorKey: "date",
-      header: "Date",
-      cell: ({ row }) => row.original.date?.split("T")[0] ?? "-",
+      header: "Date d'émission",
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2 text-xs font-medium text-muted-foreground">
+          <Calendar className="w-3 h-3" />
+          <span>{row.original.date?.split("T")[0] ?? "-"}</span>
+        </div>
+      ),
     },
-    { accessorKey: "montantBrut", header: "Montant Brut (MAD)" },
-    { accessorKey: "totalRemises", header: "Total Remises (MAD)" },
-    { accessorKey: "montantNet", header: "Montant Net (MAD)" },
     { 
-      accessorKey: "totalPaye", 
-      header: "Total Payé (MAD)",
-      cell: ({ row }) => <span>{row.original.totalPaye !== undefined ? row.original.totalPaye : "-"}</span>
+      accessorKey: "montantNet", 
+      header: "Montant Net",
+      cell: ({ row }) => <span className="font-bold text-sm">{row.original.montantNet} MAD</span>
     },
-    { accessorKey: "resteAPayer", header: "Reste à Payer (MAD)" },
+    { 
+      accessorKey: "resteAPayer", 
+      header: "Reste à régler",
+      cell: ({ row }) => (
+        <span className={`font-black text-sm ${row.original.resteAPayer > 0 ? "text-rose-500" : "text-emerald-500"}`}>
+          {row.original.resteAPayer} MAD
+        </span>
+      )
+    },
     {
       accessorKey: "statut",
       header: "Statut",
       cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded text-xs font-bold ${
-            row.original.statut === "PAYEE"
-              ? "bg-green-100 text-green-700"
-              : row.original.statut === "PARTIEL"
-              ? "bg-orange-100 text-orange-700"
-              : "bg-red-100 text-red-700"
-          }`}
-        >
+        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatutClass(row.original.statut)}`}>
           {row.original.statut}
         </span>
       ),
@@ -160,17 +183,17 @@ export default function FacturesPage() {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => fetchFicheFacture(row.original.id)}>
-            Fiche
-          </Button>
+          <button onClick={() => fetchFicheFacture(row.original.id)} className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors" title="Détails">
+            <Eye className="w-4 h-4" />
+          </button>
           {row.original.statut !== "PAYEE" && (
             <>
-              <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)}>
-                Modifier
-              </Button>
-              <Button size="sm" variant="destructive" onClick={() => handleDelete(row.original.id)}>
-                Supprimer
-              </Button>
+              <button onClick={() => handleEdit(row.original)} className="p-2 hover:bg-white/10 text-muted-foreground rounded-lg transition-colors" title="Modifier">
+                <Edit3 className="w-4 h-4" />
+              </button>
+              <button onClick={() => handleDelete(row.original.id)} className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors" title="Supprimer">
+                <Trash2 className="w-4 h-4" />
+              </button>
             </>
           )}
         </div>
@@ -179,53 +202,67 @@ export default function FacturesPage() {
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-primary text-sm font-medium">Gestion Facturation</p>
-          <PageTitle title="Factures" desc="Gérez les factures des patients" />
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <DashboardHeader
+          title="Facturation Patients"
+          subtitle="Gérez l'ensemble des factures, paiements et restes à régler"
+        />
+        
+        <div className="flex items-center space-x-3 md:mb-10">
+          <button 
+            onClick={async () => {
+              try {
+                setLoading(true);
+                await secureApi.post(BASE_URL, { date: new Date().toISOString().split("T")[0] });
+                toast.success("Facture générée avec succès");
+                fetchFactures();
+              } catch {
+                toast.error("Erreur lors de la création de la facture");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Créer une Facture</span>
+          </button>
         </div>
-        <Button
-          onClick={async () => {
-            try {
-              await secureApi.post(BASE_URL, { date: new Date().toISOString().split("T")[0] });
-              fetchFactures();
-            } catch {
-              alert("Erreur lors de la création de la facture");
-            }
-          }}
-          disabled={loading}
-        >
-          Créer une facture
-        </Button>
       </div>
 
       {showForm && editing && (
-        <div className="border rounded-xl p-6 mb-6 bg-card">
-          <h2 className="text-xl font-bold mb-2">
-            Modifier la date de la facture
-          </h2>
+        <div className="glass border-white/5 p-8 organic-card shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-inner">
+              <Calendar className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">Mise à jour de la date</h2>
+              <p className="text-sm text-muted-foreground">Modifiez la date d'émission de la facture #FAC-{editing.id}</p>
+            </div>
+          </div>
+          
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium">Date <span className="text-destructive">*</span></label>
-                  <input
-                    type="date"
-                    className="border rounded px-3 py-2 bg-background text-sm"
-                    {...form.register("date")}
-                  />
-                </div>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Date d'émission</label>
+                <input
+                  type="date"
+                  className="w-full bg-white/5 border border-white/5 rounded-2xl h-14 px-6 text-sm outline-none focus:border-primary/50 transition-all text-foreground"
+                  {...form.register("date")}
+                />
               </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setShowForm(false); setEditing(null); form.reset(); }}
+              <div className="flex justify-end pt-6 border-t border-white/5 gap-3">
+                <button type="button" onClick={() => { setShowForm(false); setEditing(null); }} className="px-6 py-3 rounded-xl border border-white/5 hover:bg-white/5 transition-all text-sm font-bold">Annuler</button>
+                <button 
+                  type="submit" 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-3 organic-pill text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50" 
+                  disabled={loading}
                 >
-                  Annuler
-                </Button>
-                <Button type="submit">Enregistrer</Button>
+                  {loading ? "Sauvegarde..." : "Enregistrer"}
+                </button>
               </div>
             </form>
           </Form>
@@ -233,144 +270,184 @@ export default function FacturesPage() {
       )}
 
       {ficheFacture && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-background rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Fiche Facture N°{ficheFacture.id}</h2>
-              <Button variant="outline" onClick={() => setFicheFacture(null)}>Fermer</Button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="glass border-white/10 organic-card p-10 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] relative">
+            <button onClick={() => setFicheFacture(null)} className="absolute top-6 right-6 p-2 hover:bg-white/5 rounded-xl transition-colors">
+               <X className="w-6 h-6 text-muted-foreground" />
+            </button>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+              <div>
+                <div className="flex items-center space-x-3 mb-2">
+                   <Receipt className="w-8 h-8 text-primary" />
+                   <h2 className="text-3xl font-black tracking-tighter uppercase">Facture #FAC-{ficheFacture.id}</h2>
+                </div>
+                <div className="flex items-center space-x-4">
+                   <span className="text-sm font-medium text-muted-foreground">Émise le {ficheFacture.date}</span>
+                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatutClass(ficheFacture.statut)}`}>
+                      {ficheFacture.statut}
+                   </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-8 bg-white/5 p-6 rounded-3xl border border-white/5">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-1">Montant Net</p>
+                  <p className="text-xl font-bold">{ficheFacture.montantNet} MAD</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60 mb-1">Déjà Payé</p>
+                  <p className="text-xl font-bold text-emerald-500">{ficheFacture.totalPaye} MAD</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-rose-500/60 mb-1">Reste à payer</p>
+                  <p className="text-xl font-bold text-rose-500">{ficheFacture.resteAPayer} MAD</p>
+                </div>
+              </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <p className="text-sm text-muted-foreground">Date :</p>
-                <p className="font-medium">{ficheFacture.date}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Statut :</p>
-                <p className="font-medium">{ficheFacture.statut}</p>
+            <div className="space-y-10">
+              <section>
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-1.5 h-6 bg-primary rounded-full" />
+                  <h3 className="text-lg font-bold">Actes & Prestations</h3>
+                </div>
+                <div className="glass border-white/5 rounded-3xl overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead className="bg-white/5 border-b border-white/5">
+                      <tr>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Acte Médical</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Qté</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">P.U (MAD)</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Sous-Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {ficheFacture.lignesFacture.length > 0 ? (
+                        ficheFacture.lignesFacture.map((l) => (
+                          <tr key={l.id || l.acteMedicalId} className="hover:bg-white/5 transition-colors">
+                            <td className="px-6 py-4">
+                              <span className="font-bold block">{l.libelleActe}</span>
+                              <span className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">ID: {l.acteMedicalId}</span>
+                            </td>
+                            <td className="px-6 py-4 font-bold text-sm">{l.quantite}</td>
+                            <td className="px-6 py-4 text-sm font-medium">{l.prixUnitaire}</td>
+                            <td className="px-6 py-4 text-sm font-black text-primary text-right">{l.sousTotal} MAD</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan={4} className="px-6 py-12 text-center text-muted-foreground text-sm">Aucun acte enregistré</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <section>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-1.5 h-6 bg-rose-500 rounded-full" />
+                    <h3 className="text-lg font-bold">Remises Appliquées</h3>
+                  </div>
+                  <div className="glass border-white/5 rounded-3xl overflow-hidden">
+                    <table className="w-full text-left">
+                      <thead className="bg-white/5 border-b border-white/5">
+                        <tr>
+                          <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Type</th>
+                          <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Valeur</th>
+                          <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Impact</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {ficheFacture.remises.length > 0 ? (
+                          ficheFacture.remises.map((r) => (
+                            <tr key={r.id || r.dateRemise} className="hover:bg-white/5 transition-colors">
+                              <td className="px-6 py-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">{r.typeRemise}</td>
+                              <td className="px-6 py-3 font-bold text-sm">{r.valeur} {r.typeRemise === 'POURCENTAGE' ? '%' : 'MAD'}</td>
+                              <td className="px-6 py-3 font-black text-rose-500 text-right">-{r.montantCalcule} MAD</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={3} className="px-6 py-8 text-center text-muted-foreground text-xs">Aucune remise</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-1.5 h-6 bg-emerald-500 rounded-full" />
+                    <h3 className="text-lg font-bold">Règlements Reçus</h3>
+                  </div>
+                  <div className="glass border-white/5 rounded-3xl overflow-hidden">
+                    <table className="w-full text-left">
+                      <thead className="bg-white/5 border-b border-white/5">
+                        <tr>
+                          <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mode</th>
+                          <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Date</th>
+                          <th className="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Montant</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {ficheFacture.paiements.length > 0 ? (
+                          ficheFacture.paiements.map((p) => (
+                            <tr key={p.id || p.datePaiement} className="hover:bg-white/5 transition-colors">
+                              <td className="px-6 py-3">
+                                 <div className="flex items-center space-x-2">
+                                    {p.modePaiement === "ESPECES" ? <Banknote className="w-3 h-3 text-emerald-500" /> : <CreditCard className="w-3 h-3 text-primary" />}
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{p.modePaiement}</span>
+                                 </div>
+                              </td>
+                              <td className="px-6 py-3 text-xs font-medium text-muted-foreground">{p.datePaiement?.split("T")[0]}</td>
+                              <td className="px-6 py-3 font-black text-emerald-500 text-right">+{p.montant} MAD</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={3} className="px-6 py-8 text-center text-muted-foreground text-xs">En attente de paiement</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
               </div>
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 bg-muted p-4 rounded-lg">
-              <div>
-                <p className="text-xs text-muted-foreground">Montant Brut</p>
-                <p className="font-bold">{ficheFacture.montantBrut} MAD</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Total Remises</p>
-                <p className="font-bold text-red-500">-{ficheFacture.totalRemises} MAD</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Montant Net</p>
-                <p className="font-bold">{ficheFacture.montantNet} MAD</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Total Payé</p>
-                <p className="font-bold text-green-600">{ficheFacture.totalPaye} MAD</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Reste à Payer</p>
-                <p className="font-bold text-orange-600">{ficheFacture.resteAPayer} MAD</p>
-              </div>
-            </div>
-
-            <h3 className="font-bold text-lg mb-2">Lignes de Facture</h3>
-            <table className="w-full text-sm text-left mb-6 border">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="p-2 border">Acte Médical</th>
-                  <th className="p-2 border">Quantité</th>
-                  <th className="p-2 border">Prix Unitaire</th>
-                  <th className="p-2 border">Sous-Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ficheFacture.lignesFacture.length > 0 ? (
-                  ficheFacture.lignesFacture.map((l) => (
-                    <tr key={l.id || l.acteMedicalId} className="border-b">
-                      <td className="p-2 border">{l.libelleActe} (ID: {l.acteMedicalId})</td>
-                      <td className="p-2 border">{l.quantite}</td>
-                      <td className="p-2 border">{l.prixUnitaire} MAD</td>
-                      <td className="p-2 border font-medium">{l.sousTotal} MAD</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr><td colSpan={4} className="p-2 text-center text-muted-foreground">Aucune ligne</td></tr>
-                )}
-              </tbody>
-            </table>
-
-            <h3 className="font-bold text-lg mb-2">Remises</h3>
-            <table className="w-full text-sm text-left mb-6 border">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="p-2 border">Date</th>
-                  <th className="p-2 border">Type</th>
-                  <th className="p-2 border">Valeur</th>
-                  <th className="p-2 border">Montant Calculé</th>
-                  <th className="p-2 border">Autorisée</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ficheFacture.remises.length > 0 ? (
-                  ficheFacture.remises.map((r) => (
-                    <tr key={r.id || r.dateRemise} className="border-b">
-                      <td className="p-2 border">{r.dateRemise}</td>
-                      <td className="p-2 border">{r.typeRemise}</td>
-                      <td className="p-2 border">{r.valeur} {r.typeRemise === 'POURCENTAGE' ? '%' : 'MAD'}</td>
-                      <td className="p-2 border font-medium text-red-500">-{r.montantCalcule} MAD</td>
-                      <td className="p-2 border">{r.estAutorisee ? "Oui" : "Non"}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr><td colSpan={5} className="p-2 text-center text-muted-foreground">Aucune remise</td></tr>
-                )}
-              </tbody>
-            </table>
-
-            <h3 className="font-bold text-lg mb-2">Paiements</h3>
-            <table className="w-full text-sm text-left mb-2 border">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="p-2 border">Date</th>
-                  <th className="p-2 border">Mode</th>
-                  <th className="p-2 border">Montant</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ficheFacture.paiements.length > 0 ? (
-                  ficheFacture.paiements.map((p) => (
-                    <tr key={p.id || p.datePaiement} className="border-b">
-                      <td className="p-2 border">{p.datePaiement}</td>
-                      <td className="p-2 border">{p.modePaiement}</td>
-                      <td className="p-2 border font-medium text-green-600">+{p.montant} MAD</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr><td colSpan={3} className="p-2 text-center text-muted-foreground">Aucun paiement</td></tr>
-                )}
-              </tbody>
-            </table>
           </div>
         </div>
       )}
 
-      <div className="border rounded-xl p-6 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-lg">Liste des factures</h3>
-          <div className="flex gap-2">
-            <input
-              className="border rounded px-3 py-1 text-sm bg-background"
-              placeholder="Rechercher par ID, Statut..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <Button variant="outline" onClick={fetchFactures} disabled={loading}>
-              {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
-            </Button>
+      <div className="glass border-white/5 shadow-2xl organic-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between px-8 py-6 border-b border-white/5 gap-4">
+          <div className="flex items-center gap-3">
+            <FileText className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-lg text-white">Registre des Factures</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/10">{factures.length} ÉMISES</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <input
+                className="bg-white/5 border border-white/5 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-all w-64"
+                placeholder="N°, Statut, Date..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button 
+              onClick={fetchFactures} 
+              disabled={loading} 
+              className="p-2.5 rounded-xl border border-white/5 hover:bg-white/5 text-muted-foreground transition-all"
+              title="Actualiser"
+            >
+              <Clock className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
-        <DataTable columns={columns} data={filtered} loading={loading} />
+        
+        <div className="p-4">
+           <DataTable columns={columns} data={filtered} loading={loading} />
+        </div>
       </div>
     </div>
   );

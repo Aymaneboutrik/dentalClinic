@@ -8,7 +8,9 @@ import { DataTable } from "@components/data-table/data-table";
 import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
-import PageTitle from "@components/commons/page-title";
+import { DashboardHeader } from "@components/commons/dashboard/DashboardHeader";
+import { FileText, Plus, Search, X, Edit3, Trash2, Hash, Activity, DollarSign, Clock } from "lucide-react";
+import { toast } from "sonner";
 
 const BASE_URL = "/lignes-facture";
 
@@ -64,7 +66,7 @@ export default function LignesFacturePage() {
       setLignes(res.data);
       setFetched(true);
     } catch {
-      alert("Erreur lors du chargement des lignes de facture");
+      toast.error("Erreur lors du chargement des lignes de facture");
     } finally {
       setLoading(false);
     }
@@ -77,18 +79,23 @@ export default function LignesFacturePage() {
   }, []);
 
   const handleSubmit = async (values: LigneFactureForm) => {
+    setLoading(true);
     try {
       if (editing) {
         await secureApi.put(`${BASE_URL}/${editing.id}`, { id: editing.id, ...values });
+        toast.success("Ligne mise à jour");
       } else {
         await secureApi.post(`${BASE_URL}`, values);
+        toast.success("Ligne ajoutée avec succès");
       }
       form.reset();
       setShowForm(false);
       setEditing(null);
       fetchLignes();
     } catch (error: any) {
-      alert(error.response?.data?.message || "Erreur lors de la sauvegarde (vérifiez que la facture est IMPAYÉE).");
+      toast.error(error.response?.data?.message || "Erreur de sauvegarde (La facture est probablement déjà payée).");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,11 +110,14 @@ export default function LignesFacturePage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer cette ligne ?")) return;
+    setLoading(true);
     try {
       await secureApi.delete(`${BASE_URL}/${id}`);
+      toast.success("Ligne supprimée");
       fetchLignes();
     } catch {
-      alert("Erreur lors de la suppression");
+      toast.error("Erreur lors de la suppression");
+      setLoading(false);
     }
   };
 
@@ -118,100 +128,181 @@ export default function LignesFacturePage() {
   );
 
   const columns: ColumnDef<LigneFacture>[] = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "factureId", header: "ID Facture" },
+    { 
+      accessorKey: "factureId", 
+      header: "Facture",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs font-bold text-muted-foreground">#FAC-{row.original.factureId}</span>
+      )
+    },
     {
       accessorKey: "acteMedicalId",
-      header: "Acte Médical",
+      header: "Désignation",
       cell: ({ row }) => (
-        <span>{row.original.libelleActe} (ID: {row.original.acteMedicalId})</span>
+        <div className="flex flex-col">
+          <span className="font-bold text-foreground">{row.original.libelleActe}</span>
+          <span className="text-[10px] text-primary/60 font-black uppercase tracking-widest">ID ACTE: {row.original.acteMedicalId}</span>
+        </div>
       ),
     },
-    { accessorKey: "quantite", header: "Quantité" },
-    { accessorKey: "prixUnitaire", header: "Prix Unitaire (MAD)" },
-    { accessorKey: "sousTotal", header: "Sous-Total (MAD)" },
+    { 
+      accessorKey: "quantite", 
+      header: "Qté",
+      cell: ({ row }) => <span className="font-black text-sm">{row.original.quantite}</span>
+    },
+    { 
+      accessorKey: "prixUnitaire", 
+      header: "Prix Unit.",
+      cell: ({ row }) => <span className="font-bold text-sm text-emerald-500">{row.original.prixUnitaire} MAD</span>
+    },
+    { 
+      accessorKey: "sousTotal", 
+      header: "Total HT",
+      cell: ({ row }) => (
+        <div className="bg-primary/5 border border-primary/10 px-3 py-1 rounded-lg w-fit">
+          <span className="font-black text-sm text-primary">{row.original.sousTotal} MAD</span>
+        </div>
+      )
+    },
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)}>
-            Modifier
-          </Button>
-          <Button size="sm" variant="destructive" onClick={() => handleDelete(row.original.id)}>
-            Supprimer
-          </Button>
+          <button onClick={() => handleEdit(row.original)} className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors">
+            <Edit3 className="w-4 h-4" />
+          </button>
+          <button onClick={() => handleDelete(row.original.id)} className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors">
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       ),
     },
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-primary text-sm font-medium">Gestion Facturation</p>
-          <PageTitle title="Lignes de Facture" desc="Gérez les actes ajoutés aux factures" />
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <DashboardHeader
+          title="Détails de Facturation"
+          subtitle="Gérez les actes et les montants associés aux factures"
+        />
+        
+        <div className="flex items-center space-x-3 md:mb-10">
+          <button 
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditing(null);
+              form.reset({ factureId: Number(factureIdFilter) || 0, acteMedicalId: 0, quantite: 1 });
+            }}
+            className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20"
+          >
+            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span>{showForm ? "Annuler" : "Ajouter un Acte"}</span>
+          </button>
         </div>
-        <Button
-          onClick={() => {
-            setShowForm(true);
-            form.reset({ factureId: 0, acteMedicalId: 0, quantite: 1 });
-          }}
-        >
-          Ajouter une ligne
-        </Button>
       </div>
 
       {showForm && (
-        <div className="border rounded-xl p-6 mb-6 bg-card">
-          <h2 className="text-xl font-bold mb-2">
-            Ajouter une ligne à une facture
-          </h2>
+        <div className="glass border-white/5 p-8 organic-card shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-primary/20 rounded-2xl text-primary shadow-inner">
+              <Activity className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">
+                {editing ? "Modifier la ligne" : "Ajouter un Acte Médical"}
+              </h2>
+              <p className="text-sm text-muted-foreground">Associez un acte et sa quantité à la facture</p>
+            </div>
+          </div>
+          
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <TextInput label="ID Facture" name="factureId" form={form} placeholder="ID Facture" withAsterisk />
-                <TextInput label="ID Acte Médical" name="acteMedicalId" form={form} placeholder="ID Acte" withAsterisk />
-                <TextInput label="Quantité" name="quantite" form={form} placeholder="1" withAsterisk />
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">ID Facture</label>
+                  <TextInput
+                    name="factureId"
+                    form={form}
+                    placeholder="Ex: 42"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">ID Acte Médical</label>
+                  <TextInput
+                    name="acteMedicalId"
+                    form={form}
+                    placeholder="Ex: 101"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Quantité</label>
+                  <TextInput
+                    name="quantite"
+                    form={form}
+                    placeholder="1"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setShowForm(false); form.reset(); }}
+              <div className="flex justify-end pt-6 border-t border-white/5">
+                <button 
+                  type="submit" 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-4 organic-pill text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50" 
+                  disabled={loading}
                 >
-                  Annuler
-                </Button>
-                <Button type="submit">Enregistrer</Button>
+                  {loading ? "Traitement..." : editing ? "Mettre à jour" : "Ajouter à la facture"}
+                </button>
               </div>
             </form>
           </Form>
         </div>
       )}
 
-      <div className="border rounded-xl p-6 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-lg">Liste des lignes</h3>
-          <div className="flex gap-2">
-            <input
-              className="border rounded px-3 py-1 text-sm bg-background w-[160px]"
-              placeholder="ID Facture..."
-              value={factureIdFilter}
-              onChange={(e) => setFactureIdFilter(e.target.value)}
-            />
-            <input
-              className="border rounded px-3 py-1 text-sm bg-background"
-              placeholder="Rechercher par libellé ou ID Facture..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <Button variant="outline" onClick={() => fetchLignes()} disabled={loading}>
-              {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
-            </Button>
+      <div className="glass border-white/5 shadow-2xl organic-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between px-8 py-6 border-b border-white/5 gap-4">
+          <div className="flex items-center gap-3">
+            <Hash className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-lg text-white">Actes de la Facture</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/10">{lignes.length} LIGNES</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <input
+                className="bg-white/5 border border-white/5 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-all w-48"
+                placeholder="ID Facture..."
+                value={factureIdFilter}
+                onChange={(e) => setFactureIdFilter(e.target.value)}
+              />
+            </div>
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <input
+                className="bg-white/5 border border-white/5 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-primary/50 transition-all w-64"
+                placeholder="Filtrer par libellé..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button 
+              onClick={() => fetchLignes()} 
+              disabled={loading} 
+              className="p-2.5 rounded-xl border border-white/5 hover:bg-white/5 text-muted-foreground transition-all"
+              title="Actualiser"
+            >
+              <Clock className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
-        <DataTable columns={columns} data={filtered} loading={loading} />
+        
+        <div className="p-4">
+           <DataTable columns={columns} data={filtered} loading={loading} />
+        </div>
       </div>
     </div>
   );

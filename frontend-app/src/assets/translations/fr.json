@@ -1,0 +1,126 @@
+{
+  "title": "Bienvenue",
+  "sidebar": {
+    "dashboard": "Tableau de bord",
+    "employees": "Fiches Employés",
+    "accounts": "Comptes & Sécurité",
+    "planning": "Planning",
+    "absenceRequests": "Demandes d’absence",
+    "absences": "Absences",
+    "patientFiles": "Dossiers Patients",
+    "appointments": "Rendez-vous",
+    "appointmentsManagement": "Gestion",
+    "appointmentsHistory": "Historique",
+    "stockOrders": "Commandes Stock",
+    "stockMovements": "Mouvements Stock",
+    "stockProducts": "Produits",
+    "stockSuppliers": "Fournisseurs",
+    "stockManagement": "Gestion Stock",
+    "billing": "Facturation & Paiement",
+    "invoices": "Factures",
+    "payments": "Paiements",
+    "medicalActs": "Actes Médicaux",
+    "discounts": "Remises",
+    "transactions": "Transactions",
+    "invoiceLines": "Lignes de Facture"
+  },
+  "login": {
+    "loginHere": "Connectez-vous ici",
+    "email": "Email",
+    "enterEmail": "Entrez votre email",
+    "password": "Mot de passe",
+    "enterPassword": "Entrez votre mot de passe",
+    "login": "Connexion"
+  },
+  "form": {
+    "pageTitle": "Composants de formulaire personnalisables",
+    "pageDesc": "Créez facilement des formulaires dynamiques avec des composants réutilisables."
+  },
+  "table": {
+    "pageTitle": "Composants de tableau personnalisables",
+    "pageDesc": "Affichez vos données avec style et flexibilité."
+  },
+  "modal": {
+    "pageTitle": "Composants de modales personnalisables",
+    "pageDesc": "Améliorez l'expérience utilisateur avec des fenêtres contextuelles fluides."
+  },
+  "dashboard": {
+    "title": "Tableau de bord Docteur",
+    "subtitle": "Bienvenue dans votre espace médical",
+    "stats": {
+      "todayPatients": "Patients aujourd'hui",
+      "todayPatientsDesc": "Total des RDV du jour",
+      "confirmedRDV": "Rendez-vous confirmés",
+      "confirmedRDVDesc": "Prêts pour consultation",
+      "totalPatients": "Total Patients",
+      "totalPatientsDesc": "Dossiers enregistrés",
+      "occupancy": "Taux d'occupation",
+      "occupancyDesc": "Sur la base de 10 RDV/jour"
+    },
+    "charts": {
+      "weeklyActivity": "Activité Hebdomadaire",
+      "weeklyActivityDesc": "Nombre de rendez-vous sur les 7 derniers jours",
+      "statusDistribution": "Statut des RDV",
+      "statusDistributionDesc": "Répartition globale",
+      "noData": "Aucune donnée pour le moment",
+      "noActivity": "Aucune activité enregistrée cette semaine"
+    },
+    "status": {
+      "confirmed": "Confirmé",
+      "pending": "En attente",
+      "cancelled": "Annulé"
+    },
+    "recentActivities": {
+      "title": "Activités récentes",
+      "subtitle": "Temps réel"
+    }
+  },
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "upload": "Télécharger",
+    "delete": "Supprimer",
+    "print": "Imprimer",
+    "add": "Ajouter",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "actions": "Actions"
+  },
+  "search": {
+    "placeholder": "Rechercher par CIN, nom ou prénom..."
+  },
+  "documents": {
+    "addTitle": "Ajouter un document",
+    "nameLabel": "Nom du document",
+    "namePlaceholder": "Ex: Radio Panoramique",
+    "fileLabel": "Fichier",
+    "clickToChoose": "Cliquez pour choisir un fichier",
+    "uploadSuccess": "Document téléchargé avec succès",
+    "uploadError": "Erreur lors du téléchargement",
+    "selectFileError": "Veuillez sélectionner un fichier"
+  },
+  "prescriptions": {
+    "newTitle": "Nouvelle Ordonnance",
+    "editTitle": "Modifier l'Ordonnance",
+    "medication": "Médicament",
+    "medicationPlaceholder": "Ex: Amoxicilline",
+    "dosage": "Dosage",
+    "dosagePlaceholder": "Ex: 500mg",
+    "duration": "Durée",
+    "durationPlaceholder": "Ex: 7 jours",
+    "instructions": "Instructions",
+    "instructionsPlaceholder": "Ex: 3 fois par jour",
+    "addLine": "Ajouter un médicament",
+    "saveSuccess": "Ordonnance mise à jour",
+    "createSuccess": "Ordonnance créée",
+    "deleteConfirm": "Supprimer définitivement cette ordonnance ?",
+    "deleteSuccess": "Ordonnance supprimée",
+    "saveError": "Erreur lors de l'enregistrement",
+    "deleteError": "Erreur lors de la suppression",
+    "requiredFieldsError": "Le nom du médicament et le dosage sont obligatoires",
+    "printTitle": "Ordonnance Médicale",
+    "printCabinet": "Cabinet Dentaire",
+    "printSignature": "Cachet et Signature du Praticien"
+  }
+}

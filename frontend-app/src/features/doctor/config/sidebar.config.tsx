@@ -11,79 +11,79 @@ import {
 
 export const doctorSidebarConfig = [
   {
-    name: "Dashboard",
+    name: "sidebar.dashboard",
     route: "/doctor",
     icon: <LayoutDashboard size={18} />,
     childs: [],
   },
   {
-    name: "Fiches Employés",
+    name: "sidebar.employees",
     route: "/doctor/personnel",
     icon: <Users size={18} />,
     childs: [],
   },
   {
-    name: "Comptes & Sécurité",
+    name: "sidebar.accounts",
     route: "/doctor/employees",
     icon: <ShieldAlert size={18} />,
     childs: [],
   },
   {
-    name: "Planning",
+    name: "sidebar.planning",
     route: "/doctor/planning",
     icon: <CalendarDays size={18} />,
     childs: [],
   },
   {
-    name: "Demandes d’absence",
+    name: "sidebar.absenceRequests",
     route: "/doctor/demandes-absence",
     icon: <FileText size={18} />,
     childs: [],
   },
   {
-    name: "Absences",
+    name: "sidebar.absences",
     route: "/doctor/absences",
     icon: <ClipboardMinus size={18} />,
     childs: [],
   },
   {
-    name: "Dossier Patient",
+    name: "sidebar.patientFiles",
     route: "/doctor/patients",
     icon: <UserRound size={18} />,
     childs: [],
   },
   {
-    name: "Rendez-vous",
+    name: "sidebar.appointments",
     route: "/doctor/rendez-vous",
     icon: <CalendarDays size={18} />,
     childs: [
-      { name: "Gestion", route: "/doctor/rendez-vous" },
-      { name: "Historique", route: "/doctor/historique" }
+      { name: "sidebar.appointmentsManagement", route: "/doctor/rendez-vous" },
+      { name: "sidebar.appointmentsHistory", route: "/doctor/historique" }
     ],
   },
   {
-    name: "Commandes Stock",
+    name: "sidebar.stockOrders",
     route: "/doctor/stock/commandes",
     icon: <Package size={18} />,
     childs: [],
   },
   {
-    name: "Mouvements Stock",
+    name: "sidebar.stockMovements",
     route: "/doctor/stock/mouvements",
     icon: <Package size={18} />,
     childs: [],
   },
   {
-    name: "Facturation & Paiement",
+    name: "sidebar.billing",
     route: "/doctor/facturation",
     icon: <FileText size={18} />,
     childs: [
-      { name: "Factures", route: "/doctor/facturation/factures" },
-      { name: "Paiements", route: "/doctor/facturation/paiements" },
-      { name: "Actes Médicaux", route: "/doctor/facturation/actes" },
-      { name: "Remises", route: "/doctor/facturation/remises" },
-      { name: "Transactions", route: "/doctor/facturation/transactions" },
-      { name: "Lignes de Facture", route: "/doctor/facturation/lignes-facture" },
+      { name: "sidebar.invoices", route: "/doctor/facturation/factures" },
+      { name: "sidebar.payments", route: "/doctor/facturation/paiements" },
+      { name: "sidebar.medicalActs", route: "/doctor/facturation/actes" },
+      { name: "sidebar.discounts", route: "/doctor/facturation/remises" },
+      { name: "sidebar.transactions", route: "/doctor/facturation/transactions" },
+      { name: "sidebar.invoiceLines", route: "/doctor/facturation/lignes-facture" },
     ],
   },
 ];

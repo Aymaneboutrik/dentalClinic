@@ -14,15 +14,31 @@ export const secretaireDashboardConfig = {
       description: "Inscrits cette semaine",
     },
     {
-      title: "Dossiers à compléter",
-      value: "8",
-      description: "Documents manquants",
+      title: "Total Patients",
+      value: "1,284",
+      description: "Dossiers enregistrés",
     },
     {
-      title: "Paiements en attente",
-      value: "3",
-      description: "À régulariser ce jour",
+      title: "Taux d'occupation",
+      value: "85%",
+      description: "Semaine en cours",
     },
+  ],
+
+  weeklyActivity: [
+    { day: "Lun", appointments: 12 },
+    { day: "Mar", appointments: 18 },
+    { day: "Mer", appointments: 15 },
+    { day: "Jeu", appointments: 22 },
+    { day: "Ven", appointments: 19 },
+    { day: "Sam", appointments: 8 },
+    { day: "Dim", appointments: 0 },
+  ],
+
+  appointmentStatus: [
+    { name: "Confirmé", value: 65, fill: "hsl(var(--primary))" },
+    { name: "En attente", value: 25, fill: "hsl(180 80% 45%)" },
+    { name: "Annulé", value: 10, fill: "hsl(0 84% 60%)" },
   ],
 
   recentActivities: [

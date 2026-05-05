@@ -24,34 +24,38 @@ export function Sidebar() {
     <>
       <aside
         className={clsx(
-          "transition-all duration-300 overflow-hidden fixed inset-y-0 left-0 z-10 hidden justify-center flex-col border-r bg-background sm:flex",
+          "transition-all duration-300 fixed top-4 bottom-4 left-4 z-10 hidden flex-col border bg-card/60 backdrop-blur-xl shadow-2xl shadow-black/20 sm:flex overflow-hidden organic-card-reverse",
           sidebarCollapsed ? "w-[60px]" : "w-[250px]"
         )}
       >
-        <nav className={clsx("flex flex-col gap-1 p-2 items-start")}>
-          <SidebarHeader />
+        <div className="flex flex-col h-full py-2">
+          <div className="px-2 pb-2">
+            <SidebarHeader />
+          </div>
 
-          {currentMenus.map((m) => (
-            <SidebarItem
-              key={m.route}
-              icon={m.icon}
-              name={m.name}
-              route={m.route}
-              childs={m.childs}
-            />
-          ))}
-        </nav>
+          <nav className={clsx("flex-1 overflow-y-auto overflow-x-hidden px-2 space-y-1 custom-scrollbar")}>
+            {currentMenus.map((m) => (
+              <SidebarItem
+                key={m.route}
+                icon={m.icon}
+                name={m.name}
+                route={m.route}
+                childs={m.childs}
+              />
+            ))}
+          </nav>
 
-        <nav className="flex flex-col items-start gap-4 px-2 mt-auto">
-          <SidebarFooter />
-        </nav>
+          <div className="px-2 pt-2 mt-auto">
+            <SidebarFooter />
+          </div>
+        </div>
       </aside>
 
       <div
         onClick={toggleSidebar}
         className={clsx(
-          "transition-all duration-300 fixed z-20 top-[50%] h-[22px] w-[22px] cursor-pointer bg-primary hidden sm:flex items-center justify-center rounded-full text-primary-foreground",
-          sidebarCollapsed ? "left-[48px]" : "left-[238px]"
+          "transition-all duration-300 fixed z-20 top-[50%] h-[22px] w-[22px] cursor-pointer bg-primary hidden sm:flex items-center justify-center rounded-full text-primary-foreground shadow-md",
+          sidebarCollapsed ? "left-[64px]" : "left-[254px]"
         )}
       >
         {sidebarCollapsed ? (

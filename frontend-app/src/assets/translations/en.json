@@ -2,12 +2,27 @@
   "title": "Welcome",
   "sidebar": {
     "dashboard": "Dashboard",
-    "form": "Form",
-    "table": "Table",
-    "charts": "Charts",
-    "calendar": "Calendar",
-    "errPages": "Error Pages",
-    "modals": "Modals"
+    "employees": "Employee Files",
+    "accounts": "Accounts & Security",
+    "planning": "Planning",
+    "absenceRequests": "Absence Requests",
+    "absences": "Absences",
+    "patientFiles": "Patient Files",
+    "appointments": "Appointments",
+    "appointmentsManagement": "Management",
+    "appointmentsHistory": "History",
+    "stockOrders": "Stock Orders",
+    "stockMovements": "Stock Movements",
+    "stockProducts": "Products",
+    "stockSuppliers": "Suppliers",
+    "stockManagement": "Stock Management",
+    "billing": "Billing & Payment",
+    "invoices": "Invoices",
+    "payments": "Payments",
+    "medicalActs": "Medical Acts",
+    "discounts": "Discounts",
+    "transactions": "Transactions",
+    "invoiceLines": "Invoice Lines"
   },
   "login": {
     "loginHere": "Login Here",
@@ -28,5 +43,84 @@
   "modal": {
     "pageTitle": "Customizable & Reusable Modal Components",
     "pageDesc": "Easily create dynamic, scalable forms with customizable, reusable components. Simplify development with built-in validation, accessibility, and flexible styling options for any project."
+  },
+  "dashboard": {
+    "title": "Doctor Dashboard",
+    "subtitle": "Welcome to your medical workspace",
+    "stats": {
+      "todayPatients": "Today's Patients",
+      "todayPatientsDesc": "Total appointments today",
+      "confirmedRDV": "Confirmed Appointments",
+      "confirmedRDVDesc": "Ready for consultation",
+      "totalPatients": "Total Patients",
+      "totalPatientsDesc": "Registered files",
+      "occupancy": "Occupancy Rate",
+      "occupancyDesc": "Based on 10 appts/day"
+    },
+    "charts": {
+      "weeklyActivity": "Weekly Activity",
+      "weeklyActivityDesc": "Number of appointments over the last 7 days",
+      "statusDistribution": "Appt. Status",
+      "statusDistributionDesc": "Global distribution",
+      "noData": "No data available for now",
+      "noActivity": "No activity recorded this week"
+    },
+    "status": {
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "cancelled": "Cancelled"
+    },
+    "recentActivities": {
+      "title": "Recent Activities",
+      "subtitle": "Real-time"
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "upload": "Upload",
+    "delete": "Delete",
+    "print": "Print",
+    "add": "Add",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "actions": "Actions"
+  },
+  "search": {
+    "placeholder": "Search by CIN, name or first name..."
+  },
+  "documents": {
+    "addTitle": "Add a document",
+    "nameLabel": "Document Name",
+    "namePlaceholder": "Ex: Panoramic X-ray",
+    "fileLabel": "File",
+    "clickToChoose": "Click to choose a file",
+    "uploadSuccess": "Document uploaded successfully",
+    "uploadError": "Error during upload",
+    "selectFileError": "Please select a file"
+  },
+  "prescriptions": {
+    "newTitle": "New Prescription",
+    "editTitle": "Edit Prescription",
+    "medication": "Medication",
+    "medicationPlaceholder": "Ex: Amoxicillin",
+    "dosage": "Dosage",
+    "dosagePlaceholder": "Ex: 500mg",
+    "duration": "Duration",
+    "durationPlaceholder": "Ex: 7 days",
+    "instructions": "Instructions",
+    "instructionsPlaceholder": "Ex: 3 times a day",
+    "addLine": "Add medication",
+    "saveSuccess": "Prescription saved",
+    "createSuccess": "Prescription created",
+    "deleteConfirm": "Permanently delete this prescription?",
+    "deleteSuccess": "Prescription deleted",
+    "saveError": "Error during saving",
+    "deleteError": "Error during deletion",
+    "requiredFieldsError": "Medication name and dosage are required",
+    "printTitle": "Medical Prescription",
+    "printCabinet": "Dental Cabinet",
+    "printSignature": "Practitioner's Stamp and Signature"
   }
 }

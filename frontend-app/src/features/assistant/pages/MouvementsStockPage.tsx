@@ -7,8 +7,10 @@ import { DataTable } from "@components/data-table/data-table";
 import { Button } from "@components/ui/button";
 import { Form } from "@components/ui/form";
 import TextInput from "@components/inputs/text-input";
-import PageTitle from "@components/commons/page-title";
+import { DashboardHeader } from "@components/commons/dashboard/DashboardHeader";
 import secureApi from "@apis/instances/secure-api";
+import { Package, Plus, History, ArrowRight, X, Clock } from "lucide-react";
+import { toast } from "sonner";
 
 const BASE_URL = "/stock/MouvementStock";
 
@@ -18,8 +20,8 @@ const typeMouvementLabels: Record<string, string> = {
 };
 
 const typeMouvementColors: Record<string, string> = {
-  Entree: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  Sortie: "bg-rose-100 text-rose-800 border-rose-200",
+  Entree: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+  Sortie: "bg-rose-500/10 text-rose-500 border-rose-500/20",
 };
 
 interface MouvementStock {
@@ -62,6 +64,7 @@ export default function MouvementsStockPage() {
       setFetched(true);
     } catch (e) {
       console.error("Erreur lors du chargement des mouvements", e);
+      toast.error("Impossible de charger les mouvements");
     } finally {
       setLoading(false);
     }
@@ -77,12 +80,12 @@ export default function MouvementsStockPage() {
       await secureApi.post(`${BASE_URL}/sortie`, values, {
         headers: { "Content-Type": "application/json" },
       });
-        alert("Sortie effectuée avec succès");
-        setShowForm(false);
-        form.reset();
-        await fetchMouvements();
+      toast.success("Sortie effectuée avec succès");
+      setShowForm(false);
+      form.reset();
+      await fetchMouvements();
     } catch {
-      alert("Erreur réseau lors de la sortie.");
+      toast.error("Erreur lors de l'enregistrement de la sortie");
       setLoading(false);
     }
   };
@@ -90,14 +93,14 @@ export default function MouvementsStockPage() {
   const columns: ColumnDef<MouvementStock>[] = [
     { 
         accessorKey: "id", 
-        header: "ID Mouvement",
-        cell: ({ row }) => <span className={`${!row.original.produitActif ? "text-rose-600 font-semibold" : "text-gray-900"}`}>{row.original.id}</span>
+        header: "ID",
+        cell: ({ row }) => <span className={`text-xs font-mono font-bold ${!row.original.produitActif ? "text-rose-500" : "text-muted-foreground"}`}>#{row.original.id}</span>
     },
     {
       accessorKey: "typeMouvement",
-      header: "Type",
+      header: "Flux",
       cell: ({ row }) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${typeMouvementColors[row.original.typeMouvement] ?? "bg-gray-100 text-gray-700"}`}>
+        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${typeMouvementColors[row.original.typeMouvement] ?? "bg-white/5 border-white/5 text-muted-foreground"}`}>
           {typeMouvementLabels[row.original.typeMouvement] ?? row.original.typeMouvement}
         </span>
       ),
@@ -105,121 +108,130 @@ export default function MouvementsStockPage() {
     { 
       accessorKey: "quantite", 
       header: "Quantité",
-      cell: ({ row }) => <span className="font-medium">{row.original.quantite}</span>
+      cell: ({ row }) => <span className="font-black text-sm">{row.original.quantite} u.</span>
     },
     {
       accessorKey: "dateMouvement",
       header: "Date & Heure",
       cell: ({ row }) =>
         row.original.dateMouvement ? (
-          <span className={`text-sm ${!row.original.produitActif ? "text-rose-600 font-bold" : "text-muted-foreground"}`}>
-            {new Date(row.original.dateMouvement).toLocaleString()}
-          </span>
+          <div className="flex items-center space-x-2 text-xs font-medium">
+             <Clock className="w-3 h-3 text-muted-foreground" />
+             <span className={`${!row.original.produitActif ? "text-rose-500" : "text-foreground"}`}>
+               {new Date(row.original.dateMouvement).toLocaleString('fr-FR')}
+             </span>
+          </div>
         ) : (
           "-"
         ),
     },
     {
       accessorKey: "produitId",
-      header: "ID Produit",
+      header: "Produit",
       cell: ({ row }) => (
-        <span className={`${!row.original.produitActif ? "text-rose-600 font-semibold" : "text-muted-foreground"} text-sm`}>
-          {row.original.produitId ?? "-"}
-        </span>
+        <div className="flex items-center space-x-2">
+           <Package className={`w-3 h-3 ${!row.original.produitActif ? "text-rose-500" : "text-primary"}`} />
+           <span className={`text-xs font-bold ${!row.original.produitActif ? "text-rose-500" : "text-foreground"}`}>ID: {row.original.produitId ?? "-"}</span>
+        </div>
       ),
     },
     {
       accessorKey: "ligneCommandeId",
-      header: "Ligne Commande ID",
+      header: "Réf. Commande",
       cell: ({ row }) => (
-        row.original.ligneCommandeId ? (
-          <span className={`${!row.original.produitActif ? "text-rose-600 font-semibold" : "text-muted-foreground"} text-sm`}>
-            {row.original.ligneCommandeId}
-          </span>
-        ) : (
-          <span className={`text-sm ${!row.original.produitActif ? "text-rose-600" : "text-muted-foreground"}`}>/</span>
-        )
+        <span className="text-xs font-mono text-muted-foreground">
+          {row.original.ligneCommandeId ? `#${row.original.ligneCommandeId}` : "---"}
+        </span>
       ),
     },
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-primary text-sm font-medium">Gestion Stock</p>
-          <PageTitle
-            title="Historique des Mouvements"
-            desc="Suivi automatique des entrées et enregistrement manuel des sorties."
-          />
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <DashboardHeader
+          title="Gestion du Stock"
+          subtitle="Mouvements d'entrée et sortie des produits cliniques"
+        />
+        
+        <div className="flex items-center space-x-3 md:mb-10">
+          <button 
+            onClick={() => setShowForm(!showForm)}
+            className={`flex items-center space-x-2 px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg ${showForm ? 'bg-white/5 text-muted-foreground border border-white/5' : 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20'}`}
+          >
+            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span>{showForm ? "Annuler" : "Enregistrer une Sortie"}</span>
+          </button>
         </div>
-        <Button 
-          onClick={() => setShowForm(!showForm)} 
-          className={showForm ? "bg-gray-500" : "bg-rose-600 hover:bg-rose-700 text-white shadow-lg transition-all"}
-        >
-          {showForm ? "Fermer le formulaire" : "Effectuer une Sortie"}
-        </Button>
       </div>
 
       {showForm && (
-        <div className="border border-rose-200 rounded-xl p-6 mb-6 bg-card shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        <div className="glass border-white/5 p-8 organic-card shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-500 shadow-inner">
+              <ArrowRight className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Nouvelle Sortie de Stock</h2>
-              <p className="text-sm text-muted-foreground">Saisissez les détails du produit à retirer du stock.</p>
+              <h2 className="text-xl font-bold text-white tracking-tight">Sortie de Stock Manuelle</h2>
+              <p className="text-sm text-muted-foreground">Enregistrez le retrait d'un produit du stock</p>
             </div>
           </div>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSortie)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextInput
-                  label="ID du Produit"
-                  name="produitId"
-                  form={form}
-                  placeholder="Ex: 101"
-                  withAsterisk
-                />
-                <TextInput
-                  label="Quantité à sortir"
-                  name="quantite"
-                  form={form}
-                  placeholder="Ex: 5"
-                  withAsterisk
-                />
+            <form onSubmit={form.handleSubmit(handleSortie)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">ID du Produit</label>
+                  <TextInput
+                    name="produitId"
+                    form={form}
+                    placeholder="Saisissez l'ID"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-primary/60 px-1">Quantité</label>
+                  <TextInput
+                    name="quantite"
+                    form={form}
+                    placeholder="Ex: 5"
+                    className="bg-white/5 border-white/5 rounded-2xl h-14"
+                  />
+                </div>
               </div>
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { setShowForm(false); form.reset(); }}
+              <div className="flex justify-end pt-6 border-t border-white/5">
+                <button 
+                  type="submit" 
+                  className="bg-rose-600 hover:bg-rose-700 text-white px-10 py-4 organic-pill text-[11px] font-black uppercase tracking-widest shadow-lg shadow-rose-600/20 transition-all active:scale-95 disabled:opacity-50" 
                   disabled={loading}
                 >
-                  Annuler
-                </Button>
-                <Button type="submit" className="bg-rose-600 hover:bg-rose-700 px-8" disabled={loading}>
                   {loading ? "Traitement..." : "Confirmer la Sortie"}
-                </Button>
+                </button>
               </div>
             </form>
           </Form>
         </div>
       )}
 
-      <div className="border rounded-xl p-6 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-lg text-gray-800">Mouvements</h3>
-            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{mouvements.length} éléments</span>
+      <div className="glass border-white/5 shadow-2xl organic-card">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <History className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-lg text-white">Journal des Mouvements</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/10">{mouvements.length} FLUX</span>
           </div>
-          <Button variant="outline" onClick={fetchMouvements} disabled={loading}>
-            {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
-          </Button>
+          <button 
+            onClick={fetchMouvements} 
+            disabled={loading} 
+            className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Clock className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+            <span>{loading ? "Actualisation..." : "Actualiser"}</span>
+          </button>
         </div>
-        <DataTable columns={columns} data={mouvements} loading={loading} />
+        <div className="p-4">
+           <DataTable columns={columns} data={mouvements} loading={loading} />
+        </div>
       </div>
     </div>
   );

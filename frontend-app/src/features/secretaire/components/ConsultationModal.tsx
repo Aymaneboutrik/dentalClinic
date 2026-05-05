@@ -56,7 +56,7 @@ export function ConsultationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] glass border-white/10 shadow-2xl rounded-[1.5rem]">
+      <DialogContent className="sm:max-w-[500px] glass border-white/5 shadow-2xl organic-card bg-background/95 backdrop-blur-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black">Nouvelle Consultation</DialogTitle>
         </DialogHeader>
@@ -69,7 +69,7 @@ export function ConsultationModal({
               value={formData.motif}
               onChange={(e) => setFormData({ ...formData, motif: e.target.value })}
               placeholder="Ex: Douleur dentaire, Détartrage..."
-              className="bg-white/5 border-white/10 rounded-xl"
+              className="bg-white/5 border-white/10 organic-pill h-12 px-6"
               required
             />
           </div>
@@ -82,15 +82,15 @@ export function ConsultationModal({
               value={formData.observation}
               onChange={(e) => setFormData({ ...formData, observation: e.target.value })}
               placeholder="Détails cliniques, diagnostic, notes..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              className="w-full bg-white/5 border border-white/10 organic-card p-6 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-inner"
             />
           </div>
 
           <DialogFooter className="mt-8">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl font-bold">
               Annuler
             </Button>
-            <Button type="submit" loading={loading} className="rounded-xl shadow-lg shadow-primary/20 bg-primary text-primary-foreground">
+            <Button type="submit" loading={loading} className="organic-button px-8 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 bg-primary text-primary-foreground">
               Enregistrer la consultation
             </Button>
           </DialogFooter>

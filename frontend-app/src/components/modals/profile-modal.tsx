@@ -131,7 +131,7 @@ function ProfileModal() {
   const initials = (user.email ? user.email.charAt(0) : "U").toUpperCase();
 
   return (
-    <div className="w-[400px] rounded-lg overflow-hidden bg-background p-6 shadow-xl border">
+    <div className="w-[420px] bg-background p-8 shadow-2xl border-white/5 organic-card-reverse">
       <div className="flex flex-col items-center space-y-4">
         <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold shadow-sm">
           {initials}
@@ -141,13 +141,13 @@ function ProfileModal() {
           <Text size="xl" className="font-bold text-foreground">
             {user.email || "Email non synchronisé (Reconnexion requise)"}
           </Text>
-          <div className="mt-2 text-sm font-semibold text-primary uppercase tracking-wider bg-primary/10 px-4 py-1 rounded-full inline-block">
+          <div className="mt-2 text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-6 py-2 organic-pill inline-block border border-primary/10">
             {user.role}
           </div>
         </div>
 
         <div className="w-full pt-4 space-y-3 border-t mt-4">
-          <div className="flex justify-between items-center p-3 bg-secondary/30 rounded-lg">
+          <div className="flex justify-between items-center p-4 bg-secondary/30 organic-pill border border-white/5">
             <span className="text-muted-foreground text-sm font-medium">Statut du compte</span>
             <span className="text-emerald-600 font-bold text-sm flex items-center">
               <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
@@ -278,8 +278,8 @@ function ProfileModal() {
         </div>
       </div>
 
-      <div className="mt-4 px-6 pb-6">
-        <Button onClick={handleClose} variant="default" className="w-full font-bold shadow-md hover:shadow-lg transition-all duration-300">
+      <div className="mt-2 px-8 pb-8">
+        <Button onClick={handleClose} variant="default" className="w-full organic-button font-black uppercase tracking-widest text-xs shadow-lg hover:shadow-xl transition-all duration-300">
           Fermer
         </Button>
       </div>

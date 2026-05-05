@@ -54,8 +54,12 @@ function SidebarItem({
   };
 
   const isActiveModule = (): boolean => {
-    const currentModule: string = "/" + location.pathname.split("/")[1];
-    return currentModule === route;
+    // If the route is a root dashboard route, it must match exactly
+    if (route === "/doctor" || route === "/secretaire" || route === "/assistant" || route === "/") {
+      return location.pathname === route;
+    }
+    // Otherwise, check if the current path starts with this route
+    return location.pathname.startsWith(route);
   };
 
   const hasActiveChild = (): boolean => {
@@ -98,7 +102,7 @@ function SidebarItem({
                     {icon}
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="right">{name}</TooltipContent>
+                <TooltipContent side="right">{t(name)}</TooltipContent>
               </Tooltip>
             </PopoverTrigger>
             <PopoverContent side="right">
@@ -124,10 +128,10 @@ function SidebarItem({
               <div
                 onClick={handleClick}
                 className={clsx(
-                  "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
+                  "w-full h-9 flex items-center justify-center px-2 rounded-lg cursor-pointer transition-all duration-300 select-none outline-none focus:outline-none",
                   isActiveModule() || hasActiveChild()
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                    ? "bg-primary/20 text-primary organic-pill glow-blue shadow-lg shadow-primary/10"
+                    : "text-muted-foreground hover:bg-primary/10 hover:translate-x-1 rounded-xl"
                 )}
               >
                 {icon}
@@ -147,10 +151,10 @@ function SidebarItem({
       <div
         onClick={handleClick}
         className={clsx(
-          "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
+          "w-full h-9 flex items-center justify-between px-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none group",
           (isActiveModule() || hasActiveChild()) &&
-            "bg-primary text-primary-foreground",
-          !(isActiveModule() || hasActiveChild()) && "hover:bg-primary/10"
+            "bg-primary/20 text-primary organic-pill glow-blue shadow-lg shadow-primary/10",
+          !(isActiveModule() || hasActiveChild()) && "hover:bg-primary/10 hover:translate-x-2 rounded-xl"
         )}
       >
         <div className={clsx("flex items-center gap-2")}>
@@ -201,6 +205,7 @@ function ChildItem({
 }: Omit<Props, "childs"> & { collapsed?: boolean }) {
   const isMatched = useMatch(route);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleClick = () => {
     navigate(route);
@@ -212,13 +217,13 @@ function ChildItem({
     onClick={handleClick}
       className={clsx(
             "flex align-middle gap-2 p-2 rounded-lg cursor-pointer transition-all duration-300 text-muted-foreground select-none outline-none focus:outline-none",
-        isMatched && "text-primary",
-        !isMatched && "hover:text-primary",
+        isMatched && "text-primary font-bold bg-primary/5 organic-pill",
+        !isMatched && "hover:text-primary hover:translate-x-2 rounded-xl",
         !collapsed && "pl-6"
       )}
     >
       {icon}
-      <Text>{name}</Text>
+      <Text>{t(name)}</Text>
     </div>
   );
 }

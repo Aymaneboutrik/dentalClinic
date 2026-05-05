@@ -25,9 +25,9 @@ function LangDropdown() {
         <Button
           variant="outline"
           size="icon"
-          className="overflow-hidden rounded-full"
+          className="overflow-hidden rounded-full glass shadow-glass border-white/10 hover:scale-110 transition-all duration-300"
         >
-          <Earth className="h-4 w-4" />
+          <Earth className="h-[18px] w-[18px] text-primary" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="space-y-1">
@@ -42,14 +42,14 @@ function LangDropdown() {
           English
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => handleChangeLang("mm")}
+          onClick={() => handleChangeLang("fr")}
           className={clsx(
             "cursor-pointer",
-            i18n.language === "mm" &&
+            i18n.language === "fr" &&
               "bg-primary text-primary-foreground focus:text-primary-foreground focus:bg-primary"
           )}
         >
-          Myanmar
+          Français
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

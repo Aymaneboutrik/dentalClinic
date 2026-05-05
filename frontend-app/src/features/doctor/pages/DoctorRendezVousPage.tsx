@@ -234,21 +234,12 @@ const DoctorRendezVousPage = () => {
 
   return (
     <div className="w-full space-y-8">
-      <div className="p-6 border shadow-sm rounded-2xl bg-card">
+      <div className="p-8 border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
             <p className="text-sm font-medium text-primary">Module Docteur</p>
             <h1 className="text-3xl font-bold tracking-tight">Mes Rendez-vous</h1>
             {currentDoctor && <p className="text-sm text-muted-foreground">Connecté en tant que Dr. {currentDoctor.nom} {currentDoctor.prenom}</p>}
-          </div>
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Rechercher un patient..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 text-sm rounded-xl border border-white/10 bg-white/5 text-white outline-none focus:border-primary w-64"
-            />
           </div>
         </div>
       </div>
@@ -259,7 +250,7 @@ const DoctorRendezVousPage = () => {
         </div>
       )}
 
-      <div className="border shadow-sm rounded-2xl bg-card">
+      <div className="border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/30">
@@ -324,7 +315,7 @@ const DoctorRendezVousPage = () => {
                           {app.statutId !== 3 && app.statutId !== 4 && (
                             <button
                               onClick={() => handleCancel(app.id)}
-                              className="px-3 py-1.5 text-xs font-semibold text-red-400 border border-red-500/30 bg-red-500/10 rounded-lg hover:bg-red-500/20"
+                              className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-400 border border-red-500/30 bg-red-500/10 organic-pill hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/10"
                             >
                               Annuler
                             </button>
@@ -342,7 +333,7 @@ const DoctorRendezVousPage = () => {
 
       {showRescheduleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#081028] p-6 shadow-2xl">
+          <div className="w-full max-w-md organic-card-reverse border border-white/5 bg-[#081028]/95 backdrop-blur-xl p-8 shadow-2xl">
             <h2 className="text-xl font-semibold text-white mb-6">Reporter le rendez-vous</h2>
             {rescheduleError && <p className="mb-4 text-sm text-red-500">{rescheduleError}</p>}
             <form onSubmit={handleRescheduleSubmit} className="space-y-4">
@@ -389,7 +380,7 @@ const DoctorRendezVousPage = () => {
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
+                  className="organic-button bg-blue-600 px-8 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-blue-500 shadow-lg shadow-blue-500/20"
                 >
                   Reporter
                 </button>

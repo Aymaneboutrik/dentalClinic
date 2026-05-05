@@ -109,7 +109,7 @@ export default function PatientListPage() {
           <div className="flex items-center space-x-3 md:mb-10">
             <button 
               onClick={() => openModal("create")}
-              className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-primary/20"
+              className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 organic-pill font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-primary/20"
             >
               <UserPlus className="w-4 h-4" />
               <span>Nouveau Patient</span>
@@ -119,7 +119,7 @@ export default function PatientListPage() {
       </div>
 
       {/* Patients Table */}
-      <div className="glass border-white/5 shadow-2xl rounded-[2rem] overflow-hidden">
+      <div className="glass border-white/5 shadow-2xl organic-card">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

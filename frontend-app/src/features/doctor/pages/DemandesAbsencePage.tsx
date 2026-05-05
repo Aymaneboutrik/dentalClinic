@@ -119,13 +119,13 @@ const DemandesAbsencePage = () => {
 
   return (
     <div className="w-full space-y-8">
-      <div className="p-6 border shadow-sm rounded-2xl bg-card">
+      <div className="p-8 border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-primary">
+            <p className="text-sm font-medium text-primary uppercase tracking-widest">
               Gestion des demandes d'absence
             </p>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-3xl font-black tracking-tight">
               Demandes des employés
             </h1>
           </div>
@@ -144,7 +144,7 @@ const DemandesAbsencePage = () => {
         </div>
       )}
 
-      <div className="border shadow-sm rounded-2xl bg-card">
+      <div className="border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="flex items-center justify-between px-6 py-5 border-b">
           <div>
             <h2 className="text-lg font-semibold">Liste des demandes</h2>
@@ -231,7 +231,7 @@ const DemandesAbsencePage = () => {
 
                       <td className="px-6 py-5">
                         <span
-                          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getStatutBadgeClasses(
+                          className={`inline-flex items-center organic-pill border px-4 py-1.5 text-[10px] font-black uppercase tracking-widest ${getStatutBadgeClasses(
                             demande.statut
                           )}`}
                         >
@@ -251,10 +251,10 @@ const DemandesAbsencePage = () => {
                                 type="button"
                                 onClick={() => handleAccepter(demande.idDemande)}
                                 disabled={isCurrentActionLoading}
-                                className="px-4 py-2 text-xs font-semibold text-blue-400 transition border rounded-xl border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-70"
+                                className="px-6 py-2 text-[10px] font-black uppercase tracking-widest text-blue-400 transition border organic-pill border-blue-500/30 bg-blue-500/10 hover:bg-blue-600 hover:text-white shadow-lg shadow-blue-500/20 disabled:cursor-not-allowed disabled:opacity-70"
                               >
                                 {isCurrentActionLoading
-                                  ? "Traitement..."
+                                  ? "..."
                                   : "Accepter"}
                               </button>
 
@@ -262,10 +262,10 @@ const DemandesAbsencePage = () => {
                                 type="button"
                                 onClick={() => handleRefuser(demande.idDemande)}
                                 disabled={isCurrentActionLoading}
-                                className="px-4 py-2 text-xs font-semibold text-red-400 transition border rounded-xl border-red-500/30 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-70"
+                                className="px-6 py-2 text-[10px] font-black uppercase tracking-widest text-red-400 transition border organic-pill border-red-500/30 bg-red-500/10 hover:bg-red-600 hover:text-white shadow-lg shadow-red-500/20 disabled:cursor-not-allowed disabled:opacity-70"
                               >
                                 {isCurrentActionLoading
-                                  ? "Traitement..."
+                                  ? "..."
                                   : "Refuser"}
                               </button>
                             </>

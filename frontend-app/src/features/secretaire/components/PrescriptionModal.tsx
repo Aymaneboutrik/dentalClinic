@@ -12,6 +12,7 @@ import { Input } from "@components/ui/input";
 import { Trash2, Plus, Printer, Save, Loader2 } from "lucide-react";
 import { patientService } from "@apis/services/patient";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface PrescriptionLine {
   id?: number;
@@ -34,6 +35,7 @@ export function PrescriptionModal({
   onSuccess,
   consultationId,
 }: PrescriptionModalProps) {
+  const { t } = useTranslation();
   const [lignes, setLignes] = useState<PrescriptionLine[]>([
     { medicament: "", dosage: "", duree: "", instructions: "" },
   ]);
@@ -89,7 +91,7 @@ export function PrescriptionModal({
     if (!consultationId) return;
 
     if (lignes.some(l => !l.medicament || !l.dosage)) {
-        toast.error("Le nom du médicament et le dosage sont obligatoires");
+        toast.error(t("prescriptions.requiredFieldsError"));
         return;
     }
 
@@ -97,15 +99,15 @@ export function PrescriptionModal({
     try {
       if (ordonnanceId) {
         await patientService.updateOrdonnance(ordonnanceId, lignes);
-        toast.success("Ordonnance mise à jour");
+        toast.success(t("prescriptions.saveSuccess"));
       } else {
         await patientService.createOrdonnance(consultationId, lignes);
-        toast.success("Ordonnance créée");
+        toast.success(t("prescriptions.createSuccess"));
       }
       onSuccess();
       onClose();
     } catch (error) {
-      toast.error("Erreur lors de l'enregistrement");
+      toast.error(t("prescriptions.saveError"));
     } finally {
       setLoading(false);
     }
@@ -113,15 +115,15 @@ export function PrescriptionModal({
 
   const handleDelete = async () => {
     if (!ordonnanceId) return;
-    if (window.confirm("Supprimer définitivement cette ordonnance ?")) {
+    if (window.confirm(t("prescriptions.deleteConfirm"))) {
       setLoading(true);
       try {
         await patientService.deleteOrdonnance(ordonnanceId);
-        toast.success("Ordonnance supprimée");
+        toast.success(t("prescriptions.deleteSuccess"));
         onSuccess();
         onClose();
       } catch (error) {
-        toast.error("Erreur lors de la suppression");
+        toast.error(t("prescriptions.deleteError"));
       } finally {
         setLoading(false);
       }
@@ -135,7 +137,7 @@ export function PrescriptionModal({
     const content = `
       <html>
         <head>
-          <title>Ordonnance</title>
+          <title>${t("prescriptions.printTitle")}</title>
           <style>
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; }
             .header { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 40px; }
@@ -152,8 +154,8 @@ export function PrescriptionModal({
         </head>
         <body>
           <div class="header">
-            <h1>Cabinet Dentaire</h1>
-            <p>Ordonnance Médicale</p>
+            <h1>${t("prescriptions.printCabinet")}</h1>
+            <p>${t("prescriptions.printTitle")}</p>
           </div>
           <div class="info">
             <div>Patient: _______________________</div>
@@ -163,12 +165,12 @@ export function PrescriptionModal({
             ${lignes.map(l => `
               <div class="line">
                 <div class="med">${l.medicament} - ${l.dosage}</div>
-                <div class="details">Durée: ${l.duree || '-'} | Instructions: ${l.instructions || '-'}</div>
+                <div class="details">${t("prescriptions.duration")}: ${l.duree || '-'} | ${t("prescriptions.instructions")}: ${l.instructions || '-'}</div>
               </div>
             `).join('')}
           </div>
           <div class="footer">
-            Cachet et Signature du Praticien
+            ${t("prescriptions.printSignature")}
           </div>
           <script>window.print();</script>
         </body>
@@ -180,10 +182,10 @@ export function PrescriptionModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] glass border-white/10 shadow-2xl rounded-[1.5rem] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[700px] glass border-white/5 shadow-2xl organic-card-reverse max-h-[90vh] flex flex-col bg-background/95 backdrop-blur-xl">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-2xl font-black">
-            {ordonnanceId ? "Modifier l'Ordonnance" : "Nouvelle Ordonnance"}
+            {ordonnanceId ? t("prescriptions.editTitle") : t("prescriptions.newTitle")}
           </DialogTitle>
           <div className="flex items-center space-x-2 pr-6">
             {ordonnanceId && (
@@ -196,7 +198,7 @@ export function PrescriptionModal({
                   className="rounded-xl border-white/10 bg-white/5 hover:bg-white/10"
                 >
                   <Printer className="w-4 h-4 mr-2" />
-                  Imprimer
+                  {t("common.print")}
                 </Button>
                 <Button 
                   type="button" 
@@ -206,7 +208,7 @@ export function PrescriptionModal({
                   className="text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Supprimer
+                  {t("common.delete")}
                 </Button>
               </>
             )}
@@ -221,7 +223,7 @@ export function PrescriptionModal({
           <form id="prescription-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto py-4 space-y-6 pr-2 custom-scrollbar">
             <div className="space-y-4">
               {lignes.map((ligne, index) => (
-                <div key={index} className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-4 relative group">
+                <div key={index} className="p-6 bg-white/5 border border-white/5 organic-card space-y-4 relative group shadow-sm">
                   {lignes.length > 1 && (
                     <button
                       type="button"
@@ -234,22 +236,22 @@ export function PrescriptionModal({
                   
                   <div className="grid grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Médicament</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("prescriptions.medication")}</Label>
                       <Input
                         value={ligne.medicament}
                         onChange={(e) => handleInputChange(index, "medicament", e.target.value)}
-                        placeholder="Ex: Amoxicilline"
-                        className="bg-white/5 border-white/10 rounded-xl h-10"
+                        placeholder={t("prescriptions.medicationPlaceholder")}
+                        className="bg-white/5 border-white/10 organic-pill h-10"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dosage</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("prescriptions.dosage")}</Label>
                       <Input
                         value={ligne.dosage}
                         onChange={(e) => handleInputChange(index, "dosage", e.target.value)}
-                        placeholder="Ex: 500mg"
-                        className="bg-white/5 border-white/10 rounded-xl h-10"
+                        placeholder={t("prescriptions.dosagePlaceholder")}
+                        className="bg-white/5 border-white/10 organic-pill h-10"
                         required
                       />
                     </div>
@@ -257,21 +259,21 @@ export function PrescriptionModal({
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Durée</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("prescriptions.duration")}</Label>
                       <Input
                         value={ligne.duree}
                         onChange={(e) => handleInputChange(index, "duree", e.target.value)}
-                        placeholder="Ex: 7 jours"
-                        className="bg-white/5 border-white/10 rounded-xl h-10"
+                        placeholder={t("prescriptions.durationPlaceholder")}
+                        className="bg-white/5 border-white/10 organic-pill h-10"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Instructions</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("prescriptions.instructions")}</Label>
                       <Input
                         value={ligne.instructions}
                         onChange={(e) => handleInputChange(index, "instructions", e.target.value)}
-                        placeholder="Ex: 3 fois par jour"
-                        className="bg-white/5 border-white/10 rounded-xl h-10"
+                        placeholder={t("prescriptions.instructionsPlaceholder")}
+                        className="bg-white/5 border-white/10 organic-pill h-10"
                       />
                     </div>
                   </div>
@@ -282,30 +284,30 @@ export function PrescriptionModal({
             <button
               type="button"
               onClick={handleAddLine}
-              className="w-full flex items-center justify-center space-x-2 p-3 border-2 border-dashed border-white/10 rounded-2xl text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all text-sm font-bold"
+              className="w-full flex items-center justify-center space-x-2 p-4 border-2 border-dashed border-white/10 organic-card text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all text-[10px] font-black uppercase tracking-widest shadow-inner"
             >
               <Plus className="w-4 h-4" />
-              <span>Ajouter un médicament</span>
+              <span>{t("prescriptions.addLine")}</span>
             </button>
           </form>
         )}
 
-        <DialogFooter className="pt-4 border-t border-white/5">
-          <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
-            Annuler
-          </Button>
-          <Button 
-            form="prescription-form"
-            type="submit" 
-            disabled={loading || initialLoading}
-            className="rounded-xl shadow-lg shadow-primary/20 bg-primary text-primary-foreground"
-          >
+          <DialogFooter className="pt-6 border-t border-white/5">
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl font-bold">
+              {t("common.cancel")}
+            </Button>
+            <Button 
+              form="prescription-form"
+              type="submit" 
+              disabled={loading || initialLoading}
+              className="organic-button px-8 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 bg-primary text-primary-foreground"
+            >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
             ) : (
               <Save className="w-4 h-4 mr-2" />
             )}
-            {ordonnanceId ? "Enregistrer les modifications" : "Générer l'ordonnance"}
+            {ordonnanceId ? t("prescriptions.editTitle") : t("prescriptions.newTitle")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -243,13 +243,13 @@ const AbsencePage = () => {
 
   return (
     <div className="w-full space-y-8">
-      <div className="p-6 border shadow-sm rounded-2xl bg-card">
+      <div className="p-8 border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-primary">
+            <p className="text-sm font-medium text-primary uppercase tracking-widest">
               Gestion des absences
             </p>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-3xl font-black tracking-tight">
               Absences des employés
             </h1>
           </div>
@@ -257,7 +257,7 @@ const AbsencePage = () => {
           <button
             type="button"
             onClick={handleOpenAddForm}
-            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
+            className="organic-button bg-blue-600 px-8 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-blue-500 shadow-lg shadow-blue-500/20"
           >
             Ajouter une absence
           </button>
@@ -271,7 +271,7 @@ const AbsencePage = () => {
       )}
 
       {showAddForm && (
-        <div className="rounded-2xl border border-white/10 bg-[#081028] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+        <div className="organic-card border border-white/10 bg-[#081028]/80 backdrop-blur-xl p-8 shadow-2xl">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-white">
               Ajouter une absence
@@ -377,7 +377,7 @@ const AbsencePage = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+                className="organic-pill border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold text-slate-200 transition hover:bg-white/10"
               >
                 Annuler
               </button>
@@ -385,7 +385,7 @@ const AbsencePage = () => {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
+                className="organic-button bg-blue-600 px-10 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70 shadow-lg shadow-blue-500/20"
               >
                 Enregistrer
               </button>
@@ -400,7 +400,7 @@ const AbsencePage = () => {
         </div>
       )}
 
-      <div className="border shadow-sm rounded-2xl bg-card">
+      <div className="border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="flex items-center justify-between px-6 py-5 border-b">
           <div>
             <h2 className="text-lg font-semibold">Liste des absences</h2>
@@ -489,7 +489,7 @@ const AbsencePage = () => {
                         <button
                           type="button"
                           onClick={() => handleDelete(absence.idAbsence)}
-                          className="px-4 py-2 text-xs font-semibold text-red-400 transition border rounded-xl border-red-500/30 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300"
+                          className="px-6 py-2 text-[9px] font-black uppercase tracking-widest text-red-400 transition border organic-pill border-red-500/30 bg-red-500/10 hover:bg-red-500 hover:text-white shadow-lg shadow-red-500/10"
                         >
                           Supprimer
                         </button>

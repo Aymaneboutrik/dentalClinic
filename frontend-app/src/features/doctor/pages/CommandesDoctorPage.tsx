@@ -164,7 +164,7 @@ export default function CommandesDoctorPage() {
       accessorKey: "statut",
       header: "Statut",
       cell: ({ row }) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statutColors[row.original.statut] ?? "bg-gray-100 text-gray-700"}`}>
+        <span className={`inline-flex items-center organic-pill border px-4 py-1.5 text-[10px] font-black uppercase tracking-widest ${statutColors[row.original.statut] ?? "bg-gray-100 text-gray-700"}`}>
           {statutLabels[row.original.statut] ?? row.original.statut}
         </span>
       ),
@@ -179,7 +179,7 @@ export default function CommandesDoctorPage() {
 
               <Button
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 organic-pill px-6 h-9 text-[10px] font-black uppercase tracking-widest"
                 onClick={() => handleValider(row.original.id)}
                 disabled={loading}
               >
@@ -188,7 +188,7 @@ export default function CommandesDoctorPage() {
               <Button
                 size="sm"
                 variant="outline"
-                className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                className="text-rose-600 border-rose-500/30 bg-rose-500/10 hover:bg-rose-600 hover:text-white transition-all shadow-lg shadow-rose-500/10 organic-pill px-6 h-9 text-[10px] font-black uppercase tracking-widest"
                 onClick={() => openRefusForm(row.original.id)}
                 disabled={loading}
               >
@@ -203,12 +203,12 @@ export default function CommandesDoctorPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8 p-8 border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div>
-          <p className="text-primary text-sm font-medium">Gestion Stock</p>
+          <p className="text-primary text-[11px] font-black uppercase tracking-widest mb-1">Gestion Stock</p>
           <PageTitle title="Approbation des Commandes" desc="Revoyez les commandes en attente et validez-les pour approvisionner le stock." />
         </div>
-        <Button variant="outline" onClick={fetchCommandes} disabled={loading}>
+        <Button variant="outline" onClick={fetchCommandes} disabled={loading} className="organic-button px-8 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-lg">
           {loading ? "Chargement..." : fetched ? "Actualiser" : "Charger"}
         </Button>
       </div>
@@ -216,36 +216,39 @@ export default function CommandesDoctorPage() {
 
 
       {showRefusForm && (
-        <div className="border border-rose-200 rounded-xl p-6 mb-6 bg-card shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <div className="border border-white/5 organic-card p-8 mb-8 bg-[#081028]/80 backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-rose-500/20 rounded-2xl text-rose-500 shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Motif du Refus</h2>
-              <p className="text-sm text-muted-foreground">Veuillez indiquer pourquoi la commande #{selectedId} est refusée.</p>
+              <h2 className="text-2xl font-black text-white tracking-tight">Motif du Refus</h2>
+              <p className="text-sm text-slate-400">Veuillez indiquer pourquoi la commande <span className="text-rose-400 font-bold">#{selectedId}</span> est refusée.</p>
             </div>
           </div>
           
           <Form {...refusForm}>
-            <form onSubmit={refusForm.handleSubmit(handleRefuser)} className="space-y-6">
-              <TextareaInput
-                label="Commentaire de refus"
-                name="note"
-                form={refusForm}
-                placeholder="Ex: Prix trop élevé, produit non conforme..."
-                withAsterisk
-              />
-              <div className="flex justify-end gap-3 pt-4 border-t">
+            <form onSubmit={refusForm.handleSubmit(handleRefuser)} className="space-y-8">
+              <div className="organic-card border border-white/5 bg-white/5 p-2 focus-within:border-blue-500/30 transition-all">
+                <TextareaInput
+                  label="Commentaire de refus"
+                  name="note"
+                  form={refusForm}
+                  placeholder="Ex: Prix trop élevé, produit non conforme..."
+                  withAsterisk
+                />
+              </div>
+              <div className="flex justify-end gap-4 pt-6 border-t border-white/5">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => { setShowRefusForm(false); setSelectedId(null); refusForm.reset(); }}
                   disabled={loading}
+                  className="organic-pill px-8 h-12 text-[11px] font-black uppercase tracking-widest border-white/10 hover:bg-white/5 transition-all"
                 >
                   Annuler
                 </Button>
-                <Button type="submit" variant="destructive" className="px-8 shadow-md" disabled={loading}>
+                <Button type="submit" variant="destructive" className="organic-button bg-rose-600 hover:bg-rose-700 px-10 h-12 text-[11px] font-black uppercase tracking-widest shadow-lg shadow-rose-600/20" disabled={loading}>
                   {loading ? "Traitement..." : "Confirmer le Refus"}
                 </Button>
               </div>
@@ -254,11 +257,11 @@ export default function CommandesDoctorPage() {
         </div>
       )}
 
-      <div className="border rounded-xl p-6 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-lg text-gray-800">Commandes à traiter</h3>
-            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{commandes.length} au total</span>
+      <div className="border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5 p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <h3 className="font-black text-xl text-white tracking-tight">Commandes à traiter</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-white/5 text-primary px-3 py-1 organic-pill border border-white/10">{commandes.length} AU TOTAL</span>
           </div>
         </div>
         <DataTable columns={columns} data={commandes} loading={loading} />

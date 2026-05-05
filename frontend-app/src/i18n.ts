@@ -1,7 +1,7 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import en from "@assets/translations/en.json";
-import mm from "@assets/translations/mm.json";
+import fr from "@assets/translations/fr.json";
 import useUserPreference from "@stores/user-preference";
 
 const resources = {
@@ -9,10 +9,7 @@ const resources = {
     translation: en,
   },
   fr: {
-    translation: en, // Fallback to English for French browsers for now
-  },
-  mm: {
-    translation: mm,
+    translation: fr,
   },
 };
 

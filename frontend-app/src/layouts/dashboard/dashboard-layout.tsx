@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import clsx from "clsx";
 import { Header, Sidebar } from "./components";
 import useUserPreference from "@stores/user-preference";
@@ -11,6 +11,7 @@ import useAuthOperations from "@hooks/use-auth-operations";
 
 export function DashboardLayout() {
   //useAuth();
+  const location = useLocation();
 
   const { sidebarCollapsed } = useUserPreference();
   const { open, closeAll } = useModal();
@@ -50,10 +51,12 @@ export function DashboardLayout() {
         <main
           className={clsx(
             "p-4 sm:ml-4 flex-1 items-start mt-14 grid gap-4 transition-all duration-300",
-            sidebarCollapsed ? "sm:pl-[60px]" : "sm:pl-[250px]"
+            sidebarCollapsed ? "sm:pl-[76px]" : "sm:pl-[266px]"
           )}
         >
-          <Outlet />
+          <div key={location.pathname} className="animate-fade-in-up">
+            <Outlet />
+          </div>
         </main>
       </div>
     </IdleTimerProvider>

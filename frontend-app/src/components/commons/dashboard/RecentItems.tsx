@@ -10,33 +10,39 @@ type RecentItemsProps = {
 
 export function RecentItems({ items }: RecentItemsProps) {
   return (
-    <div className="glass p-8 border-white/5 shadow-2xl rounded-[2rem]">
+    <div className="glass p-8 border-white/5 shadow-2xl organic-card bg-card/40 backdrop-blur-md">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold tracking-tight text-foreground">Activités récentes</h2>
-        <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full">Temps réel</span>
+        <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-4 py-2 organic-pill border border-primary/10">Temps réel</span>
       </div>
 
       <div className="space-y-6">
-        {items.map((item, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 transition-all duration-200 group border border-transparent hover:border-white/5"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                <span className="text-lg font-bold">{item.name.charAt(0)}</span>
+        {items.length > 0 ? (
+          items.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between p-5 organic-pill hover:bg-white/5 transition-all duration-300 group border border-transparent hover:border-white/5 shadow-sm"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <span className="text-lg font-bold">{item.name.charAt(0)}</span>
+                </div>
+                <div>
+                  <p className="font-bold text-foreground group-hover:text-primary transition-colors">{item.title}</p>
+                  <p className="text-sm text-muted-foreground font-medium">{item.name}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-foreground group-hover:text-primary transition-colors">{item.title}</p>
-                <p className="text-sm text-muted-foreground font-medium">{item.name}</p>
-              </div>
-            </div>
 
-            <div className="text-right">
-              <span className="text-sm font-semibold text-muted-foreground/80">{item.time}</span>
+              <div className="text-right">
+                <span className="text-sm font-semibold text-muted-foreground/80">{item.time}</span>
+              </div>
             </div>
+          ))
+        ) : (
+          <div className="text-center p-6 text-muted-foreground">
+            Aucune activité récente
           </div>
-        ))}
+        )}
       </div>
     </div>
 

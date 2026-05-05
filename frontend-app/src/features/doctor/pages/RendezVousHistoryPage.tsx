@@ -88,7 +88,7 @@ const RendezVousHistoryPage = () => {
     };
     
     const s = statusMap[status.toString()];
-    return s ? <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${s.color}`}>{s.label}</span> : <span>{status.toString()}</span>;
+    return s ? <span className={`inline-flex items-center organic-pill border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${s.color}`}>{s.label}</span> : <span>{status.toString()}</span>;
   };
 
   const getTypeModification = (type: string | number | undefined) => {
@@ -112,14 +112,14 @@ const RendezVousHistoryPage = () => {
 
   return (
     <div className="w-full space-y-8">
-      <div className="p-6 border shadow-sm rounded-2xl bg-card">
+      <div className="p-8 border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-primary">Traçabilité</p>
-          <h1 className="text-3xl font-bold tracking-tight">Historique des Rendez-vous</h1>
+          <p className="text-sm font-medium text-primary uppercase tracking-widest">Traçabilité</p>
+          <h1 className="text-3xl font-black tracking-tight">Historique des Rendez-vous</h1>
         </div>
       </div>
 
-      <div className="border shadow-sm rounded-2xl bg-card">
+      <div className="border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/30">
@@ -176,13 +176,13 @@ const RendezVousHistoryPage = () => {
                       {getStatusLabel(item.nouveauStatut)}
                     </td>
                     <td className="px-4 py-4">
-                       <span className="text-[10px] bg-white/5 px-2 py-1 rounded border border-white/10 text-primary font-semibold uppercase">
-                         {getTypeModification(item.typeModification)}
-                       </span>
+                        <span className="text-[10px] bg-white/5 px-4 py-1.5 organic-pill border border-white/10 text-primary font-black uppercase tracking-widest">
+                          {getTypeModification(item.typeModification)}
+                        </span>
                     </td>
                     <td className="px-4 py-4">
                       {item.estUrgent ? (
-                        <span className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400">
+                        <span className="inline-flex items-center organic-pill border border-red-500/30 bg-red-500/15 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-red-400">
                           Urgent
                         </span>
                       ) : (

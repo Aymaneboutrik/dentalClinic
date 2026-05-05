@@ -120,7 +120,7 @@ export default function DoctorEmployeesPage() {
           <Text size="xxxl" className="font-bold text-foreground">Gestion du Cabinet</Text>
           <Text className="text-muted-foreground mt-1">Administration de l'équipe et sécurité centralisée.</Text>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} className="font-bold" variant="default">
+        <Button onClick={() => setShowCreateModal(true)} className="font-bold organic-button px-8 h-11 shadow-lg shadow-primary/20" variant="default">
           <Plus className="mr-2 h-4 w-4" /> Créer un employé
         </Button>
       </div>
@@ -128,17 +128,17 @@ export default function DoctorEmployeesPage() {
       <div className="flex space-x-4 mb-6">
         <button
           onClick={() => setActiveTab("equipe")}
-          className={`px-4 py-2 font-bold transition-all rounded-lg ${activeTab === "equipe" ? "bg-primary text-primary-foreground shadow-lg" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
+          className={`px-8 py-2.5 font-black uppercase tracking-widest text-[10px] transition-all organic-pill ${activeTab === "equipe" ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20 scale-105" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
         >
           L'Équipe ({users.filter(u => u.role !== "Dentiste").length})
         </button>
         <button
           onClick={() => setActiveTab("securite")}
-          className={`flex items-center px-4 py-2 font-bold transition-all rounded-lg ${activeTab === "securite" ? "bg-red-500 text-white shadow-lg shadow-red-500/20" : "bg-card text-card-foreground border hover:bg-secondary/80"}`}
+          className={`flex items-center px-8 py-2.5 font-black uppercase tracking-widest text-[10px] transition-all organic-pill ${activeTab === "securite" ? "bg-red-500 text-white shadow-xl shadow-red-500/20 scale-105" : "bg-card text-card-foreground border border-border/50 hover:bg-secondary/80"}`}
         >
           <KeyRound className="mr-2 h-4 w-4" />
-          Sécurité & Mots de passe
-          {requests.length > 0 && <span className="ml-2 bg-white text-red-600 rounded-full text-xs px-2 py-0.5">{requests.length}</span>}
+          Sécurité
+          {requests.length > 0 && <span className="ml-2 bg-white text-red-600 organic-pill text-[9px] px-2 py-0.5">{requests.length}</span>}
         </button>
       </div>
 
@@ -148,7 +148,7 @@ export default function DoctorEmployeesPage() {
         </div>
       ) : activeTab === "equipe" ? (
         <div className="grid gap-4">
-          <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+          <div className="organic-card border bg-card/40 backdrop-blur-md text-card-foreground shadow-2xl overflow-hidden">
             <table className="w-full text-sm text-left">
               <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground font-bold">
                 <tr>
@@ -166,13 +166,13 @@ export default function DoctorEmployeesPage() {
                       <p className="text-muted-foreground text-xs">{u.email}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${u.role === "Dentiste" ? "bg-blue-500/10 text-blue-500" : u.role === "Secretaire" ? "bg-purple-500/10 text-purple-500" : "bg-amber-500/10 text-amber-500"}`}>
+                      <span className={`px-3 py-1 organic-pill text-xs font-bold ${u.role === "Dentiste" ? "bg-blue-500/10 text-blue-500" : u.role === "Secretaire" ? "bg-purple-500/10 text-purple-500" : "bg-amber-500/10 text-amber-500"}`}>
                         {u.role}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`flex w-max items-center px-3 py-1 rounded-full text-xs font-bold ${u.actif ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${u.actif ? "bg-emerald-500" : "bg-red-500"}`}></span>
+                      <span className={`flex w-max items-center px-4 py-1.5 organic-pill text-[10px] font-black uppercase tracking-widest ${u.actif ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : "bg-red-500/10 text-red-500 border border-red-500/20"}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full mr-2 ${u.actif ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`}></span>
                         {u.actif ? "Actif" : "Inactif"}
                       </span>
                     </td>
@@ -186,7 +186,7 @@ export default function DoctorEmployeesPage() {
                               setSelectedUser(u);
                               setShowResetModal(true);
                             }}
-                            className="font-semibold text-xs border-amber-200 text-amber-600 hover:bg-amber-50"
+                             className="font-bold text-[10px] uppercase tracking-wider border-amber-200 text-amber-600 hover:bg-amber-50 organic-pill"
                             title="Réinitialiser le mot de passe"
                           >
                             <KeyRound className="h-3 w-3" />
@@ -195,7 +195,7 @@ export default function DoctorEmployeesPage() {
                             variant={u.actif ? "destructive" : "default"}
                             size="sm"
                             onClick={() => handleToggleStatus(u.idUtilisateur, u.actif)}
-                            className={`font-semibold text-xs ${u.actif ? "bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white border-transparent" : ""}`}
+                            className={`font-bold text-[10px] uppercase tracking-wider organic-pill ${u.actif ? "bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white border-transparent" : ""}`}
                           >
                             {u.actif ? "Désactiver" : "Activer"}
                           </Button>
@@ -211,14 +211,14 @@ export default function DoctorEmployeesPage() {
       ) : (
         <div className="grid gap-4">
           {requests.length === 0 ? (
-            <div className="p-12 text-center bg-card rounded-xl border border-dashed flex flex-col items-center">
+            <div className="p-12 text-center bg-card organic-card border border-dashed flex flex-col items-center shadow-inner">
               <ShieldAlert className="h-12 w-12 text-emerald-500/50 mb-3" />
-              <Text className="text-emerald-600 font-bold">Aucune demande en attente</Text>
+              <Text className="text-emerald-600 font-black uppercase tracking-widest text-xs">Aucune demande en attente</Text>
               <Text className="text-muted-foreground text-sm mt-1">L'ensemble de votre équipe utilise des codes sécurisés.</Text>
             </div>
           ) : (
             requests.map(req => (
-              <div key={req.id} className="flex justify-between items-center p-6 bg-card border rounded-xl shadow-sm hover:shadow-md transition-all">
+              <div key={req.id} className="flex justify-between items-center p-8 bg-card/60 backdrop-blur-md border organic-card shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 rounded-full bg-red-500/10 flex flex-col items-center justify-center text-red-500">
                     <KeyRound size={20} />
@@ -246,7 +246,7 @@ export default function DoctorEmployeesPage() {
       {/* Basic Inline Modal for Creation */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-background rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-border">
+          <div className="bg-background organic-card w-full max-w-md shadow-2xl overflow-hidden border border-border/50">
             <div className="p-6">
               <Text size="xl" className="font-bold text-foreground mb-4">Nouvel Employé</Text>
               <form onSubmit={handleCreateUser} className="space-y-4" autoComplete="off">
@@ -316,7 +316,7 @@ export default function DoctorEmployeesPage() {
                   <select 
                     value={newUser.role} 
                     onChange={e => setNewUser({...newUser, role: e.target.value})}
-                    className="w-full flex h-10 w-full border-border bg-background px-3 py-2 text-sm rounded-md border"
+                    className="w-full flex h-11 w-full border-white/10 bg-white/5 px-4 py-2 text-sm organic-pill border focus:ring-primary/20 transition-all outline-none"
                   >
                     <option value="Assistante">Assistante</option>
                     <option value="Secretaire">Secretaire</option>
@@ -324,8 +324,8 @@ export default function DoctorEmployeesPage() {
                 </div>
                 
                 <div className="pt-4 flex gap-3">
-                  <Button type="button" variant="outline" className="flex-1 font-bold" onClick={() => setShowCreateModal(false)}>Annuler</Button>
-                  <Button type="submit" className="flex-1 font-bold">Créer le compte</Button>
+                  <Button type="button" variant="outline" className="flex-1 rounded-xl font-bold" onClick={() => setShowCreateModal(false)}>Annuler</Button>
+                  <Button type="submit" className="flex-1 organic-button font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">Créer le compte</Button>
                 </div>
               </form>
             </div>
@@ -336,7 +336,7 @@ export default function DoctorEmployeesPage() {
       {/* Modale de réinitialisation directe de mot de passe */}
       {showResetModal && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-background rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-border">
+          <div className="bg-background organic-card-reverse w-full max-w-md shadow-2xl overflow-hidden border border-white/5">
             <div className="p-6">
               <Text size="xl" className="font-bold text-foreground mb-2">Réinitialiser le mot de passe</Text>
               <Text className="text-sm text-muted-foreground mb-4">

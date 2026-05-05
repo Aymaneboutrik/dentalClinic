@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { DashboardHeader } from "../../../components/commons/dashboard/DashboardHeader";
+import { Calendar, ShieldCheck, Clock, FileText } from "lucide-react";
 import type { Absence } from "../../../types/absence/absence";
 import {
   getAbsencesByEmployeId,
@@ -7,11 +9,8 @@ import {
 
 const formatDate = (dateValue?: string | null): string => {
   if (!dateValue) return "-";
-
   const date = new Date(dateValue);
-
   if (Number.isNaN(date.getTime())) return "-";
-
   return date.toLocaleDateString("fr-FR");
 };
 
@@ -21,11 +20,9 @@ const isSameDayAbsence = (
 ): boolean => {
   const formattedDateDebut = formatDate(dateDebut);
   const formattedDateFin = formatDate(dateFin);
-
   if (formattedDateDebut === "-" || formattedDateFin === "-") {
     return false;
   }
-
   return formattedDateDebut === formattedDateFin;
 };
 
@@ -38,7 +35,6 @@ const SecretaireAbsencePage = () => {
     try {
       setLoading(true);
       setError(null);
-
       const data = await getAbsencesByEmployeId();
       setAbsences(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -55,117 +51,108 @@ const SecretaireAbsencePage = () => {
   }, []);
 
   return (
-    <div className="w-full space-y-8">
-      <div className="p-6 border shadow-sm rounded-2xl bg-card">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-primary">
-              Gestion des absences
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Mes absences
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Consultez l’historique de vos absences validées.
-            </p>
-          </div>
-
-          <div className="px-4 py-3 text-sm text-blue-400 border rounded-2xl border-blue-500/20 bg-blue-500/10">
-            <span className="font-semibold">{absences.length}</span> absence
-            {absences.length > 1 ? "s" : ""} affichée
-            {absences.length > 1 ? "s" : ""}
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <DashboardHeader
+          title="Mes Absences"
+          subtitle="Consultez l'historique complet de vos absences validées"
+        />
+        
+        <div className="flex items-center space-x-3 md:mb-10">
+          <div className="glass border-white/5 px-6 py-3 rounded-2xl flex items-center space-x-3 shadow-lg">
+             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                <ShieldCheck className="w-4 h-4" />
+             </div>
+             <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Absences</p>
+                <p className="text-sm font-bold text-foreground">{absences.length} validée{absences.length > 1 ? 's' : ''}</p>
+             </div>
           </div>
         </div>
       </div>
 
       {error && (
-        <div className="px-4 py-3 text-sm text-red-400 border rounded-2xl border-red-500/20 bg-red-500/10">
-          {error}
+        <div className="glass border-red-500/20 bg-red-500/10 p-4 rounded-2xl flex items-center space-x-3 animate-in fade-in slide-in-from-top-2 duration-300">
+           <FileText className="w-5 h-5 text-red-500" />
+           <p className="text-sm text-red-500 font-medium">{error}</p>
         </div>
       )}
 
-      <div className="border shadow-sm rounded-2xl bg-card">
-        <div className="flex items-center justify-between px-6 py-5 border-b">
-          <div>
-            <h2 className="text-lg font-semibold">Liste de mes absences</h2>
-          </div>
+      <div className="glass border-white/5 shadow-2xl organic-card">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
+          <h3 className="text-lg font-bold flex items-center space-x-2">
+            <Clock className="w-5 h-5 text-primary" />
+            <span>Journal des Absences</span>
+          </h3>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-sm">
-            <thead className="bg-muted/30">
-              <tr className="text-left border-b">
-                <th className="px-6 py-4 font-semibold">Employé</th>
-                <th className="px-6 py-4 font-semibold">Type d’absence</th>
-                <th className="px-6 py-4 font-semibold">Date début</th>
-                <th className="px-6 py-4 font-semibold">Date fin</th>
-                <th className="px-6 py-4 font-semibold">Date validation</th>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-white/5 bg-white/5">
+                <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Employé</th>
+                <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Type d'Absence</th>
+                <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Période</th>
+                <th className="px-8 py-5 text-xs font-black uppercase tracking-widest text-muted-foreground">Validée le</th>
               </tr>
             </thead>
-
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {loading ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-sm text-center text-muted-foreground"
-                  >
-                    Chargement des absences...
-                  </td>
-                </tr>
-              ) : error && absences.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-sm text-center text-red-500"
-                  >
-                    {error}
-                  </td>
-                </tr>
-              ) : absences.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-sm text-center text-muted-foreground"
-                  >
-                    Aucune absence à afficher pour le moment.
-                  </td>
-                </tr>
-              ) : (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td colSpan={4} className="px-8 py-8 bg-white/5" />
+                  </tr>
+                ))
+              ) : absences.length > 0 ? (
                 absences.map((absence) => (
-                  <tr
-                    key={absence.idAbsence}
-                    className="transition duration-200 border-b border-white/10 hover:bg-white/5"
-                  >
-                    <td className="px-6 py-5 font-semibold text-white">
-                      {String(absence.nom || "")} {String(absence.prenom || "")}
+                  <tr key={absence.idAbsence} className="hover:bg-white/5 transition-colors group">
+                    <td className="px-8 py-5">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold">
+                          {absence.nom?.charAt(0).toUpperCase() || "?"}
+                        </div>
+                        <div>
+                          <p className="font-bold text-foreground group-hover:text-primary transition-colors capitalize">{absence.prenom} {absence.nom}</p>
+                          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">Secrétaire</p>
+                        </div>
+                      </div>
                     </td>
-
-                    <td className="px-6 py-5 text-slate-300">
-                      {String(absence.typeAbsence || "-")}
+                    <td className="px-8 py-5 text-sm font-medium">
+                       <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/5 border border-white/5 text-muted-foreground">
+                          {absence.typeAbsence || "Standard"}
+                       </span>
                     </td>
-
-                    {isSameDayAbsence(absence.dateDebut, absence.dateFin) ? (
-                      <td className="px-6 py-5 text-slate-300" colSpan={2}>
-                        {formatDate(absence.dateDebut)}
-                      </td>
-                    ) : (
-                      <>
-                        <td className="px-6 py-5 text-slate-300">
-                          {formatDate(absence.dateDebut)}
-                        </td>
-
-                        <td className="px-6 py-5 text-slate-300">
-                          {formatDate(absence.dateFin)}
-                        </td>
-                      </>
-                    )}
-
-                    <td className="px-6 py-5 text-slate-300">
-                      {formatDate(absence.dateValidation)}
+                    <td className="px-8 py-5">
+                      <div className="flex flex-col">
+                        {isSameDayAbsence(absence.dateDebut, absence.dateFin) ? (
+                          <span className="text-sm font-bold">{formatDate(absence.dateDebut)}</span>
+                        ) : (
+                          <>
+                            <span className="text-sm font-medium">du {formatDate(absence.dateDebut)}</span>
+                            <span className="text-sm font-medium text-muted-foreground">au {formatDate(absence.dateFin)}</span>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-8 py-5">
+                       <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-primary/40" />
+                          <span className="text-sm font-medium">{formatDate(absence.dateValidation)}</span>
+                       </div>
                     </td>
                   </tr>
                 ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-8 py-20 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground/30">
+                        <Calendar className="w-8 h-8" />
+                      </div>
+                      <p className="text-muted-foreground font-medium">Aucune absence enregistrée</p>
+                    </div>
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

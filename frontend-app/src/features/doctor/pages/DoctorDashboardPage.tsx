@@ -3,62 +3,143 @@ import { doctorDashboardConfig } from "../config/dashboard.config";
 import { DashboardHeader } from "../../../components/commons/dashboard/DashboardHeader";
 import { StatsCards } from "../../../components/commons/dashboard/StatsCards";
 import { RecentItems } from "../../../components/commons/dashboard/RecentItems";
+import { DashboardCharts } from "../components/DashboardCharts";
 import { userService } from "../../../apis/services/user";
+import { patientService } from "../../../apis/services/patient";
+import { getRendezVous } from "../../../apis/services/rendezvous";
+import { format, isToday, startOfWeek, addDays, isSameDay } from "date-fns";
+import { useTranslation } from "react-i18next";
+import { Users, CalendarCheck, FileText, Activity } from "lucide-react";
 
 export default function DoctorDashboardPage() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState(doctorDashboardConfig.stats);
+  const [weeklyData, setWeeklyData] = useState(doctorDashboardConfig.weeklyActivity);
+  const [statusData, setStatusData] = useState(doctorDashboardConfig.appointmentStatus);
+  const [activities, setActivities] = useState<any[]>([]);
 
   useEffect(() => {
-    const loadStats = async () => {
+    const loadDashboardData = async () => {
       try {
-        const users = await userService.getUsers();
+        const [users, patients, appointments] = await Promise.all([
+          userService.getUsers(),
+          patientService.getAllPatients(),
+          getRendezVous(),
+        ]);
 
-        const activeStaff = users.filter(
-          (u: any) => u.actif && u.role !== "Dentiste"
+        const todayAppointments = appointments.filter((a: any) =>
+          isToday(new Date(a.date))
+        );
+        const confirmedToday = todayAppointments.filter(
+          (a: any) => a.statut === "CONFIRME"
         ).length;
+
+        const occupancy =
+          appointments.length > 0 ? Math.round((confirmedToday / 10) * 100) : 0;
 
         setStats([
           {
-            title: "Patients aujourd’hui",
-            value: "12",
-            description: "+2 depuis hier",
+            title: t("dashboard.stats.todayPatients"),
+            value: todayAppointments.length.toString(),
+            description: t("dashboard.stats.todayPatientsDesc"),
+            icon: <Users className="w-5 h-5" />,
           },
           {
-            title: "Rendez-vous confirmés",
-            value: "8",
-            description: "pour aujourd’hui",
+            title: t("dashboard.stats.confirmedRDV"),
+            value: confirmedToday.toString(),
+            description: t("dashboard.stats.confirmedRDVDesc"),
+            icon: <CalendarCheck className="w-5 h-5" />,
           },
           {
-            title: "Employés actifs",
-            value: activeStaff.toString(),
-            description: "Secrétaires et assistantes actives",
+            title: t("dashboard.stats.totalPatients"),
+            value: patients.length.toString(),
+            description: t("dashboard.stats.totalPatientsDesc"),
+            icon: <FileText className="w-5 h-5" />,
+          },
+          {
+            title: t("dashboard.stats.occupancy"),
+            value: `${occupancy}%`,
+            description: t("dashboard.stats.occupancyDesc"),
+            icon: <Activity className="w-5 h-5" />,
           },
         ]);
+
+        const days = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+        const last7Days = Array.from({ length: 7 }).map((_, i) => {
+          const date = addDays(startOfWeek(new Date()), i);
+          const count = appointments.filter((a: any) =>
+            isSameDay(new Date(a.date), date)
+          ).length;
+          return { day: days[date.getDay()], appointments: count };
+        });
+        setWeeklyData(last7Days);
+
+        const statuses = appointments.reduce((acc: any, curr: any) => {
+          acc[curr.statut] = (acc[curr.statut] || 0) + 1;
+          return acc;
+        }, {});
+
+        const total = appointments.length || 1;
+        setStatusData([
+          {
+            name: t("dashboard.status.confirmed"),
+            value: Math.round(((statuses["CONFIRME"] || 0) / total) * 100),
+            fill: "hsl(var(--primary))",
+          },
+          {
+            name: t("dashboard.status.pending"),
+            value: Math.round(((statuses["EN_ATTENTE"] || 0) / total) * 100),
+            fill: "hsl(180 80% 45%)",
+          },
+          {
+            name: t("dashboard.status.cancelled"),
+            value: Math.round(((statuses["ANNULE"] || 0) / total) * 100),
+            fill: "hsl(0 84% 60%)",
+          },
+        ]);
+
+        const recent = [...appointments]
+          .sort(
+            (a: any, b: any) =>
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+          )
+          .slice(0, 5)
+          .map((a: any) => {
+            const patient = patients.find((p: any) => p.id === a.patientId);
+            return {
+              title:
+                a.statut === "CONFIRME"
+                  ? t("dashboard.status.confirmed")
+                  : a.statut === "ANNULE"
+                  ? t("dashboard.status.cancelled")
+                  : t("dashboard.status.pending"),
+              name: patient ? `${patient.prenom} ${patient.nom}` : "Patient inconnu",
+              time: format(new Date(a.date), "HH:mm"),
+            };
+          });
+
+        setActivities(recent);
       } catch (error) {
-        console.error(
-          "Non bloquant, l'API n'est pas encore prête.",
-          error
-        );
+        console.error("Erreur lors du chargement des données concrètes:", error);
       }
     };
 
-    loadStats();
-  }, []);
+    loadDashboardData();
+  }, [t]);
 
   return (
-    <div className="flex min-h-screen">
-      <main className="flex-1 p-6">
-        <DashboardHeader
-          title={doctorDashboardConfig.title}
-          subtitle={doctorDashboardConfig.subtitle}
-        />
+    <div className="space-y-8 pb-10">
+      <DashboardHeader
+        title={t("dashboard.title")}
+        subtitle={t("dashboard.subtitle")}
+      />
 
-        <StatsCards items={stats} />
+      <StatsCards items={stats} />
 
-        <div className="mt-6">
-          <RecentItems items={doctorDashboardConfig.recentActivities} />
-        </div>
-      </main>
+      <div className="space-y-8">
+        <RecentItems items={activities} />
+        <DashboardCharts weeklyData={weeklyData} statusData={statusData} />
+      </div>
     </div>
   );
 }

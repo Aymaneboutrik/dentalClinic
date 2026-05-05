@@ -337,11 +337,11 @@ const PlanningPage = () => {
 
   return (
     <div className="w-full space-y-8">
-      <div className="p-6 border shadow-sm rounded-2xl border-white/10 bg-card">
+      <div className="p-8 border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-primary">Planning</p>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <p className="text-sm font-medium text-primary uppercase tracking-widest">Planning</p>
+            <h1 className="text-3xl font-black tracking-tight">
               Gestion des horaires
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -359,7 +359,7 @@ const PlanningPage = () => {
             <button
               type="button"
               onClick={handleOpenAddForm}
-              className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500"
+              className="organic-button bg-blue-600 px-8 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-blue-500 shadow-lg shadow-blue-500/20"
             >
               Ajouter un horaire
             </button>
@@ -374,7 +374,7 @@ const PlanningPage = () => {
       )}
 
       {showAddForm && (
-        <div className="rounded-2xl border border-white/10 bg-[#081028] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+        <div className="organic-card border border-white/10 bg-[#081028]/80 backdrop-blur-xl p-8 shadow-2xl">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-white">
               {isEditMode ? "Modifier un horaire" : "Ajouter un horaire"}
@@ -403,7 +403,7 @@ const PlanningPage = () => {
                 value={formData.idEmploye}
                 onChange={handleChange}
                 disabled={isEditMode}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:bg-blue-500/5 disabled:cursor-not-allowed disabled:opacity-70 ${
+                className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition focus:bg-blue-500/5 disabled:cursor-not-allowed disabled:opacity-70 ${
                   fieldErrors.idEmploye
                     ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                     : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -433,7 +433,7 @@ const PlanningPage = () => {
                 name="jour"
                 value={formData.jour}
                 onChange={handleChange}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
+                className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
                   fieldErrors.jour
                     ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                     : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -466,7 +466,7 @@ const PlanningPage = () => {
                 name="heureDebut"
                 value={formData.heureDebut}
                 onChange={handleChange}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
+                className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
                   fieldErrors.heureDebut
                     ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                     : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -486,7 +486,7 @@ const PlanningPage = () => {
                 name="heureFin"
                 value={formData.heureFin}
                 onChange={handleChange}
-                className={`w-full rounded-xl border bg-white/5 px-4 py-3 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
+                className={`w-full organic-pill h-12 px-5 text-sm text-white outline-none transition focus:bg-blue-500/5 ${
                   fieldErrors.heureFin
                     ? "border-red-500/50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
                     : "border-blue-500/20 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.15)]"
@@ -501,7 +501,7 @@ const PlanningPage = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+                className="organic-pill border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold text-slate-200 transition hover:bg-white/10"
               >
                 Annuler
               </button>
@@ -509,7 +509,7 @@ const PlanningPage = () => {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
+                className="organic-button bg-blue-600 px-10 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70 shadow-lg shadow-blue-500/20"
               >
                 {isEditMode ? "Mettre à jour" : "Enregistrer"}
               </button>
@@ -518,7 +518,7 @@ const PlanningPage = () => {
         </div>
       )}
 
-      <div className="overflow-hidden border shadow-sm rounded-2xl border-white/10 bg-card">
+      <div className="overflow-hidden border shadow-2xl organic-card bg-card/40 backdrop-blur-md border-white/5">
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
           <div>
             <h2 className="text-lg font-semibold text-white">
@@ -541,7 +541,7 @@ const PlanningPage = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <div className="min-w-[1160px] rounded-2xl border border-white/10 bg-[#081028]">
+              <div className="min-w-[1160px] organic-card border border-white/10 bg-[#081028]/90 shadow-inner">
                 <div className="grid grid-cols-8 border-b border-white/10 bg-white/5">
                   <div className="flex items-center px-4 py-4 text-sm font-semibold border-r border-white/10 text-slate-300">
                     Employé
@@ -570,7 +570,7 @@ const PlanningPage = () => {
                         <span className="text-sm font-semibold text-white">
                           {employee.fullName}
                         </span>
-                        <span className="inline-flex items-center px-3 py-1 mt-2 text-xs font-medium text-blue-400 border rounded-full w-fit border-blue-500/20 bg-blue-500/10">
+                        <span className="inline-flex items-center px-4 py-1.5 mt-2 text-[10px] font-black uppercase tracking-widest text-blue-400 border organic-pill w-fit border-blue-500/20 bg-blue-500/10">
                           {employee.role}
                         </span>
                       </div>
@@ -603,9 +603,9 @@ const PlanningPage = () => {
                                           prev === horaireId ? null : horaireId
                                         )
                                       }
-                                      className="w-full px-3 py-2 text-center transition border shadow-sm rounded-xl border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/15"
+                                      className="w-full px-4 py-2.5 text-center transition border shadow-lg organic-pill border-emerald-500/30 bg-emerald-500/20 hover:bg-emerald-500/30 hover:scale-[1.02]"
                                     >
-                                      <span className="block text-xs font-medium text-emerald-300">
+                                      <span className="block text-[11px] font-black tracking-widest text-emerald-300">
                                         {String(
                                           horaire?.heureDebut ?? ""
                                         ).slice(0, 5)}{" "}
@@ -628,7 +628,7 @@ const PlanningPage = () => {
                                         <button
                                           type="button"
                                           onClick={() => handleEdit(horaire)}
-                                          className="w-full px-3 py-2 text-xs font-semibold text-blue-400 transition border rounded-lg border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 hover:text-blue-300"
+                                          className="w-full px-3 py-2 text-xs font-semibold text-blue-400 transition border organic-pill h-9 px-6 uppercase tracking-widest text-[9px] font-black shadow-lg shadow-blue-500/10 transition-all hover:scale-105"
                                         >
                                           Modifier
                                         </button>
@@ -638,7 +638,7 @@ const PlanningPage = () => {
                                           onClick={() =>
                                             handleDelete(horaireId)
                                           }
-                                          className="w-full px-3 py-2 text-xs font-semibold text-red-400 transition border rounded-lg border-red-500/30 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300"
+                                          className="w-full px-3 py-2 text-xs font-semibold text-red-400 transition border organic-pill h-9 px-6 uppercase tracking-widest text-[9px] font-black shadow-lg shadow-red-500/10 transition-all hover:scale-105"
                                         >
                                           Supprimer
                                         </button>
@@ -649,10 +649,10 @@ const PlanningPage = () => {
                               })
                             ) : (
                               <div
-                                className={`rounded-lg px-2 py-1 text-center text-sm font-medium ${
+                                className={`organic-pill px-4 py-2 text-center text-[10px] font-black uppercase tracking-widest shadow-inner ${
                                   isSunday
-                                    ? "border border-red-500/30 bg-red-500/20 text-red-400"
-                                    : "border border-red-500/20 bg-red-500/10 text-red-300"
+                                    ? "border border-red-500/40 bg-red-500/25 text-red-300"
+                                    : "border border-red-500/20 bg-red-500/10 text-red-400/60"
                                 }`}
                               >
                                 OFF

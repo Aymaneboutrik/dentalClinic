@@ -168,7 +168,7 @@ export function PatientActionModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] glass border-white/10 shadow-2xl rounded-[1.5rem]">
+      <DialogContent className="sm:max-w-[600px] glass border-white/5 shadow-2xl organic-card-reverse bg-background/95 backdrop-blur-xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black">
             {mode === "create" ? "Nouveau Patient" : mode === "edit" ? "Modifier Patient" : "Détails du Patient"}
@@ -186,7 +186,7 @@ export function PatientActionModal({
                 onChange={handleChange}
                 disabled={isViewOnly}
                 placeholder="Ex: Alami"
-                className={`bg-white/5 border-white/10 rounded-xl ${errors.nom ? "border-red-500" : ""}`}
+                className={`bg-white/5 border-white/10 organic-pill ${errors.nom ? "border-red-500" : ""}`}
               />
               {errors.nom && <p className="text-red-500 text-xs mt-1">{errors.nom}</p>}
             </div>
@@ -199,7 +199,7 @@ export function PatientActionModal({
                 onChange={handleChange}
                 disabled={isViewOnly}
                 placeholder="Ex: Ahmed"
-                className={`bg-white/5 border-white/10 rounded-xl ${errors.prenom ? "border-red-500" : ""}`}
+                className={`bg-white/5 border-white/10 organic-pill ${errors.prenom ? "border-red-500" : ""}`}
               />
               {errors.prenom && <p className="text-red-500 text-xs mt-1">{errors.prenom}</p>}
             </div>
@@ -215,7 +215,7 @@ export function PatientActionModal({
                 onChange={handleChange}
                 disabled={isViewOnly}
                 placeholder="Ex: AB12345"
-                className={`bg-white/5 border-white/10 rounded-xl ${errors.cin ? "border-red-500" : ""}`}
+                className={`bg-white/5 border-white/10 organic-pill ${errors.cin ? "border-red-500" : ""}`}
               />
               {errors.cin && <p className="text-red-500 text-xs mt-1">{errors.cin}</p>}
             </div>
@@ -228,7 +228,7 @@ export function PatientActionModal({
                 value={formData.dateNaissance ? String(formData.dateNaissance).split("T")[0] : ""}
                 onChange={handleChange}
                 disabled={isViewOnly}
-                className={`bg-white/5 border-white/10 rounded-xl ${errors.dateNaissance ? "border-red-500" : ""}`}
+                className={`bg-white/5 border-white/10 organic-pill ${errors.dateNaissance ? "border-red-500" : ""}`}
               />
               {errors.dateNaissance && <p className="text-red-500 text-xs mt-1">{errors.dateNaissance}</p>}
             </div>
@@ -244,7 +244,7 @@ export function PatientActionModal({
                 onChange={handleChange}
                 disabled={isViewOnly}
                 placeholder="06..."
-                className={`bg-white/5 border-white/10 rounded-xl ${errors.telephone ? "border-red-500" : ""}`}
+                className={`bg-white/5 border-white/10 organic-pill ${errors.telephone ? "border-red-500" : ""}`}
               />
               {errors.telephone && <p className="text-red-500 text-xs mt-1">{errors.telephone}</p>}
             </div>
@@ -258,7 +258,7 @@ export function PatientActionModal({
                 onChange={handleChange}
                 disabled={isViewOnly}
                 placeholder="email@exemple.com"
-                className={`bg-white/5 border-white/10 rounded-xl ${errors.email ? "border-red-500" : ""}`}
+                className={`bg-white/5 border-white/10 organic-pill ${errors.email ? "border-red-500" : ""}`}
               />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
@@ -272,7 +272,7 @@ export function PatientActionModal({
                 onValueChange={(val) => handleSelectChange("sexe", val)}
                 value={formData.sexe || "M"}
               >
-                <SelectTrigger className={`bg-white/5 border-white/10 rounded-xl ${errors.sexe ? "border-red-500" : ""}`}>
+                <SelectTrigger className={`bg-white/5 border-white/10 organic-pill ${errors.sexe ? "border-red-500" : ""}`}>
                   <SelectValue placeholder="Sexe" />
                 </SelectTrigger>
                 <SelectContent>
@@ -291,7 +291,7 @@ export function PatientActionModal({
                 onChange={handleChange}
                 disabled={isViewOnly}
                 placeholder="Ex: Professeur"
-                className={`bg-white/5 border-white/10 rounded-xl ${errors.profession ? "border-red-500" : ""}`}
+                className={`bg-white/5 border-white/10 organic-pill ${errors.profession ? "border-red-500" : ""}`}
               />
               {errors.profession && <p className="text-red-500 text-xs mt-1">{errors.profession}</p>}
             </div>
@@ -299,10 +299,10 @@ export function PatientActionModal({
 
           {!isViewOnly && (
             <DialogFooter className="mt-8">
-              <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
+              <Button type="button" variant="outline" onClick={onClose} className="rounded-xl font-bold">
                 Annuler
               </Button>
-              <Button type="submit" loading={loading} className="rounded-xl shadow-lg shadow-primary/20">
+              <Button type="submit" loading={loading} className="organic-button px-10 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20">
                 {mode === "create" ? "Créer" : "Sauvegarder"}
               </Button>
             </DialogFooter>

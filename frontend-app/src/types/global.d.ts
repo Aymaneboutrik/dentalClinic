@@ -1,5 +1,5 @@
 declare global {
-  type Lang = "en" | "mm";
+  type Lang = "en" | "fr";
 
   type Theme = "dark" | "light";
 
