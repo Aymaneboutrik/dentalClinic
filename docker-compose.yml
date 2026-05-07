@@ -6,9 +6,9 @@ services:
     container_name: frontend-react
     ports:
       - "5173:5173"
-    volumes:
-       - ./frontend-app:/app
-       - /app/node_modules
+    #volumes:
+      # - ./frontend-app:/app
+      #- /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=false
       - VITE_USE_POLLING=false
@@ -111,7 +111,6 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=personnel-db;Port=5432;Database=personnel_db;Username=personnel_user;Password=personnel_pass
-      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=
     networks:
       - dental-network
 
@@ -137,7 +136,6 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=stock-db;Database=stockdb;Username=admin;Password=admin123
-      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=
     ports:
       - "5003:8080"
     networks:
@@ -167,7 +165,6 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=rendezvous-db;Port=5432;Database=rendezvous_db;Username=rendezvous_user;Password=rendezvous_pass
-      JWT_SECRET: dGhpcy1pcy1hLXZlcnktc2VjcmV0LWtleS10aGF0LWlzLWxvbmctZW5vdWdoLTI1NmJpdHM=
     networks:
       - dental-network
 
@@ -238,8 +235,11 @@ volumes:
   pgadmin_data:
   stock_data:
   servicepersonnel_personnel_db_data:
+    external: true
   patient-service_patient-db-data:
+    external: true
   patient_uploads:
   rendezvous_db_data:
+    external:
+      name: dentalclinic_rendezvous_db_data
   paiement-data:
-

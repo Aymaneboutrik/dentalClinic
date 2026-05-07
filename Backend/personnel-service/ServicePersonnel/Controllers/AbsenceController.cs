@@ -7,7 +7,7 @@ namespace Service_Personnel.Controllers
 {
     [Route("api/absence")]
     [ApiController]
-    [Authorize(Roles = "Dentiste, Secretaire")]
+    [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
     public class AbsenceController : ControllerBase
     {
         private readonly IAbsenceService _absenceService;

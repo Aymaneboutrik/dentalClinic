@@ -1,5 +1,5 @@
 import type { Planning } from "../../../types/planning/planning";
-
+import secureApi from "@apis/instances/secure-api";
 
 
 export interface ApiError {
@@ -44,26 +44,19 @@ const normalizePlanning = (item: any): Planning => {
 };
 
 export const getPlannings = async (): Promise<Planning[]> => {
-  let response: Response;
-
   try {
-    response = await fetch("/api/personnel/api/horaires");
-  } catch {
+    const response = await secureApi.get("/personnel/api/horaires");
+    const result = response.data;
+
+    if (!Array.isArray(result)) {
+      return [];
+    }
+
+    return result.map((item: any) => normalizePlanning(item));
+  } catch (error: any) {
     throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
+      message: error.response?.data?.message || "Impossible de contacter le serveur.",
+      status: error.response?.status || 0,
     } as ApiError;
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-
-  const result = await response.json();
-
-  if (!Array.isArray(result)) {
-    return [];
-  }
-
-  return result.map((item) => normalizePlanning(item));
 };

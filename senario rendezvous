@@ -1,0 +1,287 @@
+# Analyse Fonctionnelle — Service Rendez-vous
+## Projet : DentalClinic — Rapport de Projet de Fin d'Études
+
+---
+
+# PARTIE II — SERVICE RENDEZ-VOUS
+
+> Le Service Rendez-vous est un microservice ASP.NET Core responsable du cycle de vie complet des rendez-vous médicaux de la clinique : planification, confirmation, report, annulation, marquage de présence/absence, et archivage historique. Chaque transition de statut est automatiquement tracée dans un journal d'historique.
+
+---
+
+### Cycle de vie d'un rendez-vous
+
+| Statut ID | Libellé     | Description                                |
+|:---------:|:------------|:-------------------------------------------|
+| 1         | Programmé   | État initial après création                |
+| 2         | Confirmé    | Confirmation explicite par un acteur       |
+| 3         | Annulé      | Rendez-vous annulé (supprimé de la table)  |
+| 4         | Effectué    | Consultation réalisée (archivé)            |
+| 5         | Absent      | Patient absent au rendez-vous              |
+
+---
+
+## UC-RV01 — Création d'un Rendez-vous
+
+### 1. Description
+Permet à un Dentiste ou une Secrétaire de créer un nouveau rendez-vous pour un patient avec un dentiste donné. Le rendez-vous est créé avec le statut *"Programmé"* et un premier enregistrement est automatiquement inséré dans l'historique.
+
+### 2. Acteur principal
+**Dentiste**, **Secrétaire**
+
+### 3. Préconditions
+- L'acteur est authentifié avec un token JWT valide et possède le rôle `Dentiste` ou `Secretaire`.
+- L'identifiant du patient (`patientId`) est valide.
+- L'identifiant du dentiste (`dentisteId`) est valide.
+
+### 4. Scénario nominal
+1. L'acteur soumet une requête `POST /api/rendez-vous` avec les informations suivantes : identifiant du patient, identifiant du dentiste, date, heure de début, heure de fin prévue, motif, et caractère urgent (optionnel).
+2. Le système vérifie que la **date du rendez-vous n'est pas dans le passé**.
+3. Le système vérifie que l'**heure de début est strictement antérieure à l'heure de fin prévue**.
+4. Si toutes les validations passent, un objet `RendezVous` est créé avec `StatutId = 1` (*Programmé*).
+5. L'objet est persisté en base de données.
+6. Un enregistrement historique est automatiquement créé (AncienStatut : *"N/A"*, NouveauStatut : *"Programmé"*, TypeModification : *"Création"*).
+7. Le système retourne `HTTP 201 Created` avec les données complètes du rendez-vous.
+
+### 5. Scénarios alternatifs
+- **Rendez-vous urgent** : Si le champ `EstUrgent` est `true`, le rendez-vous est signalé comme prioritaire dans l'interface, sans modifier le flux de création.
+
+### 6. Scénarios d'échec
+- **Date dans le passé (400)** : *"La date du rendez-vous ne peut pas être dans le passé."*
+- **Heure incohérente (400)** : *"L'heure de début doit être avant l'heure de fin prévue."*
+- **Données manquantes (400)** : Champ obligatoire absent dans le corps de la requête.
+- **Accès non autorisé (403)** : L'Assistante tente de créer un rendez-vous.
+- **Non authentifié (401)** : Token absent ou expiré.
+
+### 7. Postconditions
+- Le rendez-vous est enregistré avec le statut *"Programmé"* (`StatutId = 1`).
+- Un premier enregistrement apparaît dans l'historique du rendez-vous.
+- Le rendez-vous est visible dans la liste globale via `GET /api/rendez-vous`.
+
+---
+
+## UC-RV02 — Modification d'un Rendez-vous
+
+### 1. Description
+Permet de mettre à jour les informations d'un rendez-vous existant (date, horaire, motif, urgence). Chaque modification est tracée dans l'historique du rendez-vous.
+
+### 2. Acteur principal
+**Dentiste**, **Secrétaire**
+
+### 3. Préconditions
+- L'acteur est authentifié avec le rôle `Dentiste` ou `Secretaire`.
+- Le rendez-vous identifié par son `id` doit exister en base de données.
+- Le rendez-vous ne doit pas encore être dans un état terminal (*Annulé*, *Effectué*).
+
+### 4. Scénario nominal
+1. L'acteur soumet une requête `PUT /api/rendez-vous/{id}` avec les nouvelles valeurs (date, heures, motif, urgence).
+2. Le système récupère le rendez-vous existant.
+3. Le système valide la cohérence de la nouvelle date (non passée) et des horaires (début < fin).
+4. L'ancien statut est sauvegardé pour l'historique.
+5. Les propriétés du rendez-vous sont mises à jour.
+6. Un enregistrement historique est créé (TypeModification : *"ModificationStatut"*).
+7. Le système retourne `HTTP 200 OK` avec les données mises à jour.
+
+### 5. Scénarios alternatifs
+- **Modification du motif uniquement** : Les champs de date et d'heure peuvent être conservés identiques tant que leur cohérence est respectée.
+
+### 6. Scénarios d'échec
+- **Rendez-vous introuvable (404)** : Identifiant inconnu → exception `RendezVousNotFoundException`.
+- **Date dans le passé (400)** : La nouvelle date est antérieure à aujourd'hui.
+- **Heure incohérente (400)** : Heure de début ≥ heure de fin prévue.
+- **Accès non autorisé (403)** : L'Assistante tente une modification.
+- **Non authentifié (401)** : Token absent ou expiré.
+
+### 7. Postconditions
+- Les données du rendez-vous sont mises à jour dans la base de données.
+- Un nouvel enregistrement historique trace la modification avec la date, l'acteur et les anciens/nouveaux statuts.
+
+---
+
+## UC-RV03 — Annulation d'un Rendez-vous
+
+### 1. Description
+Permet d'annuler un rendez-vous planifié. Le rendez-vous est supprimé de la table active mais toute la traçabilité est préservée dans l'historique via un enregistrement avec le statut *"Annulé"*.
+
+### 2. Acteur principal
+**Dentiste**, **Secrétaire**
+
+### 3. Préconditions
+- L'acteur est authentifié avec le rôle `Dentiste` ou `Secretaire`.
+- Le rendez-vous identifié par son `id` doit exister en base de données.
+
+### 4. Scénario nominal
+1. L'acteur soumet une requête `PUT /api/rendez-vous/{id}/annuler?modifiePar={identifiant}`.
+2. Le système récupère le rendez-vous et sauvegarde l'ancien statut.
+3. Le statut est mis à jour à `StatutId = 3` (*Annulé*).
+4. Le système effectue la mise à jour en base.
+5. Un enregistrement historique est créé (NouveauStatut : *"Annulé"*, TypeModification : *"Annulation"*, ModifiePar : identifiant transmis).
+6. Le rendez-vous est **physiquement supprimé** de la table principale.
+7. Le système retourne `HTTP 204 No Content`.
+
+### 5. Scénarios alternatifs
+- **Annulation initiée par le Dentiste** : Le paramètre `modifiePar` contient l'identifiant du Dentiste, garantissant la traçabilité de la décision.
+
+### 6. Scénarios d'échec
+- **Rendez-vous introuvable (404)** : Identifiant inconnu.
+- **Paramètre manquant (400)** : Le paramètre `modifiePar` est absent.
+- **Accès non autorisé (403)** : L'Assistante tente une annulation.
+- **Non authentifié (401)** : Token absent ou expiré.
+
+### 7. Postconditions
+- Le rendez-vous est retiré de la liste active.
+- L'entrée historique avec le statut *"Annulé"* est conservée de manière permanente.
+- La disponibilité du dentiste est libérée pour ce créneau.
+
+---
+
+## UC-RV04 — Report d'un Rendez-vous
+
+### 1. Description
+Permet de reporter un rendez-vous à une nouvelle date et un nouvel horaire. Le système vérifie automatiquement la disponibilité du dentiste pour éviter les conflits de créneaux avant d'accepter le report.
+
+### 2. Acteur principal
+**Dentiste**, **Secrétaire**
+
+### 3. Préconditions
+- L'acteur est authentifié avec le rôle `Dentiste` ou `Secretaire`.
+- Le rendez-vous cible doit exister en base de données.
+- La nouvelle date et les nouveaux horaires doivent être fournis dans le corps de la requête.
+
+### 4. Scénario nominal
+1. L'acteur soumet `PUT /api/rendez-vous/{id}/reporter` avec un corps JSON contenant la nouvelle date, l'heure de début et l'heure de fin prévue.
+2. Le système valide le **format de la date** (AAAA-MM-JJ) et le **format des heures** (HH:mm).
+3. Le système vérifie que la **nouvelle date n'est pas dans le passé**.
+4. Le système vérifie que **l'heure de début est inférieure à l'heure de fin**.
+5. Le système **détecte les conflits** avec les autres rendez-vous du même dentiste à la même date et au même créneau (en excluant les rendez-vous Annulés et Absents).
+6. Si aucun conflit n'existe, le rendez-vous est mis à jour avec les nouvelles valeurs et le statut *"Reporté"*.
+7. Un enregistrement historique est créé (TypeModification : *"Report"*).
+8. Le système retourne `HTTP 204 No Content`.
+
+### 5. Scénarios alternatifs
+- **Rendez-vous urgent reporté** : Le champ `EstUrgent` est conservé lors du report.
+
+### 6. Scénarios d'échec
+- **Conflit de disponibilité (400)** : *"Le dentiste n'est pas disponible à cet horaire (conflit de rendez-vous)."*
+- **Date dans le passé (400)** : *"La nouvelle date ne peut pas être dans le passé."*
+- **Format de date invalide (400)** : *"Format de date invalide. Utilisez AAAA-MM-JJ."*
+- **Format d'heure invalide (400)** : *"Format de l'heure de début invalide. Utilisez HH:mm."*
+- **Heure incohérente (400)** : *"L'heure de début doit être inférieure à l'heure de fin."*
+- **Rendez-vous introuvable (404)** : Identifiant inconnu.
+- **Accès non autorisé (403)** : L'Assistante tente un report.
+- **Non authentifié (401)** : Token absent ou expiré.
+
+### 7. Postconditions
+- Le rendez-vous est reprogrammé à la nouvelle date et au nouvel horaire.
+- Le statut passe à *"Reporté"*.
+- La disponibilité du créneau d'origine est libérée.
+- L'entrée historique documente le report avec l'ancien et le nouvel horaire.
+
+---
+
+## UC-RV05 — Confirmation et Clôture d'un Rendez-vous
+
+### 1. Description
+Regroupe deux actions de gestion du statut d'un rendez-vous : la **confirmation** (le rendez-vous est validé et attendu) et le **marquage comme effectué** (la consultation a bien eu lieu).
+
+### 2. Acteur principal
+**Dentiste**, **Secrétaire**
+
+### 3. Préconditions
+- L'acteur est authentifié avec le rôle `Dentiste` ou `Secretaire`.
+- Le rendez-vous cible doit exister.
+- Pour la confirmation : le rendez-vous doit être dans l'état *"Programmé"*.
+- Pour le marquage *Effectué* : le rendez-vous doit être dans l'état *"Confirmé"* ou *"Programmé"*.
+
+### 4. Scénario nominal — Confirmation
+1. L'acteur soumet `PUT /api/rendez-vous/{id}/confirmer?modifiePar={identifiant}`.
+2. Le service `ConfirmAsync()` met à jour le statut à `StatutId = 2` (*Confirmé*).
+3. Un enregistrement historique est créé (NouveauStatut : *"Confirmé"*).
+4. Le système retourne `HTTP 204 No Content`.
+
+### 5. Scénarios alternatifs
+- **Marquage comme effectué** : `PUT /api/rendez-vous/{id}/effectuer?modifiePar={identifiant}` → le statut passe à `StatutId = 4` (*Effectué*) ; l'heure de fin réelle est enregistrée automatiquement (`HeureFinReelle = DateTime.UtcNow`). Le rendez-vous est ensuite **supprimé de la table active** et archivé dans l'historique.
+- **Marquage patient absent** : `PUT /api/rendez-vous/{id}/absent?modifiePar={identifiant}` → le statut passe à `StatutId = 5` (*Absent*) ; le rendez-vous est **supprimé de la table active** et l'absence est tracée dans l'historique.
+
+### 6. Scénarios d'échec
+- **Rendez-vous introuvable (404)** : Identifiant inconnu.
+- **Accès non autorisé (403)** : L'Assistante tente l'action.
+- **Non authentifié (401)** : Token absent ou expiré.
+
+### 7. Postconditions
+- **Après confirmation** : Le statut est *"Confirmé"* ; le rendez-vous reste actif.
+- **Après marquage Effectué** : La consultation est clôturée ; l'heure réelle de fin est enregistrée ; le rendez-vous disparaît de la liste active mais est archivé dans l'historique.
+- **Après marquage Absent** : Le créneau est libéré ; l'absence du patient est documentée dans l'historique.
+
+---
+
+## UC-RV06 — Consultation et Historique des Rendez-vous
+
+### 1. Description
+Permet à tout acteur autorisé de consulter la liste des rendez-vous actifs ou d'accéder à l'historique complet des modifications et transitions de statut d'un rendez-vous ou de l'ensemble du système.
+
+### 2. Acteur principal
+**Dentiste**, **Secrétaire**, **Assistante** (lecture seule)
+
+### 3. Préconditions
+- L'acteur est authentifié avec un token JWT valide.
+- L'acteur possède l'un des rôles autorisés : `Dentiste`, `Secretaire`, ou `Assistante`.
+
+### 4. Scénario nominal — Consultation des rendez-vous
+1. L'acteur émet une requête `GET /api/rendez-vous`.
+2. Le service `GetAllAsync()` récupère tous les rendez-vous actifs depuis la base de données.
+3. Chaque rendez-vous est transformé en DTO via `RendezVousMapper.ToDto()`.
+4. Le système retourne `HTTP 200 OK` avec la liste complète.
+
+### 5. Scénarios alternatifs
+- **Consultation d'un rendez-vous spécifique** : `GET /api/rendez-vous/{id}` → retourne les détails d'un rendez-vous unique.
+- **Historique d'un rendez-vous spécifique** : `GET /api/rendez-vous/{id}/historique` → retourne toutes les entrées d'historique liées à ce rendez-vous (créations, modifications, confirmations, annulations, reports, absences).
+- **Historique global** : `GET /api/rendez-vous/historique` → retourne l'intégralité des entrées historiques de tous les rendez-vous pour une vue d'audit complète.
+
+Chaque entrée historique contient : l'identifiant du rendez-vous, l'ancien statut, le nouveau statut, la date et l'heure de modification, l'identifiant de l'acteur ayant effectué l'action, le type de modification, ainsi que la snapshot des données du rendez-vous au moment de la modification (patient, dentiste, date, heure, motif, urgence).
+
+### 6. Scénarios d'échec
+- **Rendez-vous introuvable (404)** : Pour `GET /api/rendez-vous/{id}` et `GET /api/rendez-vous/{id}/historique`, si l'identifiant est inconnu → exception `RendezVousNotFoundException`.
+- **Non authentifié (401)** : Token absent ou expiré.
+- **Accès non autorisé (403)** : Un acteur sans rôle valide tente d'accéder aux données.
+
+### 7. Postconditions
+- Les données retournées sont en lecture seule : aucune modification n'est effectuée en base.
+- L'acteur obtient une vision fidèle et en temps réel de l'état du planning de la clinique.
+
+---
+
+## Synthèse des Autorisations par Service
+
+### Service Personnel
+
+| Fonctionnalité                          | Dentiste | Secrétaire | Assistante |
+|:----------------------------------------|:--------:|:----------:|:----------:|
+| Créer un employé                        | ✅       | ✅         | ❌         |
+| Modifier un employé                     | ✅       | ✅         | ❌         |
+| Consulter les employés                  | ✅       | ✅         | ❌         |
+| Supprimer un employé                    | ✅       | ✅         | ❌         |
+| Créer / Modifier un horaire             | ✅       | ✅         | ❌         |
+| Consulter les horaires (planning)       | ✅       | ✅         | ✅         |
+| Supprimer un horaire                    | ✅       | ✅         | ❌         |
+| Créer / Supprimer une absence           | ✅       | ✅         | ❌         |
+| Consulter les absences                  | ✅       | ✅         | ✅         |
+| Soumettre une demande d'absence         | ✅       | ✅         | ✅         |
+| Consulter ses demandes d'absence        | ✅       | ✅         | ✅         |
+| Accepter / Refuser une demande          | ✅       | ✅         | ❌         |
+
+### Service Rendez-vous
+
+| Fonctionnalité                          | Dentiste | Secrétaire | Assistante |
+|:----------------------------------------|:--------:|:----------:|:----------:|
+| Créer un rendez-vous                    | ✅       | ✅         | ❌         |
+| Modifier un rendez-vous                 | ✅       | ✅         | ❌         |
+| Annuler un rendez-vous                  | ✅       | ✅         | ❌         |
+| Reporter un rendez-vous                 | ✅       | ✅         | ❌         |
+| Confirmer un rendez-vous                | ✅       | ✅         | ❌         |
+| Marquer comme Effectué                  | ✅       | ✅         | ❌         |
+| Marquer patient Absent                  | ✅       | ✅         | ❌         |
+| Consulter la liste des rendez-vous      | ✅       | ✅         | ✅         |
+| Consulter un rendez-vous par ID         | ✅       | ✅         | ✅         |
+| Consulter l'historique d'un RDV         | ✅       | ✅         | ✅         |
+| Consulter l'historique global           | ✅       | ✅         | ✅         |

@@ -12,9 +12,12 @@ const secureApi = axios.create({
 // Add a request interceptor
 secureApi.interceptors.request.use(
   function (config) {
-    const token = Cookie.get(TOKEN);
+    const token = Cookie.get(TOKEN) || localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log(`[secureApi] Authorization header injected for URL: ${config.url}`);
+    } else {
+      console.warn(`[secureApi] NO TOKEN FOUND for URL: ${config.url}`);
     }
     return config;
   },

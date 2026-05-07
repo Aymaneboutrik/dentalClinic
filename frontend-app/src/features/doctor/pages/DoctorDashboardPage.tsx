@@ -125,7 +125,7 @@ export default function DoctorDashboardPage() {
     };
 
     loadDashboardData();
-  }, [t]);
+  }, []);
 
   return (
     <div className="space-y-8 pb-10">

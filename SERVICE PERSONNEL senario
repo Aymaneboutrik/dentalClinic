@@ -1,0 +1,182 @@
+# Analyse Fonctionnelle — Service Personnel & Service Rendez-vous
+## Projet : DentalClinic — Rapport de Projet de Fin d'Études
+
+---
+
+# PARTIE I — SERVICE PERSONNEL
+
+> Le Service Personnel est un microservice ASP.NET Core responsable de la gestion des ressources humaines de la clinique dentaire : employés, horaires de travail, absences et demandes d'absence.
+
+---
+
+## UC-P01 — Gestion des Employés (Créer / Modifier / Consulter / Supprimer)
+
+### 1. Description
+Permet à un acteur autorisé de gérer le répertoire des employés de la clinique : création de nouveaux profils, mise à jour des informations, consultation de la liste et suppression d'un employé.
+
+### 2. Acteur principal
+**Dentiste**, **Secrétaire**
+
+### 3. Préconditions
+- L'acteur est authentifié avec un token JWT valide.
+- L'acteur possède le rôle `Dentiste` ou `Secretaire`.
+
+### 4. Scénario nominal — Création d'un employé
+1. L'acteur soumet une requête `POST /api/employees` avec les données de l'employé (nom, prénom, téléphone, email, rôle).
+2. Le système valide les données reçues via les annotations `DataAnnotations`.
+3. Si les données sont valides, le service `EmployeeService.CreateAsync()` est appelé.
+4. L'employé est persisté en base de données PostgreSQL.
+5. Le système retourne une réponse `HTTP 201 Created` avec le message *"Employé ajouté avec succès"* et les données de l'employé créé.
+
+### 5. Scénarios alternatifs
+- **Consultation de tous les employés** : `GET /api/employees` → retourne la liste complète des employés.
+- **Consultation d'un employé par ID** : `GET /api/employees/{id}` → retourne les détails d'un employé spécifique.
+- **Mise à jour partielle** : `PATCH /api/employees/{id}` avec un corps JSON contenant les champs modifiés → les propriétés non transmises restent inchangées.
+- **Suppression** : `DELETE /api/employees/{id}` → l'employé est supprimé et le système retourne `HTTP 200 OK`.
+
+### 6. Scénarios d'échec
+- **Données invalides (400)** : Un champ obligatoire est manquant ou mal formaté → le système retourne `HTTP 400 Bad Request` avec le détail des erreurs de validation.
+- **Employé introuvable (404)** : L'identifiant fourni ne correspond à aucun employé → le middleware global retourne `HTTP 404 Not Found`.
+- **Accès non autorisé (403)** : L'acteur ne possède pas le rôle requis (`Dentiste` ou `Secretaire`) → `HTTP 403 Forbidden`.
+- **Non authentifié (401)** : Absence ou invalidité du token JWT → `HTTP 401 Unauthorized`.
+
+### 7. Postconditions
+- Le nouvel employé est enregistré en base de données avec un identifiant unique auto-généré.
+- L'employé est disponible dans la liste retournée par `GET /api/employees`.
+
+---
+
+## UC-P02 — Gestion des Horaires de Travail
+
+### 1. Description
+Permet la création, modification, consultation et suppression des plannings de travail hebdomadaires des employés. Un horaire définit le jour de la semaine, l'heure de début et l'heure de fin pour un employé donné.
+
+### 2. Acteur principal
+- **Création / Modification / Suppression** : Dentiste, Secrétaire
+- **Consultation** : Dentiste, Secrétaire, Assistante
+
+### 3. Préconditions
+- L'acteur est authentifié avec un token JWT valide.
+- L'employé concerné par l'horaire doit exister en base de données.
+
+### 4. Scénario nominal — Création d'un horaire
+1. L'acteur soumet une requête `POST /api/horaires` avec le jour, l'heure de début, l'heure de fin et l'identifiant de l'employé.
+2. Le système valide les données via le service `HoraireService.CreateAsync()`.
+3. L'horaire est persisté en base de données.
+4. Le système retourne `HTTP 200 OK` avec les données de l'horaire créé.
+
+### 5. Scénarios alternatifs
+- **Consultation du planning** : `GET /api/horaires` → accessible à tous les rôles authentifiés (Dentiste, Secrétaire, Assistante) ; retourne tous les horaires enrichis avec le nom et le rôle de chaque employé.
+- **Modification d'un horaire** : `PATCH /api/horaires/{id}` avec les nouveaux créneaux horaires → seuls les rôles Dentiste et Secrétaire peuvent effectuer cette action.
+- **Suppression d'un horaire** : `DELETE /api/horaires/{id}` → retrait définitif de l'horaire.
+
+### 6. Scénarios d'échec
+- **Horaire introuvable (404)** : L'identifiant fourni n'existe pas.
+- **Données invalides (400)** : Format d'heure incorrect ou champ obligatoire manquant.
+- **Accès non autorisé (403)** : L'Assistante tente une création, modification ou suppression.
+- **Non authentifié (401)** : Token absent ou invalide.
+
+### 7. Postconditions
+- Le planning de l'employé est mis à jour et visible via `GET /api/horaires`.
+- Les acteurs autorisés peuvent consulter les horaires mis à jour depuis leur tableau de bord.
+
+---
+
+## UC-P03 — Gestion des Absences Validées
+
+### 1. Description
+Permet l'enregistrement, la consultation et la suppression des absences officiellement validées des employés. Une absence est une période de non-présence attestée, distincte d'une simple demande.
+
+### 2. Acteur principal
+- **Création / Suppression** : Dentiste, Secrétaire
+- **Consultation** : Dentiste, Secrétaire, Assistante
+
+### 3. Préconditions
+- L'acteur est authentifié avec un token JWT valide.
+- L'employé concerné doit exister en base de données.
+
+### 4. Scénario nominal — Enregistrement d'une absence
+1. L'acteur soumet une requête `POST /api/absence` avec le type d'absence, la date de début, la date de fin et l'identifiant de l'employé.
+2. Le service `AbsenceService.CreateAsync()` enregistre l'absence.
+3. La date de validation est horodatée automatiquement par le système.
+4. Le système retourne `HTTP 200 OK` avec les données de l'absence créée.
+
+### 5. Scénarios alternatifs
+- **Consultation de toutes les absences** : `GET /api/absence` → liste complète enrichie avec le nom et le prénom de l'employé.
+- **Consultation par employé** : `GET /api/absence/employe/{employeId}` → filtre les absences pour un employé donné ; accessible aux trois rôles (Dentiste, Secrétaire, Assistante).
+- **Suppression** : `DELETE /api/absence/{id}/{docteurId}` → seul un Dentiste ou Secrétaire identifié peut supprimer une absence ; l'identifiant `docteurId` assure la traçabilité de l'action.
+
+### 6. Scénarios d'échec
+- **Absence introuvable (404)** : L'identifiant d'absence ne correspond à aucun enregistrement.
+- **Données invalides (400)** : Type d'absence manquant, dates incorrectes ou cohérence date début/fin non respectée.
+- **Accès non autorisé (403)** : L'Assistante tente une création ou suppression.
+- **Non authentifié (401)** : Token absent ou expiré.
+
+### 7. Postconditions
+- L'absence est enregistrée avec sa date de validation et visible depuis le journal des absences.
+- L'historique d'absence de l'employé est mis à jour.
+
+---
+
+## UC-P04 — Soumission d'une Demande d'Absence
+
+### 1. Description
+Permet à tout employé authentifié de soumettre une demande de congé ou d'absence. La demande est créée avec le statut *"En attente"* et doit être traitée par un acteur habilité (Dentiste ou Secrétaire).
+
+### 2. Acteur principal
+**Tout employé authentifié** (Dentiste, Secrétaire, Assistante)
+
+### 3. Préconditions
+- L'acteur est authentifié avec un token JWT valide.
+- L'identifiant de l'employé soumettant la demande est connu et transmis dans l'URL.
+
+### 4. Scénario nominal
+1. L'employé soumet une requête `POST /api/demande-absence/{employeId}` avec la date de début, la date de fin, le type de demande et un motif (optionnel).
+2. Le service `DemandeAbsenceService.CreateAsync()` crée la demande avec le statut *"En attente"* et horodate la date de création.
+3. Le système retourne `HTTP 200 OK` avec les données de la demande créée.
+
+### 5. Scénarios alternatifs
+- **Consultation de ses propres demandes** : `GET /api/demande-absence/employe/{employeId}` → l'employé consulte uniquement ses propres demandes (accessible aux trois rôles).
+- **Consultation de toutes les demandes** : `GET /api/demande-absence` → accessible aux Dentiste, Secrétaire et Assistante pour la supervision globale.
+
+### 6. Scénarios d'échec
+- **Données invalides (400)** : Date de début manquante, type de demande absent, ou date de fin antérieure à la date de début.
+- **Employé introuvable (404)** : L'identifiant fourni dans l'URL ne correspond à aucun employé.
+- **Non authentifié (401)** : Token absent ou invalide.
+
+### 7. Postconditions
+- La demande est enregistrée avec le statut *"En attente"* dans la base de données.
+- Elle apparaît dans la liste des demandes consultables par les acteurs habilités.
+
+---
+
+## UC-P05 — Traitement d'une Demande d'Absence (Accepter / Refuser)
+
+### 1. Description
+Permet à un Dentiste ou une Secrétaire de traiter une demande d'absence en attente : l'accepter ou la refuser. L'action met à jour le statut de la demande et enregistre l'identifiant du traitant.
+
+### 2. Acteur principal
+**Dentiste**, **Secrétaire**
+
+### 3. Préconditions
+- L'acteur est authentifié avec le rôle `Dentiste` ou `Secretaire`.
+- La demande cible existe et est dans l'état *"En attente"*.
+- L'identifiant du traitant (`traiteParId`) est valide.
+
+### 4. Scénario nominal — Acceptation
+1. L'acteur soumet `PUT /api/demande-absence/{id}/accepter/{traiteParId}`.
+2. Le service `DemandeAbsenceService.AccepterAsync()` change le statut de la demande à *"Acceptée"* et enregistre l'identifiant du traitant et la date de traitement.
+3. Le système retourne `HTTP 200 OK`.
+
+### 5. Scénarios alternatifs
+- **Refus d'une demande** : `PUT /api/demande-absence/{id}/refuser/{traiteParId}` → même logique avec le statut *"Refusée"*.
+
+### 6. Scénarios d'échec
+- **Demande introuvable (404)** : L'identifiant ne correspond à aucune demande.
+- **Accès non autorisé (403)** : L'Assistante tente d'accepter ou de refuser une demande.
+- **Non authentifié (401)** : Token absent ou invalide.
+
+### 7. Postconditions
+- La demande est mise à jour avec le nouveau statut (*Acceptée* ou *Refusée*).
+- La date de traitement et l'identifiant du traitant sont persists en base.
+- L'employé concerné peut consulter le nouveau statut depuis son tableau de bord.

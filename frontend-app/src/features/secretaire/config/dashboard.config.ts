@@ -1,8 +1,17 @@
+import React from "react";
+
+type StatItem = {
+  title: string;
+  value: string;
+  description: string;
+  icon?: React.ReactElement;
+};
+
 export const secretaireDashboardConfig = {
   title: "Espace Secrétariat",
   subtitle: "Gestion administrative et dossiers patients",
 
-  stats: [
+  stats: <StatItem[]>[
     {
       title: "Rendez-vous du jour",
       value: "12",

@@ -52,7 +52,7 @@ const normalizeEmployee = (item: any): AssistantEmployee => {
 
 export const getEmployees = async (): Promise<AssistantEmployee[]> => {
   try {
-    const response = await secureApi.get("/personnel/api/employees");
+    const response = await secureApi.get("/personnel/api/Employees");
     const result = response.data;
 
     if (!Array.isArray(result)) {

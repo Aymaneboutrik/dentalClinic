@@ -29,7 +29,7 @@ export default function AssistantDashboardPage() {
           isToday(new Date(a.date))
         );
         const confirmedToday = todayAppointments.filter(
-          (a: any) => a.statut === "CONFIRME"
+          (a: any) => a.statutId  === 2  
         ).length;
 
         const occupancy =
@@ -106,7 +106,7 @@ export default function AssistantDashboardPage() {
             const patient = patients.find((p: any) => p.id === a.patientId);
             return {
               title:
-                a.statut === "CONFIRME"
+                a.statut === 2
                   ? t("dashboard.status.confirmed")
                   : a.statut === "ANNULE"
                   ? t("dashboard.status.cancelled")
@@ -123,7 +123,7 @@ export default function AssistantDashboardPage() {
     };
 
     loadDashboardData();
-  }, [t]);
+  }, []);
 
   return (
     <div className="space-y-8 pb-10">

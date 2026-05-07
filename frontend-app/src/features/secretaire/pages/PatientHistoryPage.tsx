@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardHeader } from "../../../components/commons/dashboard/DashboardHeader";
 import { patientService, Patient, Consultation } from "@apis/services/patient";
-import { 
-  Search, 
-  FileText, 
-  Clock, 
-  User, 
+import {
+  Search,
+  FileText,
+  Clock,
+  User,
   Calendar,
   Download,
   Upload,
@@ -32,7 +32,7 @@ export default function PatientHistoryPage() {
   const { user } = useAuthStore();
   const searchParams = useSearchParams()[0];
   const cinFromUrl = searchParams.get("cin");
-  
+
   const { searchTerm, setSearchTerm } = useSearchStore();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [history, setHistory] = useState<Consultation[]>([]);
@@ -59,21 +59,61 @@ export default function PatientHistoryPage() {
 
   const handleSearch = async (cinValue: string = searchTerm) => {
     if (!cinValue.trim()) return;
-    
+
     setLoading(true);
     setSearched(true);
     try {
-      const patientData = await patientService.secretaryGetPatientByCin(cinValue);
-      setPatient(patientData);
-      
-      const historyData = await patientService.secretaryGetHistoryByCin(cinValue);
-      setHistory(historyData);
+      let patientData;
 
-      if (patientData?.dossierId) {
-        const docs = user?.role === "Secretaire" 
-          ? await patientService.secretaryGetDossierDocuments(patientData.dossierId)
-          : await patientService.getDossierDocuments(patientData.dossierId);
-        setDocuments(docs);
+      if (["Assistant", "Assistante"].includes(user?.role || "")) {
+
+        const patients = await patientService.assistantListPatients();
+
+        patientData = patients.find((p) => p.cin === cinValue);
+
+        if (!patientData) {
+          throw new Error("Patient introuvable");
+        }
+
+        setPatient(patientData);
+
+        const historyData =
+          await patientService.getPatientHistory(patientData.id!);
+
+        setHistory(historyData);
+
+        const dossierId =
+          patientData?.dossierId ||
+          patientData?.dossierMedical?.id;
+
+        if (dossierId) {
+          const docs =
+            await patientService.getDossierDocuments(dossierId);
+
+          setDocuments(docs);
+        }
+
+      } else {
+
+        patientData =
+          await patientService.secretaryGetPatientByCin(cinValue);
+
+        setPatient(patientData);
+
+        const historyData =
+          await patientService.secretaryGetHistoryByCin(cinValue);
+
+        setHistory(historyData);
+
+        if (patientData?.dossierId) {
+
+          const docs =
+            await patientService.secretaryGetDossierDocuments(
+              patientData.dossierId
+            );
+
+          setDocuments(docs);
+        }
       }
     } catch {
       setPatient(null);
@@ -155,7 +195,7 @@ export default function PatientHistoryPage() {
         </div>
       ) : patient ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Left Column: Patient Profile */}
           <div className="lg:col-span-1 space-y-6">
             <div className="glass border-white/5 p-8 organic-card shadow-xl sticky top-24">
@@ -170,7 +210,7 @@ export default function PatientHistoryPage() {
                   <div className="flex items-center justify-center space-x-2">
                     <h2 className="text-2xl font-black tracking-tight capitalize">{patient.prenom} {patient.nom}</h2>
                     {user?.role !== "Assistant" && user?.role !== "Assistante" && (
-                      <button 
+                      <button
                         onClick={() => setIsModalOpen(true)}
                         className="p-2 hover:bg-primary/20 rounded-xl text-primary transition-all active:scale-90"
                         title="Modifier les coordonnées personnelles (Nom, CIN, etc.)"
@@ -205,7 +245,7 @@ export default function PatientHistoryPage() {
               </div>
 
               {user?.role !== "Assistant" && user?.role !== "Assistante" && (
-                <button 
+                <button
                   onClick={() => setIsDocModalOpen(true)}
                   className="w-full mt-6 flex items-center justify-center space-x-2 bg-white/5 hover:bg-white/10 border border-white/10 p-4 organic-button font-bold transition-all"
                 >
@@ -218,7 +258,7 @@ export default function PatientHistoryPage() {
 
           {/* Right Column: History & Timeline */}
           <div className="lg:col-span-2 space-y-8">
-            
+
             {/* History Section */}
             <div className="glass border-white/5 p-8 organic-card shadow-xl">
               <div className="flex items-center justify-between mb-8">
@@ -227,7 +267,7 @@ export default function PatientHistoryPage() {
                   <span>Historique des consultations</span>
                 </h3>
                 {["Dentiste", "Doctor", "Medecin"].includes(user?.role || "") && (
-                  <button 
+                  <button
                     className="flex items-center space-x-2 bg-primary/10 hover:bg-primary/20 text-primary px-6 py-2 organic-pill font-black uppercase tracking-widest text-[10px] transition-all active:scale-95"
                     onClick={() => setIsConsultModalOpen(true)}
                   >
@@ -270,7 +310,7 @@ export default function PatientHistoryPage() {
                       )}
                       <div className="mt-4 flex flex-wrap gap-2">
                         {["Dentiste", "Doctor", "Medecin"].includes(user?.role || "") && (
-                           <button 
+                          <button
                             className="text-[10px] font-bold uppercase tracking-widest bg-green-500/10 text-green-500 px-3 py-1 rounded-full hover:bg-green-500/20 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -279,12 +319,12 @@ export default function PatientHistoryPage() {
                                 setIsPrescriptionModalOpen(true);
                               }
                             }}
-                           >
+                          >
                             Ordonnance
-                           </button>
+                          </button>
                         )}
                         {user?.role !== "Secretaire" && (
-                          <button 
+                          <button
                             className="text-[10px] font-bold uppercase tracking-widest bg-white/5 text-muted-foreground px-3 py-1 rounded-full hover:bg-white/10 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -299,7 +339,7 @@ export default function PatientHistoryPage() {
                           </button>
                         )}
                         {["Assistant", "Assistante", "Dentiste", "Doctor", "Medecin"].includes(user?.role || "") && (
-                          <button 
+                          <button
                             className="text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full hover:bg-blue-500/20 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -332,7 +372,7 @@ export default function PatientHistoryPage() {
               {documents.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {documents.map((doc) => (
-                    <div 
+                    <div
                       key={doc.id}
                       className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between hover:bg-white/10 transition-all group gap-4"
                     >
@@ -355,7 +395,7 @@ export default function PatientHistoryPage() {
                       {/* Right: Actions */}
                       <div className="flex items-center space-x-1 shrink-0">
                         {user?.role !== "Assistant" && user?.role !== "Assistante" && (
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); doc.id && handleRenameDocument(doc.id, doc.nom); }}
                             className="p-2 text-muted-foreground hover:text-primary hover:bg-white/10 rounded-xl transition-all"
                             title="Renommer"
@@ -363,14 +403,14 @@ export default function PatientHistoryPage() {
                             <Pencil className="w-4 h-4" />
                           </button>
                         )}
-                        <button 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (doc.id) {
-                              const downloadFn = user?.role === "Secretaire" 
+                              const downloadFn = user?.role === "Secretaire"
                                 ? patientService.secretaryDownloadDocument(doc.id)
                                 : patientService.downloadDocument(doc.id);
-                                
+
                               downloadFn.then(blob => {
                                 const url = window.URL.createObjectURL(blob);
                                 const a = document.createElement('a');
@@ -393,7 +433,7 @@ export default function PatientHistoryPage() {
                           <Download className="w-4 h-4" />
                         </button>
                         {user?.role !== "Assistant" && user?.role !== "Assistante" && (
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); doc.id && handleDeleteDocument(doc.id); }}
                             className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
                             title="Supprimer"

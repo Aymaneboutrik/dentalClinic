@@ -168,6 +168,13 @@ const AssistantDemandeAbsencePage = () => {
         </div>
       </div>
 
+      {error && (
+        <div className="glass border-red-500/20 bg-red-500/10 p-4 rounded-2xl flex items-center space-x-3 animate-in fade-in slide-in-from-top-2 duration-300">
+           <FileText className="w-5 h-5 text-red-500" />
+           <p className="text-sm text-red-500 font-medium">{error}</p>
+        </div>
+      )}
+
       {showAddForm && (
         <div className="glass border-white/5 p-8 organic-card shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="flex items-center justify-between mb-8">

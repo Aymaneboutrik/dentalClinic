@@ -123,7 +123,7 @@ export default function SecretaireDashboardPage() {
     };
 
     loadDashboardData();
-  }, [t]);
+  }, []);
 
   return (
     <div className="space-y-8 pb-10">

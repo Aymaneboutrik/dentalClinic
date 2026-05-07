@@ -49,7 +49,10 @@ export default function PatientListPage() {
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      const data = await patientService.secretaryListPatients();
+      const data =
+    user?.role === "Assistant" || user?.role === "Assistante"
+    ? await patientService.assistantListPatients()
+    : await patientService.secretaryListPatients();
       setPatients(data);
     } catch (error) {
       toast.error("Erreur lors du chargement des patients");

@@ -1,3 +1,4 @@
+import secureApi from "@apis/instances/secure-api";
 import type { Absence } from "../../../types/absence/absence";
 
 export interface ApiError {
@@ -44,26 +45,20 @@ const normalizeAbsence = (item: any): Absence => {
 };
 
 export const getAbsencesByEmployeId = async (): Promise<Absence[]> => {
-  let response: Response;
-
   try {
-    response = await fetch(`/api/absence/employe/${CURRENT_ASSISTANT_ID}`);
-  } catch {
+    const response = await secureApi.get(`/absence/employe/${CURRENT_ASSISTANT_ID}`);
+    const result = response.data;
+
+    if (!Array.isArray(result)) {
+      return [];
+    }
+
+    return result.map((item: any) => normalizeAbsence(item));
+  } catch (error: any) {
+
     throw {
-      message: "Impossible de contacter le serveur.",
-      status: 0,
+      message: error.response?.data?.message || "Impossible de contacter le serveur.",
+      status: error.response?.status || 0,
     } as ApiError;
   }
-
-  if (!response.ok) {
-    throw await buildApiError(response);
-  }
-
-  const result = await response.json();
-
-  if (!Array.isArray(result)) {
-    return [];
-  }
-
-  return result.map((item) => normalizeAbsence(item));
 };

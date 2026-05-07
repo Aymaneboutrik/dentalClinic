@@ -1,8 +1,17 @@
+import React from "react";
+
+type StatItem = {
+  title: string;
+  value: string;
+  description: string;
+  icon?: React.ReactElement;
+};
+
 export const doctorDashboardConfig = {
   title: "Tableau de Bord",
   subtitle: "Bienvenue, Docteur. Voici un aperçu de votre activité.",
 
-  stats: [
+  stats: <StatItem[]>[
     {
       title: "Patients aujourd’hui",
       value: "12",

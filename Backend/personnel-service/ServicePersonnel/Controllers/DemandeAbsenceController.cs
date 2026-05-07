@@ -30,7 +30,7 @@ namespace Service_Personnel.Controllers
 
 
         [HttpGet]
-        [Authorize(Roles = "Dentiste, Secretaire")]
+        [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
         public async Task<IActionResult> GetAll(CancellationToken ct)
         {
             var result = await _demandeAbsenceService.GetAllAsync(ct);
@@ -38,7 +38,7 @@ namespace Service_Personnel.Controllers
         }
 
         [HttpGet("employe/{employeId}")]
-        [Authorize(Roles = "Dentiste, Secretaire")]
+        [Authorize(Roles = "Dentiste, Secretaire, Assistante")]
         public async Task<IActionResult> GetByEmployeId(int employeId, CancellationToken ct)
         {
             var result = await _demandeAbsenceService.GetByEmployeIdAsync(employeId, ct);

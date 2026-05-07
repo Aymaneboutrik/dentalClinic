@@ -50,6 +50,14 @@ public class AssistantController {
                         .collect(Collectors.toList())
         );
     }
+    @GetMapping("/patients")
+    public ResponseEntity<List<PatientDto>> listAllPatients() {
+        return ResponseEntity.ok(
+                patientService.searchPatients(null).stream()
+                        .map(patientMapper::toPatientDto)
+                        .collect(Collectors.toList())
+        );  
+}
 
     // ==========================================
     // 2. AJOUTER DES NOTES DE SUIVI (OBSERVATIONS)

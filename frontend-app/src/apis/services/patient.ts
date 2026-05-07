@@ -196,6 +196,12 @@ export const patientService = {
   secretaryDownloadDocument: async (id: number) => {
     const response = await secureApi.get(`/sec/documents/${id}`, { responseType: "blob" });
     return response.data;
-  }
+  },
+
+  // Role Specific - Assistant
+  assistantListPatients: async () => {
+  const response = await secureApi.get(`/assistant/patients`);
+  return response.data;
+},
 };
 

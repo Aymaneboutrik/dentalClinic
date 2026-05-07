@@ -2,10 +2,6 @@ import React, { useEffect, useState } from "react";
 import { DashboardHeader } from "../../../components/commons/dashboard/DashboardHeader";
 import { Calendar, Clock, User, ShieldCheck, AlertCircle } from "lucide-react";
 import { getPlannings, type ApiError } from "../services/planning.service";
-import {
-  getEmployees,
-  type AssistantEmployee,
-} from "../services/personnel.service";
 import type { Planning } from "../../../types/planning/planning";
 
 type EmployeePlanningGroup = {
@@ -16,7 +12,6 @@ type EmployeePlanningGroup = {
 
 const AssistantPlanningPage = () => {
   const [plannings, setPlannings] = useState<Planning[]>([]);
-  const [employees, setEmployees] = useState<AssistantEmployee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,13 +30,9 @@ const AssistantPlanningPage = () => {
       setLoading(true);
       setError(null);
 
-      const [planningData, employeesData] = await Promise.all([
-        getPlannings(),
-        getEmployees(),
-      ]);
+      const planningData = await getPlannings();
 
       setPlannings(Array.isArray(planningData) ? planningData : []);
-      setEmployees(Array.isArray(employeesData) ? employeesData : []);
     } catch (err) {
       console.error("Erreur fetch planning assistant:", err);
       const apiError = err as ApiError;
@@ -56,18 +47,6 @@ const AssistantPlanningPage = () => {
   }, []);
 
   const groupedByEmployee: Record<string, EmployeePlanningGroup> = {};
-
-  employees.forEach((emp) => {
-    const fullName = `${String(emp?.nom ?? "")} ${String(
-      emp?.prenom ?? ""
-    )}`.trim();
-
-    groupedByEmployee[fullName] = {
-      fullName,
-      role: String(emp?.nomRole ?? ""),
-      horaires: [],
-    };
-  });
 
   plannings.forEach((planning) => {
     const fullName = `${String(planning?.nom ?? "")} ${String(
