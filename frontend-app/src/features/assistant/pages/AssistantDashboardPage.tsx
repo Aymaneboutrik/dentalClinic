@@ -4,7 +4,7 @@ import { DashboardHeader } from "../../../components/commons/dashboard/Dashboard
 import { StatsCards } from "../../../components/commons/dashboard/StatsCards";
 import { DashboardCharts } from "../../doctor/components/DashboardCharts";
 import { patientService } from "../../../apis/services/patient";
-import { getRendezVous } from "../../../apis/services/rendezvous";
+import { getRendezVous, getAllHistory } from "../../../apis/services/rendezvous";
 import { isToday, startOfWeek, addDays, isSameDay, format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Users, CalendarCheck, FileText, Activity } from "lucide-react";
@@ -90,42 +90,103 @@ export default function AssistantDashboardPage() {
             icon: <Activity className="w-5 h-5" />,
           },
         ]);
-        const weekly = [
-          { day: "Lun", appointments: 12 },
-          { day: "Mar", appointments: 18 },
-          { day: "Mer", appointments: 15 },
-          { day: "Jeu", appointments: 22 },
-          { day: "Ven", appointments: 19 },
-          { day: "Sam", appointments: 8 },
-          { day: "Dim", appointments: 0 },
+        let mouvementsResponse: any[] = [];
+        try {
+          const res = await secureApi.get("/stock/MouvementStock");
+          mouvementsResponse = extractArray(res.data);
+        } catch (e) {
+        }
+
+        const monthCounts: Record<string, number> = {};
+        const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+
+        monthNames.forEach(m => monthCounts[m] = 0);
+        mouvementsResponse.forEach((m: any) => {
+          if (m.dateMouvement) {
+            const date = new Date(m.dateMouvement);
+            const monthStr = monthNames[date.getMonth()];
+            monthCounts[monthStr] += 1;
+          }
+        });
+
+        const stockWeekly = monthNames.map(month => ({
+          day: month,
+          appointments: monthCounts[month]
+        }));
+
+        setWeeklyData(stockWeekly);
+
+        // NOUVELLE LOGIQUE: Calculer les statuts à partir de l'historique (traçabilité réelle)
+        let historyData: any[] = [];
+        try {
+          const historyResponse = await getAllHistory();
+          historyData = extractArray(historyResponse);
+        } catch (e) {
+          console.error("Erreur récupération historique:", e);
+        }
+
+        // Grouper l'historique par rendez-vous pour obtenir le statut final réel
+        const latestStatusMap = new Map<string, any>();
+        
+        // Trier du plus ancien au plus récent, ainsi le dernier inséré écrase les précédents
+        const sortedHistory = [...historyData].sort(
+          (a, b) => new Date(a.dateModification).getTime() - new Date(b.dateModification).getTime()
+        );
+
+        sortedHistory.forEach((item) => {
+          // Si rendezVousId est null (rendez-vous supprimé), on génère une clé composite unique
+          const key = item.rendezVousId 
+            ? `rdv-${item.rendezVousId}` 
+            : `deleted-${item.patientId}-${item.dentisteId}-${item.date}-${item.heureDebut}`;
+          latestStatusMap.set(key, item);
+        });
+
+        let countEffectue = 0;
+        let countAnnule = 0;
+        let countReporte = 0;
+        let countAbsent = 0;
+
+        Array.from(latestStatusMap.values()).forEach((item) => {
+          const status = item.nouveauStatut?.toString().toLowerCase() || "";
+          
+          if (status.includes("effectu") || status === "3" || (status === "4" && !status.includes("absent"))) {
+             countEffectue++;
+          } else if (status.includes("annul") || status === "2") {
+             countAnnule++;
+          } else if (status.includes("report") || status === "5" || status === "6") {
+             countReporte++;
+          } else if (status.includes("absent") || status === "4") {
+             countAbsent++;
+          }
+        });
+
+        const sumStatuts = countEffectue + countAnnule + countReporte + countAbsent;
+        const divisor = sumStatuts > 0 ? sumStatuts : 1;
+
+        const newStatusData = [
+          {
+            name: "Effectué",
+            value: Math.round((countEffectue / divisor) * 100),
+            fill: "green",
+          },
+          {
+            name: "Annulé",
+            value: Math.round((countAnnule / divisor) * 100),
+            fill: "red",
+          },
+          {
+            name: "Reporté",
+            value: Math.round((countReporte / divisor) * 100),
+            fill: "blue",
+          },
+          {
+            name: "Absent",
+            value: Math.round((countAbsent / divisor) * 100),
+            fill: "black",
+          },
         ];
 
-        setWeeklyData(weekly);
-
-
-        const statuses = appointments.reduce((acc: any, curr: any) => {
-          acc[curr.statutId] = (acc[curr.statutId] || 0) + 1;
-          return acc;
-        }, {});
-
-        const total = appointments.length || 1;
-        setStatusData([
-          {
-            name: t("dashboard.status.confirmed"),
-            value: Math.round(((statuses[6] || 0) / total) * 100),
-            fill: "hsl(var(--primary))",
-          },
-          {
-            name: t("dashboard.status.pending"),
-            value: Math.round(((statuses[1] || 0) / total) * 100),
-            fill: "hsl(180 80% 45%)",
-          },
-          {
-            name: t("dashboard.status.cancelled"),
-            value: Math.round(((statuses[3] || 0) / total) * 100),
-            fill: "hsl(0 84% 60%)",
-          },
-        ]);
+        setStatusData(newStatusData);
 
       } catch (error) {
         console.error("Erreur lors du chargement des données concrètes:", error);
