@@ -128,46 +128,48 @@ export function DashboardCharts({ weeklyData, statusData }: DashboardChartsProps
                 <p className="text-xs italic">{t("dashboard.charts.noData")}</p>
               </div>
             ) : (
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Pourcentage",
-                  },
-                }}
-                className="flex-1 w-full"
-              >
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {statusData.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </PieChart>
-              </ChartContainer>
+              <div className="flex-1 min-h-0 w-full relative">
+                <ChartContainer
+                  config={{
+                    value: {
+                      label: "Pourcentage",
+                    },
+                  }}
+                  className="absolute inset-0 h-full w-full"
+                >
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {statusData.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ChartContainer>
+              </div>
             )}
-            <div className="mt-auto space-y-2 pb-2">
+            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 pb-2 shrink-0">
               {statusData.map((item: any) => (
                 <div
                   key={item.name}
-                  className="flex items-center justify-between text-xs"
+                  className="flex items-center justify-between text-xs min-w-0"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <div
-                      className="h-2 w-2 rounded-full"
+                      className="h-2.5 w-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: item.fill }}
                     />
-                    <span className="text-muted-foreground">{item.name}</span>
+                    <span className="text-muted-foreground truncate" title={item.name}>{item.name}</span>
                   </div>
-                  <span className="font-medium">{item.value}%</span>
+                  <span className="font-medium ml-2">{item.value}%</span>
                 </div>
               ))}
             </div>

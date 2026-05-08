@@ -18,6 +18,7 @@ interface Props {
   form?: any;
   className?: string;
   autoComplete?: string;
+  disableAutofill?: boolean;
 }
 
 
@@ -30,7 +31,15 @@ function TextInput({
   form,
   className,
   autoComplete,
+  disableAutofill = false,
 }: Props) {
+  const [isReadOnly, setIsReadOnly] = React.useState(disableAutofill);
+  
+  const stableId = React.useMemo(() => {
+    if (!disableAutofill) return undefined;
+    const randomSuffix = Math.random().toString(36).slice(2, 7);
+    return form?.id ? `${form.id}_${name}_${randomSuffix}` : `v_${name}_${randomSuffix}`;
+  }, [form?.id, name, disableAutofill]);
 
   return (
     <FormField
@@ -49,7 +58,16 @@ function TextInput({
               placeholder={placeholder} 
               className={className} 
               autoComplete={autoComplete}
-              {...field} 
+              {...field}
+              id={stableId || field.name}
+              readOnly={isReadOnly}
+              onFocus={(e) => {
+                if (disableAutofill) setIsReadOnly(false);
+              }}
+              onBlur={(e) => {
+                if (disableAutofill) setIsReadOnly(true);
+                field.onBlur();
+              }}
             />
           </FormControl>
 

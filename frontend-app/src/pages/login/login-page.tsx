@@ -1,4 +1,5 @@
 import React from "react";
+import logoLoginSrc from "../../assets/images/logo_64x64.svg";
 import { Form } from "@components/ui/form";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -112,43 +113,12 @@ export function Login() {
 
           {/* Header/Branding */}
           <div className="flex flex-col items-center text-center space-y-5 mb-10 relative z-10">
-            <div className="w-24 h-24 flex items-center justify-center drop-shadow-[0_0_25px_rgba(34,211,238,0.3)]">
-              <svg
-                width="90"
-                height="90"
-                viewBox="0 0 100 110"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M50 5 L90 22 L90 60 Q90 90 50 105 Q10 90 10 60 L10 22 Z"
-                  fill="none"
-                  stroke="#2196f3"
-                  strokeWidth="5"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M35 30 Q28 30 26 42 Q24 54 28 68 Q30 76 34 76 Q38 76 40 68 L50 55 L60 68 Q62 76 66 76 Q70 76 72 68 Q76 54 74 42 Q72 30 65 30 Q58 30 50 38 Q42 30 35 30 Z"
-                  fill="#42b0f5"
-                />
-                <rect x="44" y="38" width="12" height="4" rx="2" fill="white" opacity="0.9" />
-                <rect x="48" y="34" width="4" height="12" rx="2" fill="white" opacity="0.9" />
-                <path d="M62 28 Q72 20 76 28 Q72 36 62 28" fill="#42b0f5" opacity="0.7" />
-                <path d="M78 14 L79.5 18 L83 14 L79.5 10 Z" fill="#22d3ee" />
-                <circle cx="85" cy="20" r="2" fill="#22d3ee" />
-                <circle cx="82" cy="10" r="1.5" fill="#22d3ee" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-4xl font-black tracking-tight text-white mb-2">
-                Dental<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"> Clinic</span>
-              </h1>
-              <p className="text-cyan-400/70 text-[10px] font-semibold uppercase tracking-[0.25em]">
-                Excellence in Care & Well-Being
-              </p>
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-widest mt-1">
-                Portail Sécurisé
-              </p>
+            <div className="flex items-center justify-center drop-shadow-[0_0_25px_rgba(34,211,238,0.3)] w-[200px] sm:w-[250px] h-auto">
+              <img
+                src={logoLoginSrc}
+                alt="Dental Clinic Large Logo"
+                className="w-full h-auto object-contain"
+              />
             </div>
           </div>
 
@@ -174,6 +144,7 @@ export function Login() {
                       withAsterisk
                       form={form}
                       autoComplete="off"
+                      disableAutofill
                       className="bg-transparent border-none text-white focus-visible:ring-0 focus-visible:ring-offset-0 px-4 placeholder:text-slate-600"
                     />
                   </div>
