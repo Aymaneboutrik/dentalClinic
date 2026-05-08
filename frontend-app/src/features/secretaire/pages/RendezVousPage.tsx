@@ -7,9 +7,13 @@ import {
   type ApiError,
 } from "@apis/services/rendezvous";
 import { getEmployees } from "../../doctor/services/personnel.service";
+import { getPlannings } from "../../doctor/services/planning.service";
+import { getAbsences } from "../../doctor/services/absence.service";
 import { patientService, type Patient } from "@apis/services/patient";
 import type { RendezVous } from "../../../types/rendezvous/rendezvous";
 import type { Employee } from "../../../types/employee/employee";
+import type { Planning } from "../../../types/planning/planning";
+import type { Absence } from "../../../types/absence/absence";
 import useAuthStore from "@stores/auth-store";
 import { DashboardHeader } from "@components/commons/dashboard/DashboardHeader";
 import { CalendarDays, Plus, Search, X, Edit3, Trash2, User, Stethoscope, Clock, AlertCircle, CheckCircle2, History, Info, Filter } from "lucide-react";
@@ -49,6 +53,8 @@ const RendezVousPage = () => {
   const [appointments, setAppointments] = useState<RendezVous[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [dentists, setDentists] = useState<Employee[]>([]);
+  const [plannings, setPlannings] = useState<Planning[]>([]);
+  const [absences, setAbsences] = useState<Absence[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -81,6 +87,8 @@ const RendezVousPage = () => {
       const results = await Promise.allSettled([
         patientService.secretaryListPatients(),
         getEmployees(),
+        getPlannings(),
+        getAbsences(),
       ]);
 
       if (results[0].status === "fulfilled") {
@@ -95,6 +103,12 @@ const RendezVousPage = () => {
               e.nomRole?.toLowerCase() === "dentiste"
           )
         );
+      }
+      if (results[2].status === "fulfilled") {
+        setPlannings(results[2].value);
+      }
+      if (results[3].status === "fulfilled") {
+        setAbsences(results[3].value);
       }
     } catch (err) {
       console.error("Erreur lors du chargement des données auxiliaires", err);
@@ -153,6 +167,65 @@ const RendezVousPage = () => {
       if (formData.heureDebut >= formData.heureFinPrevue) {
         errors.heureDebut = "L'heure de début doit être inférieure à l'heure de fin.";
         errors.heureFinPrevue = "L'heure de fin doit être après l'heure de début.";
+      }
+    }
+
+    // --- VÉRIFICATION INTELLIGENTE DE DISPONIBILITÉ DU DOCTEUR ---
+    if (formData.dentisteId && formData.date && formData.heureDebut && formData.heureFinPrevue && !errors.heureDebut && !errors.heureFinPrevue) {
+      const dateObj = new Date(formData.date);
+      // Extraire le nom du jour en français (ex: "lundi")
+      const dayOfWeek = dateObj.toLocaleDateString('fr-FR', { weekday: 'long' }).toLowerCase();
+      
+      const doctorPlannings = plannings.filter(
+        p => p.idEmploye === formData.dentisteId && p.jour.toLowerCase() === dayOfWeek
+      );
+
+      if (doctorPlannings.length === 0) {
+        errors.dentisteId = `Le docteur ne travaille pas le ${dayOfWeek}.`;
+      } else {
+        // Vérifier si l'horaire sélectionné est bien DANS un bloc de travail (gère implicitement les pauses)
+        const isWithinHours = doctorPlannings.some(p => {
+          const start = p.heureDebut.substring(0, 5); // "08:00:00" -> "08:00"
+          const end = p.heureFin.substring(0, 5);
+          return formData.heureDebut >= start && formData.heureFinPrevue <= end;
+        });
+
+        if (!isWithinHours) {
+          errors.heureDebut = "Horaire hors planning du docteur ou pendant une pause.";
+        }
+      }
+
+      // Vérifier les absences / congés / indisponibilités
+      const doctorAbsences = absences.filter(a => a.employeId === formData.dentisteId);
+      const appStartTs = new Date(`${formData.date}T${formData.heureDebut}`).getTime();
+      const appEndTs = new Date(`${formData.date}T${formData.heureFinPrevue}`).getTime();
+
+      const isAbsent = doctorAbsences.some(a => {
+        const startTs = new Date(a.dateDebut).getTime();
+        const endTs = new Date(a.dateFin).getTime();
+        return Math.max(startTs, appStartTs) < Math.min(endTs, appEndTs);
+      });
+
+      if (isAbsent) {
+        errors.date = "Le docteur est indisponible (absence/congé) à cette date/heure.";
+      }
+
+      // Vérifier les conflits avec d'autres rendez-vous existants
+      const hasConflict = appointments.some(a => {
+        if (isEditMode && editingId === a.id) return false;
+        // On ignore les RDV annulés(3), effectués(4) ou absents(5) car le créneau est libre
+        if (a.statutId === 3 || a.statutId === 4 || a.statutId === 5) return false;
+        if (a.dentisteId !== formData.dentisteId) return false;
+        if (a.date.split('T')[0] !== formData.date) return false;
+
+        const aStart = a.heureDebut.substring(0, 5);
+        const aEnd = a.heureFinPrevue.substring(0, 5);
+        
+        return (formData.heureDebut < aEnd && formData.heureFinPrevue > aStart);
+      });
+
+      if (hasConflict) {
+        errors.heureDebut = "Le docteur a déjà un rendez-vous à cet horaire.";
       }
     }
 
